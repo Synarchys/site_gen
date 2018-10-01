@@ -1,0 +1,38 @@
+{
+  "definition": {
+    "app": "siteName",
+    "title": "Name of the  Site.",
+    "layout":{
+      "header": {
+        "tilte": "Site Name.",
+        "image": ""
+      },
+      "menu": {
+        "items": [
+          {"section": "#what",
+           "title": "Wat we Do"},
+          {"section": "#products",
+           "title": "Products",
+           "sub-sections": [
+             {"section": "#product1",
+              "title": "Product 1"
+             },
+             {"section": "#product 2",
+              "title": "Product 2"}]
+          }]
+      },
+      "body": {
+        "container": {
+          "type": "grid",
+          "items": [
+            {"cols": [{"card":
+                       {"title": "Product 1",
+                        "content": "content" }
+                      }]
+            }
+          ]}
+      },
+      "footer": {}
+    }
+  }
+}
