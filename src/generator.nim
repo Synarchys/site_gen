@@ -21,6 +21,7 @@ proc loadData() =
 
 proc MainContent(def: JsonNode): VNode =
   result = buildHtml(tdiv()):
+    Menu(def["menu"])
     Header(def["header"])
     Content(def["body"])
     Footer(def["footer"])

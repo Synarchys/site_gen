@@ -4,10 +4,11 @@
     "title": "Name of the  Site.",
     "layout":{
       "header": {
-        "tilte": "Site Name.",
+        "alternative": "Site Name.",
         "image": ""
       },
       "menu": {
+        "style": "navbar navbar-expand-lg navbar-dark fixed-top",
         "items": [
           {"section": "#what",
            "title": "Wat we Do"},
@@ -22,15 +23,28 @@
           }]
       },
       "body": {
-        "container": {
-          "type": "grid",
-          "items": [
-            {"cols": [{"card":
-                       {"title": "Product 1",
-                        "content": "content" }
-                      }]
-            }
-          ]}
+          "container": {
+            "children": [
+              { "card": {
+                "title": "Product 1",
+                "content": "Some quick example text to build on the card title and make up the bulk of the card's content.",
+                "link": {"href": "#tosomewhere", "text": "Go Somewhere"}
+               }
+              },
+              { "card": {
+                "title": "Product 2",
+                "content": "Some quick example text for Product 2 to build on the card title and make up the bulk of the card's content.",
+                "link": {"href": "#somewhereelse", "text": "Go Somewhere Else"}
+               }
+              },
+              { "card": {
+                "title": "Product 3",
+                "content": "Some quick example text for Product 3 to build on the card title and make up the bulk of the card's content.",
+                "link": {"href": "#somewhereelse", "text": "Product 3"}
+               }
+              }
+            ]
+          }
       },
       "footer": {}
     }

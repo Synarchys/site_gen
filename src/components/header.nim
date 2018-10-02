@@ -9,4 +9,4 @@ proc Header*(def: JsonNode):Vnode =
     header(class="masthead"):
       tdiv(class="container"):
         tdiv(class="intro-text"):
-          img(class="mobil", src="image logo", alt="Set the title here")
+          img(class="mobil", src="image logo", alt=def["alternative"].getStr)

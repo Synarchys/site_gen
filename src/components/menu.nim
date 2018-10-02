@@ -3,8 +3,7 @@ import karax / prelude
 
 import sugar, json
 
-proc menuContent*(menuList: JsonNode): VNode =
-  echo menuList["style"].getStr()
+proc Menu*(menuList: JsonNode): VNode =
   result = buildHtml(nav(class=menuList["style"].getStr(), id="mainNav")):
     tdiv(class="container"):
       a(class="navbar-brand js-scroll-trigger", href="#page-top"): text "HOME"
@@ -21,5 +20,5 @@ proc menuContent*(menuList: JsonNode): VNode =
         ul(class="navbar-nav text-uppercase ml-auto"):
           for m in menuList["items"]:
             li(class="nav-item"):
-              a(class="nav-link js-scroll-trigger", href=m["href"].getStr()): text m["text"].getStr()
+              a(class="nav-link js-scroll-trigger", href=m["section"].getStr()): text m["title"].getStr()
           
