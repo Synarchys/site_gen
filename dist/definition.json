@@ -1,10 +1,10 @@
 {
   "definition": {
-    "app": "siteName",
-    "title": "Name of the  Site.",
+    "app": "synarchysCorp",
+    "title": "Synarchys Corporation Official Site.",
     "layout":{
       "header": {
-        "alternative": "Site Name.",
+        "alternative": "Synarchys Corporation Official Site.",
         "image": ""
       },
       "menu": {
@@ -23,28 +23,52 @@
           }]
       },
       "body": {
-          "container": {
-            "children": [
-              { "card": {
-                "title": "Product 1",
-                "content": "Some quick example text to build on the card title and make up the bulk of the card's content.",
-                "link": {"href": "#tosomewhere", "text": "Go Somewhere"}
-               }
-              },
-              { "card": {
-                "title": "Product 2",
-                "content": "Some quick example text for Product 2 to build on the card title and make up the bulk of the card's content.",
-                "link": {"href": "#somewhereelse", "text": "Go Somewhere Else"}
-               }
-              },
-              { "card": {
-                "title": "Product 3",
-                "content": "Some quick example text for Product 3 to build on the card title and make up the bulk of the card's content.",
-                "link": {"href": "#somewhereelse", "text": "Product 3"}
-               }
-              }
-            ]
-          }
+        "container": {
+          "sections":[
+            {
+              "title": "What we Do",
+              "type": "text",
+              "images": [""],
+              "children": [
+                {
+                  "p":[
+                    "Imagine that someone could pay you just for existing, and sharing some information about your existence.",
+                    "Your data is your asset, because it has value and is used in transactions that moves the information economy.",
+                    "Internet and Machines exist because of us, and we should have a say on the evolution of both.",
+                    "This is not about the money made out of your data with no benefit for you. This is about the decisions that affect you as the user.",
+                    "We don’t want to give up our lifestyle and needs, just to protect our data. What we want is full control and ownership.",
+                    "This is not an issue of policies and regulations, this is an issue of CONTROL and OWNERSHIP."
+                  ]
+                }]
+            },
+            {
+              "title": "Products",
+              "type": "cards",
+              "children": [
+                {
+                  "card": {
+                    "title": "Product 1",
+                    "content": "Some quick example text to build on the card title and make up the bulk of the card's content.",
+                    "link": {"href": "#tosomewhere", "text": "Go Somewhere"}
+                  }
+                },
+                {
+                  "card": {
+                    "title": "Product 2",
+                    "content": "Some quick example text for Product 2 to build on the card title and make up the bulk of the card's content.",
+                    "link": {"href": "#somewhereelse", "text": "Go Somewhere Else"}
+                  }
+                },
+                {
+                  "card": {
+                    "title": "Product 3",
+                    "content": "Some quick example text for Product 3 to build on the card title and make up the bulk of the card's content.",
+                    "link": {"href": "#somewhereelse", "text": "Product 3"}
+                  }
+                }
+              ]}
+          ]
+        }
       },
       "footer": {}
     }
