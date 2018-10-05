@@ -15,58 +15,138 @@
           {"section": "#products",
            "title": "Products",
            "sub-sections": [
-             {"section": "#product1",
-              "title": "Product 1"
+             {"section": "#feedbackmachine",
+              "title": "FeedbackMachine"
              },
-             {"section": "#product 2",
-              "title": "Product 2"}]
+             {"section": "#cdt",
+              "title": "Collective Data Trust"}]
           }]
       },
       "body": {
         "container": {
           "sections":[
             {
+              "id": "whatwedo", 
               "title": "What we Do",
               "type": "text",
               "images": [""],
               "children": [
                 {
                   "p":[
-                    "Imagine that someone could pay you just for existing, and sharing some information about your existence.",
-                    "Your data is your asset, because it has value and is used in transactions that moves the information economy.",
-                    "Internet and Machines exist because of us, and we should have a say on the evolution of both.",
-                    "This is not about the money made out of your data with no benefit for you. This is about the decisions that affect you as the user.",
-                    "We don’t want to give up our lifestyle and needs, just to protect our data. What we want is full control and ownership.",
-                    "This is not an issue of policies and regulations, this is an issue of CONTROL and OWNERSHIP."
+                    "We connect companies with consumers.",
+                    "Synarchys Corp runs the Data Exchange Market Management for the Collective Data Trust.",
+                    "This allows us to provide to OUR CUSTOMERS with the specialized information they need to know about THEIR CONSUMERS and connect to them through the most effective channels.",
+                    "We combine access to Non-Traditional data for research and development purposes, with the access to consumer habits information, in order to implement the most effective micro-targeted marketing strategies, faster and better priced than a traditional data-oriented products' company.",
+                    "We can measure the performance of a product and its life-cycle inside a consumers' group, and we can build predictive models based on demographic and lifestyle data, combined with consumption habits information, and other non traditional data.",
+                    "We help our customers to match their products with markets and consumers audiences WHEN and WHERE they are most engaged."
                   ]
                 }]
             },
             {
+              "id": "products",
               "title": "Products",
               "type": "cards",
               "children": [
                 {
                   "card": {
-                    "title": "Product 1",
-                    "content": "Some quick example text to build on the card title and make up the bulk of the card's content.",
-                    "link": {"href": "#tosomewhere", "text": "Go Somewhere"}
+                    "title": "Feedbackmachine.ml",
+                    "content": [
+                      "Feedback Machine allows business to stay connected with consumers which are, or can be part of its audience."
+                    ],
+                    "link": {"href": "#feedbackmachine", "text": "FeedbackMachine"}
                   }
                 },
                 {
                   "card": {
-                    "title": "Product 2",
-                    "content": "Some quick example text for Product 2 to build on the card title and make up the bulk of the card's content.",
-                    "link": {"href": "#somewhereelse", "text": "Go Somewhere Else"}
+                    "title": "Collective Data Trust",
+                    "content": [
+                      "Collective Data Trust is a DST registered to hold and manage assets on behalf of its beneficiaries to be held and submitted to operations where those assets can produce income."
+                    ],
+                    "link": {"href": "#cdt", "text": "Collective Data Trust"}
                   }
                 },
                 {
                   "card": {
-                    "title": "Product 3",
-                    "content": "Some quick example text for Product 3 to build on the card title and make up the bulk of the card's content.",
-                    "link": {"href": "#somewhereelse", "text": "Product 3"}
+                    "title": "imu.ai",
+                    "content": [
+                      "Allows an internet user to get registered and connected with the Collective Data Trust's Marketplace and to participate in the monetization processes."
+                    ],
+                    "link": {"href": "#imu.ai", "text": "ImU.ai"}
+                  }
+                },
+                {
+                  "card": {
+                    "title": "bigrobot.ai:",
+                    "content": [
+                      "Big Robot is the product that holds the infrastructure where the entire marketplace works."
+                    ],
+                    "link": {"href": "#bigrobot.ai", "text": "BigRobot"}
                   }
                 }
-              ]}
+              ]
+            },
+            {
+              "id": "feedbackmachine",
+              "title": "FeedbackMachine",
+              "type": "text",
+              "images": [""],
+              "children": [
+                {
+                  "p": [
+                      "Feedback Machine allows business to stay connected with consumers which are, or can be part of its audience.",
+                      "Its a Data Management Suite, which allows a business to capture the value consumers are creating through information based products.",
+                      "The solution is a powerful combination of a reverse feed of information, through a C2B short time reaction platform, designed to help businesses make better decisions and establish lasting connections with their consumers with personalized 2-Way communication and consistent cross-channel experiences.",
+                      "The business has its own account on the platform with access to a simple administration console that makes a product easy to monitor and manage.",
+                      "The consumer sees an easily and friendly app, where it receives the feedback request form the business, and through which all interactions are made.",
+                      "Feedback Machine operates under the concept of distributed human computation processes, and besides providing markets insights, the project is about trying to capture the collective consciousness of its users to solve complicated issues and validate machine generated models.",
+                      "This is a product oriented to: Consumer Goods and Services Companies, Information Solutions Companies, R&D Departments, Research Labs, etc."
+                    ]
+                }]
+            },
+            {
+              "id": "cdt",
+              "title": "Collective Data Trust",
+              "type": "text",
+              "images": [""],
+              "children": [
+                {
+                    "p": [
+                      "Collective Data Trust is a DST registered to hold and manage assets on behalf of its beneficiaries to be held and submitted to operations where those assets can produce income.",
+                      "For the Collective Data Trust, such asset is DATA and other Digital Assets, and such beneficiaries, are the dully registered internet users who wants to monetize their data.",
+                      "The Collective Data Trust helps internet users to generate income with their data.",
+                      "The data is property of the beneficiaries and is managed by the trust. Such data is submitted to different processes and transactions through a data exchange privacy oriented platform.",
+                      "This product is oriented to internet users who wants to protect their privacy and generate income with their data."
+                    ]
+                }]
+            },
+            {
+              "id": "imu.ai",
+              "title": "imu.ai",
+              "type": "text",
+              "images": [""],
+              "children": [
+                {
+                  "p": [
+                      "IMU stands for Intelligent Meta User, is an application that allows an internet user to get registered and connected with the Collective Data Trust's Marketplace and to participate in the monetization processes.",
+                      "IMU takes care of data collection, data protection, and privacy management.",
+                      "This product is oriented to internet users that want's to connect with the Collective Data Trust, to monetize or access data."
+                    ]
+                }]
+            },
+            {
+              "id": "bigrobot.ai",
+              "title": "BigRobot",
+              "type": "text",
+              "images": [""],
+              "children": [
+                {
+                  "p": [
+                    "Big Robot is the product that holds the infrastructure where the entire marketplace works.",
+                    "Big Robot provides cloud space inside the platform and the tools to develop and apply Artificial Intelligence Resources.",
+                    "Big Robot operates as a Cloud Service Company, and also works as an AI Lab."
+                  ]
+                }]
+            }
           ]
         }
       },

@@ -5,7 +5,7 @@ import karax / [errors, kdom, kajax, vstyles]
 
 import sugar, json
 
-import ./components / [content, menu, header, footer]
+import ./components / [sections, menu, header, footer]
 
 const headers = [(cstring"Content-Type", cstring"application/json")]
 
@@ -23,7 +23,7 @@ proc MainContent(def: JsonNode): VNode =
   result = buildHtml(tdiv()):
     Menu(def["menu"])
     Header(def["header"])
-    Content(def["body"])
+    Sections(def["body"])
     Footer(def["footer"])
     
 proc createDOM(data: RouterData): VNode =
