@@ -1,10 +1,10 @@
 {
   "definition": {
     "app": "synarchysCorp",
-    "title": "Synarchys Corporation Official Site.",
+    "title": "Synarchys Corporation",
     "layout":{
       "header": {
-        "alternative": "Synarchys Corporation Official Site.",
+        "alternative": "Synarchys Corporation",
         "image": ""
       },
       "menu": {
@@ -19,8 +19,11 @@
               "title": "FeedbackMachine"
              },
              {"section": "#cdt",
-              "title": "Collective Data Trust"}]
-          }]
+              "title": "Collective Data Trust"}
+           ]
+          },
+          {"section": "#contact", "title": "contact"}
+        ]
       },
       "body": {
         "container": {
@@ -151,6 +154,34 @@
                     "Big Robot operates as a Cloud Service Company, and also works as an AI Lab."
                   ]
                 }]
+            },
+            {
+              "id":"contacts",
+              "title": "Contact",
+              "type": "rows",
+              "children": [
+                {
+                  "title": "THE TRUST",
+                  "p" :[
+                    "info@collectivedatatrust.com",
+                    "Collective Data Trust",
+                    "1000 N. West St., Suite. 1501",
+                    "P.O. Box 8702",
+                    "Wilmington, DE 19899",
+                    "+1 (302) 261 5727" 
+                  ]
+                },{
+                  "title": "THE TRUSTEE",
+                  "p": [
+                    "info@synarchys.com",
+                    "Synarchys Corp" ,
+                    "704 N King Street",
+                    "Suite 500",
+                    "Wilmington, DE 19801",
+                    "+1 (302) 956 9625"
+                  ]
+                }
+              ]
             }
           ]
         }
