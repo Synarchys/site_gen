@@ -50,37 +50,42 @@
                 {
                   "card": {
                     "title": "Feedbackmachine.ml",
+                    "image": "",
                     "content": [
                       "Feedback Machine allows business to stay connected with consumers which are, or can be part of its audience."
                     ],
-                    "link": {"href": "#feedbackmachine", "text": "FeedbackMachine"}
+                    "link": {"href": "#feedbackmachine", "text": "More Info"}
                   }
                 },
                 {
                   "card": {
                     "title": "Collective Data Trust",
+                    "image": "",
                     "content": [
                       "Collective Data Trust is a DST registered to hold and manage assets on behalf of its beneficiaries to be held and submitted to operations where those assets can produce income."
                     ],
-                    "link": {"href": "#cdt", "text": "Collective Data Trust"}
+                    "link": {"href": "#cdt", "text": "More Info"}
                   }
                 },
                 {
                   "card": {
-                    "title": "imu.ai",
+                    "title": "ImU.ai",
+                    "image": "",
+                    "image": "",
                     "content": [
                       "Allows an internet user to get registered and connected with the Collective Data Trust's Marketplace and to participate in the monetization processes."
                     ],
-                    "link": {"href": "#imu.ai", "text": "ImU.ai"}
+                    "link": {"href": "#imu.ai", "text": "More Info"}
                   }
                 },
                 {
                   "card": {
-                    "title": "bigrobot.ai:",
+                    "title": "BigRobot.ai",
+                    "image": "",
                     "content": [
                       "Big Robot is the product that holds the infrastructure where the entire marketplace works."
                     ],
-                    "link": {"href": "#bigrobot.ai", "text": "BigRobot"}
+                    "link": {"href": "#bigrobot.ai", "text": "More Info"}
                   }
                 }
               ]

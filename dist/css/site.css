@@ -24,7 +24,7 @@
         width: 100%;
     }
     section h2.section-heading {
-        font-size: 220% !important;
+        font-size: 200% !important;
     }
     body {
         font-family: 'sans-serif';
@@ -74,7 +74,7 @@ section {
 }
 
 section h2.section-heading {
-    font-size: 600%;
+    font-size: 350%;
     margin-top: 0;
     margin-bottom: 15px;
     color: #ff6600
@@ -377,3 +377,12 @@ ul.social-buttons li a:hover {
     background-color: #ff6600
 }
 
+.products-card {
+    width: 23rem;
+    height: 20rem;
+    margin: 1rem;
+}
+
+.card-button {
+    position: absolute, bottom: 0;
+}
