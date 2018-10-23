@@ -1,10 +1,10 @@
 {
   "definition": {
     "app": "synarchysCorp",
-    "title": "Synarchys Corporation",
+    "title": "Synarchys Corp",
     "layout":{
       "header": {
-        "alternative": "Synarchys Corporation",
+        "alternative": "Synarchys",
         "image": ""
       },
       "menu": {
@@ -29,7 +29,7 @@
         "container": {
           "sections":[
             {
-              "id": "whatwedo", 
+              "id": "what", 
               "title": "What we Do",
               "type": "text",
               "images": [""],
@@ -156,7 +156,7 @@
                 }]
             },
             {
-              "id":"contacts",
+              "id":"contact",
               "title": "Contact",
               "type": "rows",
               "children": [

@@ -35,24 +35,22 @@ proc Cards(def: JsonNode): VNode =
         if child.hasKey("card"):
           Card(child["card"])
 
+proc Contact(def: JsonNode): VNode =
+  result = buildHtml(tdiv(class="container")):
+    tdiv(class="row"):
+      tdiv(class="col text-center"):
+        h2(class="section-heading text-center"):
+          text def["title"].getStr()
+    h3(class="section-subheading text-muted")
+    tdiv(class="text-justify text-black"):
+      tdiv(class="container"):
+        tdiv(class="row"):
+          for c in def["children"]:
+            tdiv(class="col text-justify"):
+              h2: text c["title"].getStr()
+              for l in c["p"]:
+                p: text l.getStr()
 
-# proc contact(contacts: JsonNode): VNode =
-#   result = buildHtml(section(class="bg-white", id="contact")):
-#     tdiv(class="container"):
-#       tdiv(class="row"):
-#         tdiv(class="col text-center"):
-#           h2(class="section-heading text-center"): text "Contact"
-#       h3(class="section-subheading text-muted")
-#       tdiv(class="text-justify text-black"):
-#         tdiv(class="container"):
-#           tdiv(class="row"):
-#             for c in contacts["items"]:
-#               tdiv(class="col text-justify"):
-#                 h2: text c["name"].getStr()
-#                 for l in c["address_lines"]:
-#                   p: text l.getStr()
-#                 p:
-#                   a(href=c["email"].getStr()): text c["email"].getStr()
           
 proc Sections*(def: JsonNode): VNode =
   let sections  = def["container"]["sections"]
@@ -65,13 +63,5 @@ proc Sections*(def: JsonNode): VNode =
         elif sect["type"].getStr == "cards":
           Cards(sect)
         elif sect["type"].getStr == "rows":
-          # tdiv(class="container"):
-          #   h2(class="section-heading text-center"): text(sect["title"].getStr())
-          #   tdiv(class="row justify-content-center align-items-start")
-          tdiv(class="container"):
-            tdiv(class="row"):
-              tdiv(class="col text-center"):
-                h2(class="section-heading text-center"):
-                  text sect["title"].getStr()
-            #Paragraph(sect)
-            
+          Contact(sect)
+   

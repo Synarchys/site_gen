@@ -9,8 +9,9 @@ import ./components / [sections, menu, header, footer]
 
 const headers = [(cstring"Content-Type", cstring"application/json")]
 
+const agencyJS = "https://cdnjs.cloudflare.com/ajax/libs/startbootstrap-agency/5.0.2/js/agency.js"
 var siteDef: JsonNode
-var d:      JsonNode
+#var d: JsonNode
   
 proc loadData() =
   ajaxGet("../definition.json",
@@ -25,6 +26,7 @@ proc MainContent(def: JsonNode): VNode =
     Header(def["header"])
     Sections(def["body"])
     Footer(def["footer"])
+    script( src="js/agency.js")
     
 proc createDOM(data: RouterData): VNode =
   if siteDef.isNil:
@@ -32,6 +34,7 @@ proc createDOM(data: RouterData): VNode =
     result = buildHtml(tdiv()):
       p:
         text "Loading site..."
+      script( src=agencyJS)
   else:
     result = MainContent(siteDef["definition"]["layout"])
         
