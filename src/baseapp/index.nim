@@ -5,12 +5,11 @@ import karax / [errors, kdom, kajax, vstyles]
 
 import sugar, json
 
-import ./components / [content, menu, header, footer]
+import components / [content, menu, header, footer]
 
 const headers = [(cstring"Content-Type", cstring"application/json")]
 
 var siteDef: JsonNode
-var d:      JsonNode
   
 proc loadData() =
   ajaxGet("../definition.json",
@@ -34,6 +33,9 @@ proc createDOM(data: RouterData): VNode =
         text "Loading site..."
   else:
     result = MainContent(siteDef["definition"]["layout"])
-        
+
     
-setRenderer createDOM
+proc genSite*() = 
+  echo "generating something"
+  setRenderer createDOM
+
