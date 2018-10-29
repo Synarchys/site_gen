@@ -1,18 +1,22 @@
+# TODO:
 
+# add reference to layout and content definition (json)
+# add here reference to dataflow handling
+# add here reference to service clent layer(rest/ws)
+
+import json
 include karax / prelude 
 import karax / prelude
 import karax / [errors, kdom, kajax, vstyles]
 
-import sugar, json
-
-import components / [content, menu, header, footer]
+import site_genpkg / [content, menu, header, footer]
 
 const headers = [(cstring"Content-Type", cstring"application/json")]
-
+const layout_def = "/definition.json"
 var siteDef: JsonNode
   
-proc loadData() =
-  ajaxGet("../definition.json",
+proc loadDefinitions() =
+  ajaxGet(layout_def,
           headers,
           proc(stat:int, resp:cstring) =
             siteDef = parseJson($resp)
@@ -27,7 +31,7 @@ proc MainContent(def: JsonNode): VNode =
     
 proc createDOM(data: RouterData): VNode =
   if siteDef.isNil:
-    loadData()
+    loadDefinitions()
     result = buildHtml(tdiv()):
       p:
         text "Loading site..."
@@ -35,7 +39,4 @@ proc createDOM(data: RouterData): VNode =
     result = MainContent(siteDef["definition"]["layout"])
 
     
-proc genSite*() = 
-  echo "generating something"
-  setRenderer createDOM
-
+setRenderer createDOM

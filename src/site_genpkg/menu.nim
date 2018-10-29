@@ -20,5 +20,6 @@ proc Menu*(menuList: JsonNode): VNode =
         ul(class="navbar-nav text-uppercase ml-auto"):
           for m in menuList["items"]:
             li(class="nav-item"):
-              a(class="nav-link js-scroll-trigger", href=m["section"].getStr()): text m["title"].getStr()
+              a(class="nav-link js-scroll-trigger", href=m["section"].getStr()):
+                text m["title"].getStr()
           
