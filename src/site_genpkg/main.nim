@@ -1,7 +1,9 @@
-import json
+
+import json, tables
 include karax / prelude 
 import karax / prelude
 import karax / [errors, kdom, vstyles]
+
 import requestjs
 
 import site_genpkg / [content, menu, header, footer]
@@ -9,15 +11,17 @@ import site_genpkg / [content, menu, header, footer]
 const headers = [(cstring"Content-Type", cstring"application/json")]
 const layout_def = "/definition.json"
 var siteDef: JsonNode
-  
-proc loadDefinitions() =
+
+
+proc loadDefinition() =
   ajaxGet(layout_def,
           headers,
           proc(stat:int, resp:cstring) =
             siteDef = parseJson($resp)
-            # re render form after we getting the content
             kxi.redraw()
+
   )
+
 
 proc MainContent(def: JsonNode): VNode =
   result = buildHtml(tdiv()):
@@ -25,10 +29,11 @@ proc MainContent(def: JsonNode): VNode =
     Header(def["header"])
     Content(def["body"])
     Footer(def["footer"])
+
     
 proc createDOM(data: RouterData): VNode =
   if siteDef.isNil:
-    loadDefinitions()
+    loadDefinition()
     result = buildHtml(tdiv()):
       p:
         text "Loading site..."
@@ -36,4 +41,5 @@ proc createDOM(data: RouterData): VNode =
     result = MainContent(siteDef)
 
     
-setRenderer createDOM
+proc createApp*() =
+  setRenderer createDOM

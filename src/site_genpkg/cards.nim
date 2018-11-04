@@ -2,8 +2,7 @@
 include karax / prelude 
 import karax / [prelude, vstyles]
 
-import sugar, json
-
+import json
 
 proc Card*(def: JsonNode): VNode =
   result = buildHtml(tdiv(class="col")):
