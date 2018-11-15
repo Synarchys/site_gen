@@ -1,3 +1,4 @@
 *.*~
 #*.*
-dist/js/index.js
+src/baseapp/public/js/index.js
+src/site_gen
