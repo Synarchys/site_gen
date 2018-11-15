@@ -1,11 +1,13 @@
 
-import json
+import json, jsffi, tables
 
 include karax / prelude 
-import karax / [prelude, vstyles]
+import karax / [vdom, prelude, vstyles]
 
+import ./events
 
-proc Input*(`type`="text", class, id, placeholder: kstring, aria_describedby=kstring""): VNode =
+      
+proc Input*(`type`="text", class, id, placeholder: kstring, aria_describedby=kstring"", events: Table[kstring, JsObject]): VNode =
   result = buildHtml():
     input(`type`= `type`,
           id=id,
@@ -19,13 +21,15 @@ proc TextArea*(id:kstring, text="", rows=1): VNode =
    textarea(class="form-control", id=id, rows= $(rows))
 
 
-proc Select*(id:kstring, data:JsonNode): VNode =
-  # options is a JsArray of {id, value}
+proc Select*(id:kstring, data:JsonNode, events: Table[kstring, JsObject]): VNode =
   result = buildHtml():
-    select(class="form-control", id= id):    
+    select(class="form-control", id=id):
       if not data.isNil:
         for opt in data.getElems:
-          option: text opt["value"].getStr
+          option(value=opt["id"].getStr):text opt["value"].getStr
+
+  
+  result.attachEvents(id, events)
 
 
 proc FormField*(id: kstring,
@@ -34,7 +38,8 @@ proc FormField*(id: kstring,
                 text="",
                 data:JsonNode=nil ,
                 placeholder="",
-                aria_describedby=""): VNode =
+                aria_describedby="",
+                events: Table[kstring, JsObject]): VNode =
     
   result = buildHtml():
     tdiv(class="form-group"):
@@ -44,21 +49,24 @@ proc FormField*(id: kstring,
               class="form-control",
               id=id,
               aria_describedby=aria_describedby,
-              placeholder=placeholder)
+              placeholder=placeholder,
+              events=events )
         small(id=aria_describedby, class="form-text text-muted"):
           text text
       elif `type`=="textArea":
         TextArea(id=id, text=text)
       elif `type`=="select":
-        Select(id=id, data=data)
+        Select(id=id, data=data, events=events)
 
         
-proc Button*(`type`="submit", text="Submit", class="btn btn-primary"): VNode =
+proc Button*(id: string, `type`="submit", text="Submit", class="btn btn-primary",
+            events: Table[kstring, JsObject]): VNode =
   result = buildHtml():
-    button(`type`=`type`, class=class): text text
+    button(`type`=`type`, class=class): text text    
+  result.attachEvents(id, events)
 
     
-proc Form*(def: JsonNode): VNode =
+proc Form*(def: JsonNode, events: Table[kstring, JsObject]): VNode =
   let formFields = def["fields"].getElems
   result = buildHtml():
     form():
@@ -74,11 +82,13 @@ proc Form*(def: JsonNode): VNode =
 
         var data = if field.hasKey("data"): field["data"]
                    else: nil
+                   
         FormField(id=field["id"].getStr,
                   `type`=`type`,
                   label=label,
                   text="",
                   placeholder=hint,
                   data=data,
-                  aria_describedby=hint)
-      Button()
+                  aria_describedby=hint,
+                  events=events)
+      Button(id="submit", events=events)

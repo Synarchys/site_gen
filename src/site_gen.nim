@@ -1,5 +1,5 @@
 
-import os, strutils, parsecfg
+import os, osproc, strutils, parsecfg
 
 const site_gen = "site_gen"
 
@@ -29,12 +29,15 @@ proc init(targetDir: string) =
         os.copyFileWithPermissions(path, target)
 
 proc build() =
-  discard
-  echo "TODO: build the website."
-  # compile index.nim into public/js/index.js
-  # read index.nim in the site
-  # include it in the index.nim
+  const buildCmd = "nim js -o:public/js/index.js index.nim"
+  let
+    projectRoot = os.getCurrentDir()
+    output = execProcess(buildCmd)
+    
+  for kind, path in os.walkDir(projectRoot):
+    echo path
 
+    
 when declared(commandLineParams):
   let
     params = commandLineParams()
@@ -42,7 +45,6 @@ when declared(commandLineParams):
     buildIndx = params.find("build")
     
   if initIndx > -1:
-    # TODO validate parameters
     init(params[initIndx + 1])
   elif buildIndx > -1:
     build()
