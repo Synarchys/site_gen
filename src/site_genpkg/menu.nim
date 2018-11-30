@@ -4,7 +4,7 @@ import karax / prelude
 import sugar, json
 
 proc Menu*(menuList: JsonNode): VNode =
-  result = buildHtml(nav(class=menuList["style"].getStr(), id="mainNav")):
+  result = buildHtml(nav(class=menuList["class"].getStr(), id="mainNav")):
     tdiv(class="container"):
       a(class="navbar-brand js-scroll-trigger", href="#page-top"): text "HOME"
       button(class="navbar-toggler navbar-toggler-right",

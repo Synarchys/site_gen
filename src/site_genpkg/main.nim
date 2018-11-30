@@ -4,17 +4,44 @@ include karax / prelude
 import karax / prelude
 import karax / [errors, kdom, vstyles]
 
-import requestjs
+import requestjs, uuidjs
 
-import site_genpkg / [content, menu, header, footer]
+import builder
 
-# consts
-const headers = [(cstring"Content-Type", cstring"application/json")]
-const layout_def = "/definition.json"
+import site_genpkg / [content, menu, form, header, footer, grid, cards]
+export content, menu, header, footer, grid, cards
+
+var appState: JsonNode
 
 # global variables
-var appState: JsonNode
-var events: Table[kstring, JsObject]
+const headers = [(cstring"Content-Type", cstring"application/json")]
+const definitionUrl = "/definition.json"
+const modelUrl = "/model.json"
+
+
+proc loadComponents(appState: JsonNode) =
+  ajaxGet("/components.json",
+          headers,
+          proc(stat:int, resp:cstring) =
+            appState["components"] = parseJson($resp)
+            kxi.redraw()
+  )
+
+
+proc loadDefinition(appState: JsonNode) =
+  ajaxGet(definitionUrl,
+          headers,
+          proc(stat:int, resp:cstring) =
+            appState["definition"] = parseJson($resp)
+            kxi.redraw())
+
+
+proc loadModel(appState: JsonNode) =
+  ajaxGet(modelUrl,
+          headers,
+          proc(stat:int, resp:cstring) =
+            appState["model"] = parseJson($resp)
+            kxi.redraw())
 
 
 proc lookUpAndUpdate*(id: kstring, data: JsonNode) =
@@ -34,28 +61,37 @@ proc lookUpAndUpdate*(id: kstring, data: JsonNode) =
               if id == field["id"].getStr:
                 field["data"] = data
 
-  
-proc MainContent(def: JsonNode): VNode =
+
+
+proc MainContent(def: JsonNode): VNode =  
+
+  let
+    components = appState["components"]
+    header = buildComponent(components["header"])
+    menu = buildComponent(components["menu"])
+    body = buildComponent(components["body"])
+    
   result = buildHtml(tdiv()):
-    Menu(def["menu"])
-    Header(def["header"])
-    Content(def["body"], events)
+    header
+    menu
+    body
     Footer(def["footer"])
 
     
 proc createDOM(data: RouterData): VNode =
+  if not appState.hasKey("components"):
+    loadComponents(appState)
+    
   if not appState.hasKey("definition"):
-    events["init"].loadDefinition(appState)
+    loadDefinition(appState)
+    loadModel(appState)
     result = buildHtml(tdiv()):
       p:
-        text "Loading site..."
+        text "Loading Site..."
   else:
     result = MainContent(appState["definition"])
 
 
-proc createApp*(state:JsonNode, e: Table[kstring, JsObject]) =
-  events = e
-  appState = state
-  # let ev = events["selectDepartamento"]
-  # echo jsTypeOf(ev["onclick"])
+proc createApp*(state:JsonNode) =
+  appState = state  
   setRenderer createDOM
