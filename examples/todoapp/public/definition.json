@@ -1,0 +1,55 @@
+{
+  "app": "todoApp",
+  "title": "Todo App",
+  "header": {
+    "alternative": "Todo App.",
+    "image": ""
+  },
+  "menu": {
+    "class": "navbar navbar-expand-lg navbar-dark fixed-top",
+    "items": [
+      {"section": "#todos",
+       "title": "TODOS"
+      }
+    ]
+  },
+  "body": {
+    "children": [
+      { "edit":
+        {
+          "model": "todo",
+          "label": "Todos",
+          "children": [
+            {
+              "name" : "state",
+              "label": "State",
+              "type": "string",
+              "ui-type": "check",
+              "events": ["onclick"]
+            },
+            {
+              "name" : "name",
+              "label": "Name",
+              "type": "string",
+              "ui-type": "input",
+              "events": ["enkeypress"]
+            },
+            {
+              "name" : "description",
+              "label" : "Description",
+              "type": "string",
+              "ui-type": "text"
+            }
+          ]
+        }
+      },
+      {
+        "grid": {
+          "model": "todo",
+          "label": "Todo List"
+        }
+      }
+    ]
+  },
+  "footer": {}
+}
