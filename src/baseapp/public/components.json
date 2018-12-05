@@ -1,0 +1,94 @@
+{
+  "components" :{
+    "menu": {
+      "id": "dc3e9b1f-0ea1-4b82-0b87-a1a2d376cb0eb",
+      "ui-type": "nav",
+      "class": "navbar navbar-expand-lg navbar-dark fixed-top",
+      "children": [
+        {
+          "id": "9e35cc6a-1497-4a9d-33ac-5e0d4010799af",
+          "ui-type": "div",
+          "class": "container",
+          "children": [
+            {
+              "id": "03d7600f-2624-4d4c-8b45-9acb5f0bad930",
+              "ui-type": "a",
+              "class": "navbar-brand js-scroll-trigger",
+              "attributes": {
+                "href": "#page-top"
+              },
+              "children": [
+                {
+                  "id": "188f8791-ca5a-484c-91fb-c49761692f279",
+                  "ui-type": "#text",
+                  "text": ""
+                }
+              ]
+            },
+            {
+              "id": "d537c2c7-19d6-423a-9f44-8f1521b0529df",
+              "ui-type": "button",
+              "class": "navbar-toggler navbar-toggler-right",
+              "attributes": {
+                "type": "button",
+                "data-toggle": "collapse",
+                "data-target": "#navbarResponsive",
+                "aria-controls": "navbarResponsive",
+                "aria-expanded": "false",
+                "aria-label": "Toggle navigation"
+              },
+              "children": [
+                {
+                  "id": "cb1c76ac-00a5-499e-10db-3f398d66be172",
+                  "ui-type": "#text",
+                  "text": ""
+                },
+                {
+                  "id": "05c3665e-1e77-4029-621e-61db233deb6f7",
+                  "ui-type": "i",
+                  "class": "fa fa-bars"
+                }
+              ]
+            },
+            {
+              "id": "a7ed7752-2c64-40e2-d694-f74a8824b20b4",
+              "ui-type": "div",
+              "class": "collapse navbar-collapse",
+              "children": [
+                {
+                  "id": "a107238f-3af4-4340-ca54-9ae0e17c11cc8",
+                  "ui-type": "ul",
+                  "class": "navbar-nav text-uppercase ml-auto",
+                  "children": [
+                    {
+                      "id": "1eaa1626-46f0-4ab7-40f4-0b2eea5157fcc",
+                      "ui-type": "li",
+                      "class": "nav-item",
+                      "children": [
+                        {
+                          "id": "91149886-35b3-4476-6eec-9bf78f418cd5e",
+                          "ui-type": "a",
+                          "class": "nav-link js-scroll-trigger",
+                          "attributes": {
+                            "href": "#todos"
+                          },
+                          "children": [
+                            {
+                              "id": "62fba559-586a-4fe3-af56-8cd8d78cd3006",
+                              "ui-type": "#text",
+                              "text": ""
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
