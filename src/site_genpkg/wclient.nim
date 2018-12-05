@@ -17,26 +17,13 @@ proc newWorker(f: cstring): JsObject {.importcpp: "new Worker(@)".}
 
 var w: JsObject = newWorker(cstring"/js/worker.js")
 
-proc editNameOnclick(payload: JsonNode) =
-  echo "change the name of the on click"
-  echo "modify the state, update dom graph and respond"
-
-
-template cs(s: string): cstring =
-  cstring(s)
-
-# var edit = newJsObject()
-# edit[cs"name_onclick"] = editNameOnclick
-  
-var actions: Table[cstring, proc(payload: JsonNode)] = initTable[cstring, proc(payload: JsonNode)]()
-actions.add(cs"todo_gridRow_onclick", editNameOnclick)
-
-
 var message = cstring ""
 w.onmessage = proc(d: JsObject) =
   ## This gets called when the worker sends a message
-  # log("UI --> Message from worker: ", d.data.to(cstring))
-  message = d.data.to(cstring)
+  let response = d.data
+  log("UI --> Message from worker: ", response.msg.to(cstring))
+  echo response.status.to(cint)
+  message = response.msg.to(cstring)
   ## After we update the state, we redraw the interface
   #kxi.redraw()
 
@@ -47,14 +34,11 @@ w.onmessageerror = proc(d: JsObject) =
 
 proc defaultEvent*(appState: JsonNode, name: string): proc(ev: Event, n: VNode) =
   result = proc (ev: Event, n: VNode) =
-    if actions.hasKey(name):
-      echo name
-      actions[cs(name)](appState)
-    
-    # if prevent default is added inputs are not updated
-    #ev.preventDefault()
-    # var data = newJsObject()
-    # data["message"] = cstring"Somebody pressed a button on the UI"
-    # w.postMessage(data)
-  
-## END WORKER EXPERIMENT PART ##
+    # handle manually
+    ev.preventDefault()
+    var data = newJsObject()
+    data["message"] = cstring"Somebody pressed a button on the UI"
+    data["action"] = cstring(name)
+    data["state"] = appState
+    w.postMessage(data)
+
