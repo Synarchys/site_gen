@@ -7,9 +7,7 @@ import karax / [errors, kdom, vstyles]
 import requestjs, uuidjs
 
 import builder
-
-import site_genpkg / [content, menu, form, header, footer, grid, cards]
-export content, menu, header, footer, grid, cards
+export builder
 
 var appState: JsonNode
 
@@ -19,32 +17,44 @@ const definitionUrl = "/definition.json"
 const modelUrl = "/model.json"
 
 
-proc loadComponents(appState: JsonNode) =
-  ajaxGet("/components.json",
-          headers,
-          proc(stat:int, resp:cstring) =
-            appState["components"] = parseJson($resp)
-            kxi.redraw()
-  )
-
+# TODO:
+# attach event handlers
 
 proc loadDefinition(appState: JsonNode) =
   ajaxGet(definitionUrl,
           headers,
           proc(stat:int, resp:cstring) =
             appState["definition"] = parseJson($resp)
+            # finally we redraw when we have everything loaded
             kxi.redraw())
 
-
+  
 proc loadModel(appState: JsonNode) =
   ajaxGet(modelUrl,
           headers,
           proc(stat:int, resp:cstring) =
             appState["model"] = parseJson($resp)
-            kxi.redraw())
+            loadDefinition(appState))
+
+  
+proc loadComponents(appState: JsonNode) =
+  ajaxGet("/components.json",
+          headers,
+          proc(stat:int, resp:cstring) =
+            let components = parseJson($resp)
+            if appState.hasKey("components"):
+              # merge components
+              for k, v in components.getFields:
+                if not appState["components"].hasKey(k):
+                  # use components defined by the user if names colide
+                  appState{"components", k}= v
+            else:
+              appState["components"] = components
+            loadModel(appState))
 
 
 proc lookUpAndUpdate*(id: kstring, data: JsonNode) =
+  # FIXME: might not work as base code changed a lot
   # lookups for component in the definition tree
   # and updates de data attached to it
   let definition = appState["definition"]
@@ -62,36 +72,18 @@ proc lookUpAndUpdate*(id: kstring, data: JsonNode) =
                 field["data"] = data
 
 
-
-proc MainContent(def: JsonNode): VNode =  
-
-  let
-    components = appState["components"]
-    header = buildComponent(components["header"])
-    menu = buildComponent(components["menu"])
-    body = buildComponent(components["body"])
-    
-  result = buildHtml(tdiv()):
-    header
-    menu
-    body
-    Footer(def["footer"])
-
-    
 proc createDOM(data: RouterData): VNode =
-  if not appState.hasKey("components"):
-    loadComponents(appState)
-    
   if not appState.hasKey("definition"):
-    loadDefinition(appState)
-    loadModel(appState)
     result = buildHtml(tdiv()):
       p:
         text "Loading Site..."
   else:
-    result = MainContent(appState["definition"])
+    result = buildApp(appState)
+    appState["ui"] = result.toJson
+    #echo appState["ui"]
 
 
 proc createApp*(state:JsonNode) =
-  appState = state  
+  appState = state
+  loadComponents(appState)
   setRenderer createDOM
