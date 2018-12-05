@@ -1,5 +1,6 @@
 {
   "header":{"id":"12e07c9e-6860-407b-ffd0-ab3f8e88567b5","ui-type":"div","children":[{"id":"dcb96cf6-4222-407c-b9a9-59ddca092cc74","ui-type":"header","class":"masthead","children":[{"id":"4d3ad72f-2435-4cd0-5fe1-7283b2429bb16","ui-type":"div","class":"container","children":[{"id":"920a5785-ab00-40c6-5137-b713d1f830162","ui-type":"div","class":"intro-text","children":[{"id":"b006cc80-f603-4b7b-9c0e-fae2737c7cf10","ui-type":"h1","children":[{"id":"9972159f-f70e-4fae-0b27-795cb53f0cf12","ui-type":"#text","text":"Todo App."}]}]}]}]}]},
+  "footer":{"id":"ed64953c-c9d7-43fa-f129-2f1556ebc010a","ui-type":"footer","class":"bg-dark","children":[{"id":"3a62156b-0ae4-48c9-c1f5-e0300aa90cb38","ui-type":"div","class":"container","children":[{"id":"8457b025-d7d4-49ff-9c0d-4e21d0dd1c93a","ui-type":"div","class":"row","children":[{"id":"7d22ebb3-d3f5-4a24-bd9f-cda0a1b41ab93","ui-type":"div","class":"col-md-4","children":[{"id":"58713ba9-41cf-4420-fab3-8c5a7ea4df1f0","ui-type":"span","class":"copyright","children":[{"id":"f14b15f7-60d5-4f6f-cf8b-fbc07313e4e37","ui-type":"#text","text":"Copyright © SiteGen 2018"}]}]}]}]}]},
   "menu": {
     "id": "26332420-9f85-49af-09be-143a50249f624",
     "ui-type": "nav",
@@ -202,5 +203,52 @@
         ]
       }
     ]
+  },
+  "label": {
+    "ui-type": "label",
+    "children": [
+      {
+        "ui-type": "#text",
+        "text": "Menu"
+      }
+    ],
+    "attributes":{
+      "for": ""
+    }
+  },
+  "formGroup": {
+    "ui-type": "div",
+    "attributes":
+    {
+      "class": "form-group"
+    },
+    "children": [
+      {
+        "ui-type": "label",
+        "text": "",
+        "attributes":
+        {
+          "for": ""
+        }
+      }
+    ]
+  },
+  "input": {"ui-type": "input", "attributes": {"type": "text", "class": "form-control"}},
+  "checkbox":{
+    "ui-type": "input",
+    "class": "form-control",
+    "attributes":
+    {
+      "type": "checkbox"
+    }
+  },
+  "textarea":{
+    "ui-type": "textarea",
+    "class": "form-control",
+    "attributes":
+    {
+      "rows": "2",
+      "cols": "5"
+    }
   }
 }

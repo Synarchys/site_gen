@@ -1,8 +1,7 @@
-import json
+import json, jsffi
 include karax / prelude 
 import karax / prelude
 import karax / [errors, kdom, vstyles]
-import jsffi
 
 import requestjs
 
@@ -16,14 +15,24 @@ var console {.importcpp, noDecl.}: JsObject
 var appState = %*{}
 appState["data"] = %*{}
 
+var myGrid = 
+  buildHtml(tdiv(class="container-fluid")):
+    tdiv(class="row"):
+      tdiv(class="col-sm"):
+        input(`type`="checkbox", value="some text")
+      tdiv( class="col-sm"):
+        text "content of the TODO"
 
-                     
-# proc loadDefinition() =
-#   ajaxGet(def_location,
-#           headers,
-#           proc(stat:int, resp:cstring) =
-#             appState["definition"] = parseJson($resp)
-#             kxi.redraw()
-#   )
+
+var myGridJs = myGrid.toJson
+
+myGridJs["children"][0]["children"][0]["events"] = %["onclick", "onchange"]
+myGridJs["children"][0]["children"][0]["name"] = %"gridRow"
+# TODO: grab model from the definition maybe
+myGridJs["children"][0]["children"][0]["model"] = %"todo"
+
+appState["components"] = %*{
+  "myGrid": myGridJs
+}
 
 createApp(appState)

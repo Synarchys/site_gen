@@ -7,7 +7,7 @@
   },
   "menu": {
     "class": "navbar navbar-expand-lg navbar-dark fixed-top",
-    "items": [
+    "children": [
       {"section": "#todos",
        "title": "TODOS"
       }
@@ -18,33 +18,28 @@
       { "edit":
         {
           "model": "todo",
-          "label": "Todos",
+          "label": "TODOs",
           "children": [
-            {
-              "name" : "state",
-              "label": "State",
-              "type": "string",
-              "ui-type": "check",
-              "events": ["onclick"]
-            },
             {
               "name" : "name",
               "label": "Name",
               "type": "string",
               "ui-type": "input",
-              "events": ["enkeypress"]
+              "events": ["onkeydown"],
+              "value": "data of the input"
             },
             {
               "name" : "description",
               "label" : "Description",
               "type": "string",
-              "ui-type": "text"
+              "ui-type": "text",
+              "events": ["onkeydown"]
             }
           ]
         }
       },
       {
-        "grid": {
+        "myGrid": {
           "model": "todo",
           "label": "Todo List"
         }

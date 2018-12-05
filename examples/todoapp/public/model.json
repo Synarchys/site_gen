@@ -1,0 +1,21 @@
+{
+  "model": {
+    "id": "1234",
+    "name": "todo",
+    "description": "An activity to be acomplished.",
+    "fields": [
+      { "name": "id",
+        "type": "string",
+        "description": "the unique identifier, preferably uuid"
+      },
+      {"name":"value",
+       "type": "string",
+       "description": "the text corresponding to the activity that must be done."
+      },
+      {"name":"state",
+       "type": "string",
+       "description": "the state in which this activity currently is."
+      }
+    ]
+  }
+}
