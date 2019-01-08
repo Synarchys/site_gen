@@ -12,27 +12,30 @@ const def_location = "/definition.json"
 
 var console {.importcpp, noDecl.}: JsObject
 
-var appState = %*{}
-appState["data"] = %*{}
+var appStatus = %*{}
+appStatus["data"] = %*{}
 
+var gridRow =
+  buildHtml(tdiv(class="row")):
+    tdiv(class="col-sm"):
+      input(`type`="checkbox", name="todoStatus")
+    tdiv(class="col-sm"):
+      text "content of the TODO"
+      
 var myGrid = 
   buildHtml(tdiv(class="container-fluid")):
     tdiv(class="row"):
-      tdiv(class="col-sm"):
-        input(`type`="checkbox", value="some text")
-      tdiv( class="col-sm"):
-        text "content of the TODO"
-
-
+      gridRow
+    
 var myGridJs = myGrid.toJson
 
-myGridJs["children"][0]["children"][0]["events"] = %["onclick", "onchange"]
-myGridJs["children"][0]["children"][0]["name"] = %"gridRow"
+myGridJs["children"][0]["children"][0]["children"][0]["events"] = %["onclick", "onchange"]
+myGridJs["children"][0]["children"][0]["children"][0]["name"] = %"gridRow"
 # TODO: grab model from the definition maybe
-myGridJs["children"][0]["children"][0]["model"] = %"todo"
+myGridJs["children"][0]["children"][0]["children"][0]["model"] = %"todo"
 
-appState["components"] = %*{
+appStatus["components"] = %*{
   "myGrid": myGridJs
 }
 
-createApp(appState)
+createApp(appStatus)

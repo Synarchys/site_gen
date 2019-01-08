@@ -41,7 +41,8 @@
       {
         "myGrid": {
           "model": "todo",
-          "label": "Todo List"
+          "label": "Todo List",
+          "effects": ["completeTodo"]
         }
       }
     ]

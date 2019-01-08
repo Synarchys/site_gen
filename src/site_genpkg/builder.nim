@@ -1,90 +1,33 @@
 
 import strutils
 
+import json, tables, jsffi, sequtils
 include karax / prelude 
-import karax / [vdom, prelude, vstyles]
+import karax / prelude
+import karax / [errors, kdom, vstyles]
 
-import json, jsffi, tables, sequtils
 import uuidjs
+import utils
 
-import wclient
+var defaultEvent: proc(appState: JsonNode, name, id: string): proc(ev: Event, n: VNode)
 
 # global variable that holds all components
 var appState, components: JsonNode
 
-proc extractData(vn: VNode, def: JsonNode) =
-  # somehow no vnode is changed, no need to return
-  var n = vn
-  if n.kind == VnodeKind.input:
-    # TODO: handle types (?)
-    n.value = def["value"].getStr
-
-
-proc buildComponent*(params: JsonNode): VNode =
-  ## builds a component based on a json definition
-  # TODO: remove definition specific code 
-  # TODO: if the nodeKind is not found, lookup the components
-  # table and call this with its contents
-  
-  var nodeKind: VNodeKind  
-  for vnk in VNodeKind:
-    if $vnk == params["ui-type"].getStr:
-      nodeKind = vnk
-      break
-
-  if nodeKind == VNodeKind.text:
-    # text kind has its own constructor
-    result = text(params["text"].getStr)
-  else:
-    result = newVNode(nodeKind)
-
-  result.id = if params.hasKey("id"): params["id"].getStr
-              else: genUUID()
-
-  if params.hasKey("text"):
-    # if the component has a text parameter create a #text element
-    result.add text(params["text"].getStr)
-    
-  if params.hasKey("class"):
-    result.class = params["class"].getStr
-
-  if params.hasKey("attributes"):
-    for k, v in params["attributes"].fields:
-      result.setAttr(k, v.getStr)
-
-  if params.hasKey("children"):
-    for child in params["children"].getElems:
-      result.add(buildComponent(child))
-      
-  if params.hasKey("events"):
-    # TODO: improve
-    # if the component does not have a name quit with a message
-    let
-      events = params["events"]
-      model = params["model"].getStr
-      name = params["name"].getStr
-
-    for evk in EventKind:
-      if events.contains(%($evk)):
-        let actionName = "$1_$2_$3" % [model, name, $evk]
-        result.addEventListener(evk, defaultEvent(appState, actionName))
-  
-  if params.hasKey("value"):
-    # it has de data of the component,
-    # each component data is handed differently
-    extractData(result, params)
-    
 
 proc toJson*(component: VNode): JsonNode =
   ## returns a JsonNode from a VNode
-  # TODO: extract events and value(s)
-  
   result = %*{ "ui-type": $component.kind }
 
   result["id"] = if component.id != nil: %($component.id) else: %genUUID()
   if component.class != nil: result["class"] = %($component.class)
-  if component.text != nil: result["text"] = %($component.text)
-  
+  if component.text != nil or component.value != nil:
+    if component.kind == VNodeKind.input:
+      # `value` and `text` overlap on input componets
+      result["value"] = %($component.value)
+    else:
+      result["text"] = %($component.text)
+
   var attributes = %*{}
   for k,v in component.attrs:
     attributes.add($k,%($v))
@@ -94,8 +37,83 @@ proc toJson*(component: VNode): JsonNode =
   for c in component.items:
     children.add(toJson(c))
   if children.len > 0: result["children"] = children
+    
+  var events = newJArray()
+  for ev in component.events:
+    events.add(%($ev[0]))
+  if events.len > 0: result["events"] = events
 
 
+proc setValue(vn: VNode, value:string): VNode =
+  # somehow no vnode is changed, no need to return
+  result = vn
+  if result.kind == VnodeKind.input:
+    result.value = value
+
+
+proc buildComponent*(params: JsonNode): VNode =
+  ## builds a component based on a json definition
+  var nodeKind: VNodeKind  
+  for vnk in VNodeKind:
+    if $vnk == params["ui-type"].getStr:
+      nodeKind = vnk
+      break
+      
+  if nodeKind == VNodeKind.text:
+    # text kind has its own constructor
+    result = text(params["text"].getStr)
+  else:
+    result = newVNode(nodeKind)
+
+  result.id = if params.hasKey("id"): params["id"].getStr
+              else: genUUID()
+
+  if params.hasKey("value"):
+    # it has de data of the component,
+    # each component data is handed differently
+    result = setValue(result, params["value"].getStr)
+
+  # if nodeKind == VNodeKind.text and params.hasKey("text"):
+  #   result.text = params["text"].getStr  #setValue(result, params["text"].getStr)
+    
+  if nodeKind == VNodeKind.label and params.hasKey("text"):
+    # FIXME: text childs are constructed wrong
+    result.add text(params["text"].getStr)
+    
+  if params.hasKey("class"):
+    result.class = params["class"].getStr
+
+  if params.hasKey("attributes"):
+    for k, v in params["attributes"].fields:
+      if k == "checked":
+        echo "$1 -- $2" % [k, v.getStr]
+      result.setAttr(k, v.getStr)
+
+  if params.hasKey("children"):
+    for child in params["children"].getElems:
+      result.add(buildComponent(child))
+
+  if params.hasKey("model"):
+    result.setAttr("model", params["model"].getStr)
+
+  if params.hasKey("name"):
+    result.setAttr("name", params["name"].getStr)
+  
+  if params.hasKey("events"):
+    # TODO: improve
+    # if the component does not have a name quit with a message
+    let events = params["events"]
+      
+    for evk in EventKind:
+      if events.contains(%($evk)):
+        # FIXME: the way events are named and referenced is too simple
+        # it will colide if the same model is used in another part of
+        # the ui graph
+        let actionName = "$1_$2_$3" % [$result.getAttr("model"),
+                                       $result.getAttr("name"), $evk]
+        result.addEventListener(evk, defaultEvent(appState, actionName, $result.id))     
+
+  
 proc formGroup(def: JsonNode): JsonNode =
   result = copy components["formGroup"]
   
@@ -110,8 +128,6 @@ proc formGroup(def: JsonNode): JsonNode =
 
   component["id"] = %genUUID()
 
-  # for k, v in def.getFields:
-  #   if k != "uit-ype": component[k] = v
   if def.hasKey("events"):
     # add events to component we are preparing 
     component["events"] = copy def["events"]
@@ -126,6 +142,7 @@ proc formGroup(def: JsonNode): JsonNode =
   result["children"][0]{"attributes","for"} = component["id"]
   result["children"].add(component)
 
+  
 proc form(formDef: JsonNode): JsonNode =
   var form = %*{"ui-type": "form"}
   form["children"] = newJArray()
@@ -139,7 +156,8 @@ proc form(formDef: JsonNode): JsonNode =
         # check the ui-type to decide what to use
         form["children"].add(fg)
   form
-  
+
+
 proc buildBody(def: JsonNode, ): VNode =
   result = newVNode(VnodeKind.tdiv)
   result.class = "container"
@@ -164,11 +182,19 @@ proc buildBody(def: JsonNode, ): VNode =
           result.add(c)
           
 
-proc buildApp*(state: JsonNode): VNode =
+proc updateUI*(state: JsonNode): VNode =
+  # builds the vdom tree using the ui attribute
+  result = buildHtml():  
+    buildComponent(state["ui"])
+  
+
+proc initApp*(state: JsonNode, event: proc(appState: JsonNode, name, id: string): proc(ev: Event, n: VNode)): VNode =
+    
   let definition = state["definition"]
   appState = state
   components = state["components"]
-   
+  defaultEvent = event
+  
   result = buildHtml(tdiv):
     for k, v in definition.getFields:
       # FIXME: change this in the near future.
@@ -178,3 +204,4 @@ proc buildApp*(state: JsonNode): VNode =
       else:
         if components.hasKey(k):
           buildComponent(components[k])
+    
