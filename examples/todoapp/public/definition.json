@@ -25,7 +25,7 @@
               "label": "Name",
               "type": "string",
               "ui-type": "input",
-              "events": ["onkeydown"],
+              "events": ["onkeyup"],
               "value": "data of the input"
             },
             {
@@ -41,8 +41,7 @@
       {
         "myGrid": {
           "model": "todo",
-          "label": "Todo List",
-          "effects": ["completeTodo"]
+          "label": "Todo List"
         }
       }
     ]

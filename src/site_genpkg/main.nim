@@ -81,7 +81,6 @@ proc eventGen*(appStatus: JsonNode, name, id: string): proc(ev: Event, n: VNode)
 
 proc initWorker() =
   var reqObj = newJsObject()
-  reqObj["message"] = cstring"Somebody pressed a button on the UI"
   reqObj["ui"] = appStatus["ui"] # pass the ui status, should be cached 
   reqObj["action"] = cstring("init") # the name of the action that is triggered
   # send data to the worker

@@ -22,7 +22,7 @@ proc getValue*(state: JsonNode, key, attr: string): JsonNode =
 proc getElementById*(state: JsonNode, id: string): JsonNode =
   getElement(state, "id", id)
 
-      
+
 proc getValueById*(state: JsonNode, id: string): JsonNode =
   getValue(state, "id", id)
 
@@ -35,13 +35,6 @@ proc updateValue*(state: var JsonNode, id, value: string) =
       var c = child
       updateValue(c, id, value)
 
-
-proc setAttribute*(state: var JsonNode, id, attr, value: string) =
-  var element = getElement(state, "id", id)
-  if not element.hasKey("attributes"):
-    element["attributes"] = %*{}                              
-  element["attributes"].add(attr, %value)
-
   
 proc getAttribute*(state: var JsonNode, id, attr: string): JsonNode =
   var element = getElement(state, "id", id)
@@ -49,3 +42,10 @@ proc getAttribute*(state: var JsonNode, id, attr: string): JsonNode =
     if element["attributes"].hasKey(attr):
       result = element["attributes"][attr]
 
+
+proc setAttribute*(state: var JsonNode, id, attr, value: string) =
+  var element = getElement(state, "id", id)
+  if not element.hasKey("attributes"):
+    element["attributes"] = %*{}
+  element["attributes"].add(attr, %value)
+  

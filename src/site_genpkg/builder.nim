@@ -85,8 +85,6 @@ proc buildComponent*(params: JsonNode): VNode =
 
   if params.hasKey("attributes"):
     for k, v in params["attributes"].fields:
-      if k == "checked":
-        echo "$1 -- $2" % [k, v.getStr]
       result.setAttr(k, v.getStr)
 
   if params.hasKey("children"):
@@ -159,6 +157,8 @@ proc form(formDef: JsonNode): JsonNode =
 
 
 proc buildBody(def: JsonNode, ): VNode =
+  # builds the initial ui based on the definition and the components library
+  # this part should understand and comply with the component definition specification
   result = newVNode(VnodeKind.tdiv)
   result.class = "container"
   if def.hasKey("children"):

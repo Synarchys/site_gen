@@ -26,20 +26,22 @@ var todoList = %[
 
 data.add("todos",todoList)
 
-var editNameOnclick = proc (payload: JsonNode){.closure.} =
-  let
-    id = payload["id"].getStr
-    value = payload["value"].getStr
-  updateValue(ui, id, value)  
-
-
 var
+  editNamekeyUp = proc (payload: JsonNode){.closure.} =
+    let
+      id = payload["id"].getStr
+      value = payload["value"].getStr
+    updateValue(ui, id, value)
+
   gridRowOnClick = proc(payload: JsonNode){.closure.} =
     let id = payload["id"].getStr
     setAttribute(ui, id, "checked", "true")
     
   completeTodo = proc(payload: JsonNode){.closure.} =
     echo "todo completed"
+
+  renderMyGrid = proc(payload: JsonNode){.closure.} =
+    echo "add the logic to render this component when there's data"
  
 
 # actions table
@@ -47,7 +49,7 @@ var
 # actions have the id of the component attached and con operate
 # on ui components as well as its childs
 var actions = initTable[cstring, seq[proc(payload: JsonNode){.closure.}]]()
-actions.add(cstring"todo_name_onkeyup", @[editNameOnclick])
+actions.add(cstring"todo_name_onkeyup", @[editNameKeyUp])
 actions.add(cstring"todo_gridRow_onclick", @[gridRowOnClick])
 
 
@@ -57,13 +59,12 @@ var dataListeners = newseq[proc(payload: JsonNode){.closure.}]()
 dataListeners.add(completeTodo)
 
 proc callDataListeners(payload: JsonNode) =
-  echo "should do something with data and ui"
   for dataListener in dataListeners:
     dataListener(payload)
   
 proc callEventListener(payload: JsonNode, action: cstring) =
   if actions.hasKey(action):
-    echo "calling action: " & action
+    #echo "calling action: " & action
     for eventListener in actions[action]:
       eventListener(payload)
   else:
@@ -88,9 +89,9 @@ var onmessage {.exportc.} = proc(d: JsObject) =
       payload["value"] = %($data["value"].to(cstring))
     
     callEventListener(payload, action)
-    callDataListeners(payload)
+    #callDataListeners(payload)
     
-  var response = newJsObject()   
+  var response = newJsObject()
   response.ui = ui
   response.msg = cstring"OK"
   response.status = cint(200)
