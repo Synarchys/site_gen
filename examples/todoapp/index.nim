@@ -31,7 +31,9 @@ var myGridJs = myGrid.toJson
 
 myGridJs["children"][0]["children"][0]["children"][0]["events"] = %["onclick", "onchange"]
 myGridJs["children"][0]["children"][0]["children"][0]["name"] = %"gridRow"
-# TODO: grab model from the definition maybe
+myGridJs["children"][0]["children"][0]["children"][0]["dataListeners"] = %"renderMyGrid"
+
+# TODO: grab model from the definition ?
 myGridJs["children"][0]["children"][0]["children"][0]["model"] = %"todo"
 
 appStatus["components"] = %*{

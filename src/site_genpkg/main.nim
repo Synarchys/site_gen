@@ -6,8 +6,8 @@ import karax / [errors, kdom, vstyles]
 
 import requestjs, uuidjs
 
-import builder, utils
-export builder, utils
+import builder, ui_utils
+export builder, ui_utils
 
 import strutils, times
 
@@ -81,7 +81,8 @@ proc eventGen*(appStatus: JsonNode, name, id: string): proc(ev: Event, n: VNode)
 
 proc initWorker() =
   var reqObj = newJsObject()
-  reqObj["ui"] = appStatus["ui"] # pass the ui status, should be cached 
+  reqObj["ui"] = appStatus["ui"] # pass the ui status, should be cached
+  reqObj["definition"] = appStatus["definition"]
   reqObj["action"] = cstring("init") # the name of the action that is triggered
   # send data to the worker
   w.postMessage(reqObj)

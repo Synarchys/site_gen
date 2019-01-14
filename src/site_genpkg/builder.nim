@@ -7,7 +7,7 @@ import karax / prelude
 import karax / [errors, kdom, vstyles]
 
 import uuidjs
-import utils
+#import ui_utils
 
 var defaultEvent: proc(appState: JsonNode, name, id: string): proc(ev: Event, n: VNode)
 
@@ -77,7 +77,6 @@ proc buildComponent*(params: JsonNode): VNode =
   #   result.text = params["text"].getStr  #setValue(result, params["text"].getStr)
     
   if nodeKind == VNodeKind.label and params.hasKey("text"):
-    # FIXME: text childs are constructed wrong
     result.add text(params["text"].getStr)
     
   if params.hasKey("class"):
@@ -96,6 +95,9 @@ proc buildComponent*(params: JsonNode): VNode =
 
   if params.hasKey("name"):
     result.setAttr("name", params["name"].getStr)
+
+  if params.hasKey("dataListeners"):
+    result.setAttr("dataListeners", params["dataListeners"].getStr)
   
   if params.hasKey("events"):
     # TODO: improve
@@ -135,6 +137,7 @@ proc formGroup(def: JsonNode): JsonNode =
     component["name"] = copy def["name"]
   if def.hasKey("model"):
     component["model"] = copy def["model"]
+  
   
   result["children"][0]["text"] = copy def["label"]
   result["children"][0]{"attributes","for"} = component["id"]
@@ -184,7 +187,7 @@ proc buildBody(def: JsonNode, ): VNode =
 
 proc updateUI*(state: JsonNode): VNode =
   # builds the vdom tree using the ui attribute
-  result = buildHtml():  
+  result = buildHtml():
     buildComponent(state["ui"])
   
 

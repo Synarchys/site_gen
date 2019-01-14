@@ -1,7 +1,8 @@
 
 import json, jsffi, tables, sequtils, strutils
+import site_genpkg / [ui_utils, worker_utils]
+import jsonflow, uuidjs
 
-import site_genpkg / utils
 
 proc postMessage(d: JsObject) {. importc: "postMessage" .}
 
@@ -9,91 +10,72 @@ var
   console {.importcpp, noDecl.}: JsObject 
   log = console.log
   ui: JsonNode # global ui sate in memory
-  data: JsonNode = %*{} # global data
+  store: JsonNode = %*{} # global data
 
 
 # test data
 var todoList = %[
   {
+    "id": %($genUUID()),
     "text": %"Use nim for front and backend",
     "completed": %true
   },
   {
+    "id": %($genUUID()),
     "text": %"Finish site gen library",
     "completed": %false
-  }  
+  }
 ]
 
-data.add("todos",todoList)
+
+store.add("id", %($genUUID()))
+store.add("todos", todoList)
+
 
 var
-  editNamekeyUp = proc (payload: JsonNode){.closure.} =
+  flowId = $genUUID()
+  flow = createFlow(flowId)
+  dataListeners = initTable[cstring, cstring]()
+
+
+var
+  editNamekeyUp = proc(payload: JsonNode){.closure.} =
+    # event handlers
+    # call rest services and modify status if needed
     let
       id = payload["id"].getStr
       value = payload["value"].getStr
     updateValue(ui, id, value)
 
   gridRowOnClick = proc(payload: JsonNode){.closure.} =
+    # event handler
     let id = payload["id"].getStr
-    setAttribute(ui, id, "checked", "true")
-    
-  completeTodo = proc(payload: JsonNode){.closure.} =
-    echo "todo completed"
+    # change the state
+    flow.send(store, proc(d: JsonNode) = echo $d)
 
   renderMyGrid = proc(payload: JsonNode){.closure.} =
+    # bonded to a ui-component
+    # when data is modified react to it and update the ui-state
+    let
+      componentId = dataListeners["renderMyGrid"]
+      component = getElementById(ui, $componentId)
+    echo component
+    # flow.seek("1", proc(e: JsonNode) =
+    #   echo "--------------- value found in flow -----------------------"
+    #   echo $e
+    #   echo "-----------------------------------------------------------"
+    # )
     echo "add the logic to render this component when there's data"
- 
+  
 
-# actions table
-# actions are bonded to ui event handlers
-# actions have the id of the component attached and con operate
+# Actions are bonded to ui event handlers
+# actions have the id of the component attached and can operate
 # on ui components as well as its childs
 var actions = initTable[cstring, seq[proc(payload: JsonNode){.closure.}]]()
 actions.add(cstring"todo_name_onkeyup", @[editNameKeyUp])
 actions.add(cstring"todo_gridRow_onclick", @[gridRowOnClick])
 
-
-# data listeners
-# data listeners react to data changes 
-var dataListeners = newseq[proc(payload: JsonNode){.closure.}]()
-dataListeners.add(completeTodo)
-
-proc callDataListeners(payload: JsonNode) =
-  for dataListener in dataListeners:
-    dataListener(payload)
-  
-proc callEventListener(payload: JsonNode, action: cstring) =
-  if actions.hasKey(action):
-    #echo "calling action: " & action
-    for eventListener in actions[action]:
-      eventListener(payload)
-  else:
-    echo "WARNING: Action $1 not found in the table." % $action
+let subsID = flow.subscribe(renderMyGrid)
 
 
-var onmessage {.exportc.} = proc(d: JsObject) =
-  let data = d["data"]
-  ui = copy data["ui"].to(JsonNode)
-  let
-    action = data["action"].to(cstring)
-    id = data["id"].to(string)
-  if action == cstring"init":
-    echo "--- initializing worker ---"
-    
-  else:
-    var payload = %*{
-      "id": %id
-    }
-    
-    if data.value != nil:
-      payload["value"] = %($data["value"].to(cstring))
-    
-    callEventListener(payload, action)
-    #callDataListeners(payload)
-    
-  var response = newJsObject()
-  response.ui = ui
-  response.msg = cstring"OK"
-  response.status = cint(200)
-  response.id = id
-  postMessage(response)
+worker(dataListeners, actions)
