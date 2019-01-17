@@ -29,7 +29,7 @@ var myGrid =
     
 var myGridJs = myGrid.toJson
 
-myGridJs["children"][0]["children"][0]["children"][0]["events"] = %["onclick", "onchange"]
+myGridJs["children"][0]["children"][0]["children"][0]["events"] = %["onclick"]
 myGridJs["children"][0]["children"][0]["children"][0]["name"] = %"gridRow"
 myGridJs["children"][0]["children"][0]["children"][0]["dataListeners"] = %"renderMyGrid"
 
