@@ -5,14 +5,6 @@ import site_genpkg / ui_utils
 import jsonflow, uuidjs
 
 
-#[
-  worker:
-    EventHandlers:
-       proc myProc(payload: JsonNode) =
-         # ... do something with the payload
-         discard  
-]#
-
 proc bindDataListners(ui: JsonNode, dataListeners: var Table[cstring, cstring]) =
   # bind procs that modify the ui state when data is changed
   # find components that have data listeners
@@ -33,7 +25,8 @@ proc callEventListener(payload: JsonNode, action: cstring,
   else:
     echo "WARNING: Action $1 not found in the table." % $action
 
-
+# TODO: create dataListener and inject it into the payload
+# 
 # proc createDataListenersTable(): NimNode =
 #   result = nnkStmtList.newTree(
 #     nnkVarSection.newTree(
@@ -79,20 +72,7 @@ proc createEventsTable(): NimNode =
   )
 
 
-proc addEventListener(n: NimNode): NimNode =
-  #echo n.dumpTree
-  # result = nnkCall.newTree(
-  #   nnkDotExpr.newTree(
-  #     newIdentNode("actions"),
-  #     newIdentNode("add")
-  #   ),
-  #   nnkCallStrLit.newTree(
-  #     newIdentNode("cstring"),
-  #     newLit("todo_name_onkeyup")
-  #   ),
-  #   newIdentNode("editNameKeyUp")
-  # )
-  
+proc addEventListener(n: NimNode): NimNode =  
   result = nnkCall.newTree(
     nnkDotExpr.newTree(
       newIdentNode("actions"),
@@ -105,48 +85,22 @@ proc addEventListener(n: NimNode): NimNode =
     newIdentNode($n[0].ident)
   )
 
-
-proc createAll(n: NimNode): NimNode =
-  #var table = createEventsTable()
-  var call1 = addEventListener(n)
-  result = nnkStmtList.newTree(
-    nnkVarSection.newTree(
-      createEventsTable()
-    ),
-    call1
-  )
  
-
-proc processEventHandlers(n: NimNode): untyped =
-    # create a table with using ident as key
-    # and the proc as body
+proc processEventHandlers(n: NimNode): untyped =  
   result = nnkStmtList.newTree(
     nnkVarSection.newTree(
       createEventsTable()
     )
   )
-  # add procs to table
+
   for x in n:
     result.add addEventListener(x)
 
 
-macro worker*(n: untyped): untyped =
-  #echo arg.treeRepr
-  #result = createAll(n)
-  result = newStmtList()
-  #result.add createDataListenersTable()
-  if n.kind == nnkStmtList:
-    for x in n.children:
-      # should be a nnkCall "EventHandlers"
-      if x.kind == nnkCall:
-        if x[0].eqident("EventHandlers"):
-          #for procDef in x[1]:
-            #echo procDef.treeRepr
-          result.add processEventHandlers(x[1])
-  # # add here the template for worker communication
-
-
-template communication*() =  
+template communication* =
+  
+  proc postMessage(d: JsObject) {. importc: "postMessage" .}
+  
   var onmessage* {.exportc.} = proc(d: JsObject) =
     let
       data = d["data"]
@@ -171,3 +125,17 @@ template communication*() =
       response.status = cint(200)
       response.id = id
       postMessage(response)
+
+    
+macro worker*(n: untyped): untyped =
+  result = newStmtList()
+  if n.kind == nnkStmtList:
+    for x in n.children:
+      if x.kind == nnkCall:
+        if x[0].eqident("EventHandlers"):
+          result.add x[1]
+          result.add processEventHandlers(x[1])
+          
+    result.add(nnkCall.newTree(
+      newIdentNode("communication")
+    ))
