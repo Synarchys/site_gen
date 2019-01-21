@@ -9,7 +9,7 @@ import karax / [errors, kdom, vstyles]
 import uuidjs
 #import ui_utils
 
-var defaultEvent: proc(appState: JsonNode, name, id: string): proc(ev: Event, n: VNode)
+var defaultEvent: proc(name, id: string): proc(ev: Event, n: VNode)
 
 # global variable that holds all components
 var appState, components: JsonNode
@@ -44,20 +44,24 @@ proc toJson*(component: VNode): JsonNode =
   if events.len > 0: result["events"] = events
 
 
-proc setValue(vn: VNode, value:string): VNode =
-  # somehow no vnode is changed, no need to return
-  result = vn
-  if result.kind == VnodeKind.input:
-    result.value = value
+# proc setValue(vn: VNode, value:string): VNode =
+#   # somehow no vnode is changed, no need to return
+#   result = vn
+#   if result.kind == VnodeKind.input:
+#     result.value = value
+#     echo $result
 
 
 proc buildComponent*(params: JsonNode): VNode =
   ## builds a component based on a json definition
   var nodeKind: VNodeKind  
   for vnk in VNodeKind:
-    if $vnk == params["ui-type"].getStr:
-      nodeKind = vnk
-      break
+    if params.hasKey("ui-type"):
+      if $vnk == params["ui-type"].getStr:
+        nodeKind = vnk
+        break
+    else:
+      echo params.pretty
       
   if nodeKind == VNodeKind.text:
     # text kind has its own constructor
@@ -71,7 +75,9 @@ proc buildComponent*(params: JsonNode): VNode =
   if params.hasKey("value"):
     # it has de data of the component,
     # each component data is handed differently
-    result = setValue(result, params["value"].getStr)
+    # hack to update values
+    result.id = $genUUID()
+    setInputText(result, params["value"].getStr)
 
   # if nodeKind == VNodeKind.text and params.hasKey("text"):
   #   result.text = params["text"].getStr  #setValue(result, params["text"].getStr)
@@ -109,27 +115,36 @@ proc buildComponent*(params: JsonNode): VNode =
         # FIXME: the way events are named and referenced is too simple
         # it will colide if the same model is used in another part of
         # the ui graph
-        let actionName = "$1_$2_$3" % [$result.getAttr("model"),
-                                       $result.getAttr("name"), $evk]
-        result.addEventListener(evk, defaultEvent(appState, actionName, $result.id))     
+        let actionName = "$1_$2_$3" % [$result.getAttr("model"), $result.getAttr("name"), $evk]
+        result.addEventListener(evk, defaultEvent(actionName, $result.id))
+      #else:
+      #  echo "WARNING: event ", $evk, " does not exists." 
 
   
 proc formGroup(def: JsonNode): JsonNode =
   result = copy components["formGroup"]
   
-  var component = if def["ui-type"].getStr == "check":
-                    copy components["checkbox"]
-                  elif $def["ui-type"].getStr == "text":
-                    copy components["textarea"]
-                  elif $def["ui-type"].getStr == "input":
-                    copy components["input"]
-                  # use input as default
-                  else: copy components["input"]
+  var component: JsonNode
+
+  let uiType = $def["ui-type"].getStr
+  
+  if components.haskey(uiType):
+    component = copy components[uiType]
+  else:    
+    if uiType == "check":
+      component = copy components["checkbox"]
+    elif uiType == "text":
+      component = copy components["textarea"]
+    elif uiType == "input":
+      component = copy components["input"]
+    else:
+      # raise error
+      echo "Error: ui-type ", uiType, "not found."
 
   component["id"] = %genUUID()
 
   if def.hasKey("events"):
-    # add events to component we are preparing 
+    # add events to component we are preparing
     component["events"] = copy def["events"]
   if def.hasKey("value"):
     component["value"] = copy def["value"]
@@ -137,28 +152,46 @@ proc formGroup(def: JsonNode): JsonNode =
     component["name"] = copy def["name"]
   if def.hasKey("model"):
     component["model"] = copy def["model"]
-  
-  
+    
   result["children"][0]["text"] = copy def["label"]
   result["children"][0]{"attributes","for"} = component["id"]
   result["children"].add(component)
 
   
 proc form(formDef: JsonNode): JsonNode =
-  var form = %*{"ui-type": "form"}
+  var form = %*{"ui-type": "form",
+                 "name": formDef["name"],
+                 "model": formDef["model"]
+               }
   form["children"] = newJArray()
   
   for k1, v1 in formDef.getFields:
     if k1 == "children":
       for item in v1.getElems:
-        # ?
+        var child: JsonNode
         item["model"] = formDef["model"]
-        let fg = formGroup(item)
-        # check the ui-type to decide what to use
-        form["children"].add(fg)
+        # echo "ui - type  ", item["ui-type"]
+        if item["ui-type"].getStr == "button":
+          # just build it
+          child = copy components["button"]
+          # add the label or text as child so it can be displayed on the button
+          child["model"] = formDef["model"]
+          child["name"] = copy item["name"]
+          child["events"] = copy item["events"]
+          child["children"][0]["text"] = item["label"]
+        else:
+          # if item is input use formGroup
+          child = formGroup(item)
+        form["children"].add(child)
   form
 
 
+proc buildHeader(def: JsonNode): VNode =
+  var h = copy components["header"]
+  h["children"][0]["children"][0]["children"][0]["children"][0]["children"][0]["text"] = def["alternative"]
+  result = buildComponent(h)
+
+  
 proc buildBody(def: JsonNode, ): VNode =
   # builds the initial ui based on the definition and the components library
   # this part should understand and comply with the component definition specification
@@ -169,7 +202,12 @@ proc buildBody(def: JsonNode, ): VNode =
     for elem in children.getElems:
       for k, v in elem.getFields:
         if k == "edit":
-          result.add(buildComponent(form(v)))
+          var vNodeForm = buildComponent(form(v))
+          # preventing default submision
+          vNodeForm.addEventListener(EventKind.onsubmit,
+                                     proc(ev: Event, n: Vnode) =
+                                       ev.preventDefault())
+          result.add(vNodeForm)
         elif k == "list":
           # TODO
           var ul = newVNode(VnodeKind.ul)
@@ -185,13 +223,12 @@ proc buildBody(def: JsonNode, ): VNode =
           result.add(c)
           
 
-proc updateUI*(state: JsonNode): VNode =
+proc updateUI*(ui: JsonNode): VNode =
   # builds the vdom tree using the ui attribute
-  result = buildHtml():
-    buildComponent(state["ui"])
-  
+  result = buildComponent(ui)
 
-proc initApp*(state: JsonNode, event: proc(appState: JsonNode, name, id: string): proc(ev: Event, n: VNode)): VNode =
+    
+proc initApp*(state: JsonNode, event: proc(name, id: string): proc(ev: Event, n: VNode)): VNode =
     
   let definition = state["definition"]
   appState = state
@@ -200,10 +237,17 @@ proc initApp*(state: JsonNode, event: proc(appState: JsonNode, name, id: string)
   
   result = buildHtml(tdiv):
     for k, v in definition.getFields:
-      # FIXME: change this in the near future.
       if k == "body":
-        let body = buildBody(v)
-        body
+        buildBody(v)
+      elif k == "header":
+        buildHeader(v)
+      elif k == "menu":
+        # basic ui replacement logic 
+        var uiType = v["ui-type"].getStr
+        if not components.hasKey(uiType):
+          uiType = k
+        echo components[uiType].pretty
+        buildComponent(components[uiType])
       else:
         if components.hasKey(k):
           buildComponent(components[k])

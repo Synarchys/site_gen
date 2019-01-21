@@ -1,22 +1,18 @@
 
 import json, tables, jsffi
+
 include karax / prelude 
 import karax / prelude
-import karax / [errors, kdom, vstyles]
+import karax / [vdom, karaxdsl, errors, kdom, vstyles]
 
 import requestjs, uuidjs
 
-import builder, ui_utils
+import builder, ui_utils, listeners
 export builder, ui_utils
 
 import strutils, times
 
-# worker wrapper
-proc newWorker(f: cstring): JsObject {.importcpp: "new Worker(@)".}
-
-var
-  console {.importcpp, noDecl.}: JsObject 
-  log = console.log
+var console {.importcpp, noDecl.}: JsObject 
 
 # global variables
 const headers = [(cstring"Content-Type", cstring"application/json")]
@@ -25,17 +21,28 @@ const modelUrl = "/model.json"
 
 var
   initialized = false
-  myRenderer: proc (data: RouterData)
-  w: JsObject = newWorker(cstring"/js/worker.js")
   `kxi`: KaraxInstance
   appStatus: JsonNode
+  ui: JsonNode = %*{}
+  actions: Table[cstring, proc(payload: JsonNode){.closure.}]
+
 
 # TODO: move all loading to the worker
+proc pareseJSonDefinion(resp: string): JsonNode = 
+  try:
+    result = parseJson($resp)
+  except:
+    # TODO: Show error component
+    let msg = getCurrentExceptionMsg()
+    appStatus["error"] = %msg
+    echo "Error with message \n", msg
+
+    
 proc loadDefinition(appStatus: JsonNode) =
   ajaxGet(definitionUrl,
           headers,
           proc(stat:int, resp:cstring) =
-            appStatus["definition"] = parseJson($resp)
+            appStatus["definition"] = pareseJSonDefinion($resp)
             # finally we redraw when we have everything loaded
             `kxi`.redraw()
   )
@@ -45,7 +52,8 @@ proc loadModel(appStatus: JsonNode) =
   ajaxGet(modelUrl,
           headers,
           proc(stat:int, resp:cstring) =
-            appStatus["model"] = parseJson($resp)
+            if stat == 200:
+              appStatus["model"] = pareseJSonDefinion($resp)
             loadDefinition(appStatus))
 
   
@@ -53,7 +61,7 @@ proc loadComponents(appStatus: JsonNode) =
   ajaxGet("/components.json",
           headers,
           proc(stat:int, resp:cstring) =
-            let components = parseJson($resp)
+            let components = pareseJSonDefinion($resp)
             if appStatus.hasKey("components"):
               # merge components
               for k, v in components.getFields:
@@ -64,73 +72,55 @@ proc loadComponents(appStatus: JsonNode) =
               appStatus["components"] = components
             loadModel(appStatus))
 
-  
-proc eventGen*(appStatus: JsonNode, name, id: string): proc(ev: Event, n: VNode) =  
+
+proc eventGen*(action, id: string): proc(ev: Event, n: VNode) =    
   result = proc (ev: Event, n: VNode) =
     ev.preventDefault()
-    var reqObj = newJsObject()
-    reqObj["message"] = cstring"Somebody pressed a button on the UI"
-    reqObj["ui"] = appStatus["ui"] # pass the ui status, should be cached 
-    reqObj["action"] = cstring(name) # the name of the action that is triggered
-    reqObj["id"] = id # the id of the component
     
-    if n.value != nil: reqObj["value"] = n.value
-    # send data to the worker
-    w.postMessage(reqObj)
-
-
-proc initWorker() =
-  var reqObj = newJsObject()
-  reqObj["ui"] = appStatus["ui"] # pass the ui status, should be cached
-  reqObj["definition"] = appStatus["definition"]
-  reqObj["action"] = cstring("init") # the name of the action that is triggered
-  # send data to the worker
-  w.postMessage(reqObj)
-
-
-proc intialize() =
-  # initialize ui
-  w.onmessage = proc(d: JsObject) =
-    ## This gets called when the worker sends a message
-    let
-      response = d.data
-      id = response["id"].to(string)
-      
-    var ui = response["ui"].to(JsonNode)  
-    appStatus["ui"] = ui
+    var payload = %*{}
+    payload["message"] = %"Somebody pressed a button on the UI"
+    payload["ui"] = ui #appStatus["ui"] # pass the ui status, should be cached
+    payload["action"] = %action # the name of the action that is triggered
+    payload["id"] = %id # the id of the component
+    if n.value != nil: payload["value"] = %($n.value)
+    callEventListener(payload, action, actions)
+    ui = payload["ui"]
+    echo "New value is ", getValueById(ui, id)
     `kxi`.redraw()
-
-  w.onmessageerror = proc(d: JsObject) =
-    ## If something goes wrong, this will be called
-    log("in error: ", d)
-  
-  # initialize worker
-  initWorker()
-
-proc createDOM(data: RouterData): VNode =
+    
+    
+proc createDOM(data: RouterData): VNode =  
   if initialized:
-    result = updateUI(appStatus)
-    appStatus["ui"] = result.toJson
+    result = updateUI(ui)
+    ui = result.toJson
+    
+  elif appStatus.hasKey("error"):
+    result = buildHtml(tdiv()):
+      p:
+        text appStatus["error"].getStr        
+    appStatus.delete("error")
     
   elif not appStatus.hasKey("definition"):
+    loadComponents(appStatus)
     result = buildHtml(tdiv()):
       p:
         text "Loading Site..."
+  
   else:
     let started = now()
     echo " -- Initializing $1 --" % $started.nanosecond
     result = initApp(appStatus, eventGen)
-    appStatus["ui"] = result.toJson
-    # worker client intialization
-    intialize()
-    
-    initialized = true
+    ui = result.toJson
     let ended = now()
     echo " -- Initialized $1 --" % $ended.nanosecond
     echo "Initialization time: $1 " % $(ended - started)
+    initialized = true
+          
 
-
-proc createApp*(status:JsonNode) =
+proc createApp*(status: JsonNode,
+                a: Table[cstring, proc(payload: JsonNode){.closure.}]) =
+  actions = a
   appStatus = status
-  loadComponents(appStatus)
   `kxi` = setRenderer(createDOM)
+
+
