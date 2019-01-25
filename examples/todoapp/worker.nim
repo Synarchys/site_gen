@@ -60,7 +60,9 @@ worker:
       let
         id = payload["id"].getStr
         value = payload["value"].getStr
-      updateValue(ui, id, value)
+        
+      echo getValueById(ui, id)
+      #updateValue(ui, id, value)
 
     proc todo_gridRow_onclick(payload: JsonNode) =
       echo "processing event handler"
