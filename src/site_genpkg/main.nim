@@ -22,10 +22,9 @@ const modelUrl = "/model.json"
 var
   initialized = false
   `kxi`: KaraxInstance
-  appStatus: JsonNode
-  ui: JsonNode = %*{}
+  appState: JsonNode
   actions: Table[cstring, proc(payload: JsonNode){.closure.}]
-
+  dataListeners: Table[cstring, cstring]
 
 # TODO: move all loading to the worker
 proc pareseJSonDefinion(resp: string): JsonNode = 
@@ -34,93 +33,130 @@ proc pareseJSonDefinion(resp: string): JsonNode =
   except:
     # TODO: Show error component
     let msg = getCurrentExceptionMsg()
-    appStatus["error"] = %msg
+    appState["error"] = %msg
     echo "Error with message \n", msg
 
     
-proc loadDefinition(appStatus: JsonNode) =
+proc loadDefinition(appState: JsonNode) =
   ajaxGet(definitionUrl,
           headers,
           proc(stat:int, resp:cstring) =
-            appStatus["definition"] = pareseJSonDefinion($resp)
+            appState["definition"] = pareseJSonDefinion($resp)
             # finally we redraw when we have everything loaded
             `kxi`.redraw()
   )
 
   
-proc loadModel(appStatus: JsonNode) =
+proc loadModel(appState: JsonNode) =
   ajaxGet(modelUrl,
           headers,
           proc(stat:int, resp:cstring) =
             if stat == 200:
-              appStatus["model"] = pareseJSonDefinion($resp)
-            loadDefinition(appStatus))
+              appState["model"] = pareseJSonDefinion($resp)
+            loadDefinition(appState))
 
   
-proc loadComponents(appStatus: JsonNode) =
+proc loadComponents(appState: JsonNode) =
   ajaxGet("/components.json",
           headers,
           proc(stat:int, resp:cstring) =
             let components = pareseJSonDefinion($resp)
-            if appStatus.hasKey("components"):
+            if appState.hasKey("components"):
               # merge components
               for k, v in components.getFields:
-                if not appStatus["components"].hasKey(k):
+                if not appState["components"].hasKey(k):
                   # use components defined by the user if names colide
-                  appStatus{"components", k}= v
+                  appState{"components", k}= v
             else:
-              appStatus["components"] = components
-            loadModel(appStatus))
+              appState["components"] = components
+            loadModel(appState))
 
 
-proc eventGen*(action, id: string): proc(ev: Event, n: VNode) =    
+proc updateInput(payload: JsonNode) =
+  # deprecate (?)
+  # sync with the vnode
+  let
+    id = payload["id"].getStr
+    value = payload["value"].getStr    
+  var ui = payload["ui"]
+  updateValue(ui, id, value)
+  payload["ui"] = ui
+
+
+proc updateData(n: VNode) =
+  if not n.value.isNil:
+    let 
+      model = $n.getAttr("model")
+      field = $n.getAttr("name")
+    
+    if not appState.hasKey("data"):
+      appState.add("data", %*{})
+    if not appState["data"].hasKey(model):
+      appState["data"].add(model, %*{})
+    # update the value
+    appState["data"][model].add($field, %($n.value))
+
+  
+proc reRender*()=
+  `kxi`.redraw()
+
+    
+proc eventGen*(action, id: string): proc(ev: Event, n: VNode) =  
   result = proc (ev: Event, n: VNode) =
     ev.preventDefault()
-    
     var payload = %*{}
-    payload["message"] = %"Somebody pressed a button on the UI"
-    payload["ui"] = ui #appStatus["ui"] # pass the ui status, should be cached
+    payload["ui"] = appState["ui"] # pass the ui status, should be cached
     payload["action"] = %action # the name of the action that is triggered
     payload["id"] = %id # the id of the component
-    if n.value != nil: payload["value"] = %($n.value)
+    if n.value != nil:
+      payload["value"] = %($n.value)    
     callEventListener(payload, action, actions)
-    ui = payload["ui"]
-    echo "New value is ", getValueById(ui, id)
-    `kxi`.redraw()
-    
-    
+    appState["ui"] = payload["ui"]
+    updateData(n)  
+    reRender()
+  
+
+proc bindDataListeners() =
+  # binds a ui component id to a proc  
+  appState.add("dataListeners", %*{})
+  for component in findElementsByAttrKey(appState["ui"], "dataListener"):
+    let dl = component["attributes"]["dataListener"]
+    appState["dataListeners"].add(dl.getStr, component["id"])
+
+
 proc createDOM(data: RouterData): VNode =  
   if initialized:
-    result = updateUI(ui)
-    ui = result.toJson
+    result = updateUIRaw(appState)
+    #result = updateUI(appState)
+    appState["ui"] = result.toJson
     
-  elif appStatus.hasKey("error"):
+  elif appState.hasKey("error"):
     result = buildHtml(tdiv()):
       p:
-        text appStatus["error"].getStr        
-    appStatus.delete("error")
+        text appState["error"].getStr        
+    appState.delete("error")
     
-  elif not appStatus.hasKey("definition"):
-    loadComponents(appStatus)
+  elif not appState.hasKey("definition"):
+    loadComponents(appState)
     result = buildHtml(tdiv()):
       p:
         text "Loading Site..."
-  
+
   else:
     let started = now()
     echo " -- Initializing $1 --" % $started.nanosecond
-    result = initApp(appStatus, eventGen)
-    ui = result.toJson
+    result = initApp(appState, eventGen)
+    appState["ui"] = result.toJson
+    bindDataListeners()
     let ended = now()
     echo " -- Initialized $1 --" % $ended.nanosecond
     echo "Initialization time: $1 " % $(ended - started)
     initialized = true
           
 
-proc createApp*(status: JsonNode,
+proc createApp*(state: JsonNode,
                 a: Table[cstring, proc(payload: JsonNode){.closure.}]) =
   actions = a
-  appStatus = status
+  appState = state
   `kxi` = setRenderer(createDOM)
-
 
