@@ -107,7 +107,8 @@ proc eventGen*(action, id: string): proc(ev: Event, n: VNode) =
     var payload = %*{}
     payload["ui"] = appState["ui"] # pass the ui status, should be cached
     payload["action"] = %action # the name of the action that is triggered
-    payload["id"] = %id # the id of the component
+    # ignoring the id of the vnode, use component_id for internal reference
+    #payload["id"] = %id # the id of the component
     if n.value != nil:
       payload["value"] = %($n.value)    
     callEventListener(payload, action, actions)
@@ -124,17 +125,23 @@ proc bindDataListeners() =
     appState["dataListeners"].add(dl.getStr, component["id"])
 
 
-proc createDOM(data: RouterData): VNode =  
-  if initialized:
-    result = updateUIRaw(appState)
-    #result = updateUI(appState)
-    appState["ui"] = result.toJson
+proc createDOM(rd: RouterData): VNode =  
+  if appState.hasKey("route") and rd.hashPart != appState["route"].getStr:
+      window.location.href = cstring(appState["route"].getStr)
+      echo "route is ", appState["route"]
+  else:
+    # we store the current route
+    appState["route"] = %($rd.hashPart)
     
-  elif appState.hasKey("error"):
+  if appState.hasKey("error"):
     result = buildHtml(tdiv()):
       p:
         text appState["error"].getStr        
     appState.delete("error")
+    
+  elif initialized:
+    result = updateUI(appState)
+    appState["ui"] = result.toJson
     
   elif not appState.hasKey("definition"):
     loadComponents(appState)
@@ -152,7 +159,7 @@ proc createDOM(data: RouterData): VNode =
     echo " -- Initialized $1 --" % $ended.nanosecond
     echo "Initialization time: $1 " % $(ended - started)
     initialized = true
-          
+    
 
 proc createApp*(state: JsonNode,
                 a: Table[cstring, proc(payload: JsonNode){.closure.}]) =
