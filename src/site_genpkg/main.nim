@@ -125,14 +125,33 @@ proc bindDataListeners() =
     appState["dataListeners"].add(dl.getStr, component["id"])
 
 
-proc createDOM(rd: RouterData): VNode =  
-  if appState.hasKey("route") and rd.hashPart != appState["route"].getStr:
-      window.location.href = cstring(appState["route"].getStr)
-      echo "route is ", appState["route"]
-  else:
-    # we store the current route
+
+# type
+#   Navigation = ref object
+#     hashPart_prev, hashPart_current: cstring
+#     route_prev, route_current: cstring
+                   
+# var nav = Navigation()
+
+var hashPart_prev: cstring
+
+proc navigate(rd: RouterData) =  
+  if hashPart_prev != $rd.hashPart:
     appState["route"] = %($rd.hashPart)
+    hashPart_prev = $rd.hashPart
+  elif $hashPart_prev != appState["route"].getStr:
+    window.location.href = cstring(appState["route"].getStr)
+    hashPart_prev = window.location.href
+
     
+proc initNavigation() =
+  appState["route"] = %($window.location.hash)
+  hashPart_prev = window.location.hash
+
+    
+proc createDOM(rd: RouterData): VNode =
+  navigate(rd)
+  
   if appState.hasKey("error"):
     result = buildHtml(tdiv()):
       p:
@@ -159,11 +178,12 @@ proc createDOM(rd: RouterData): VNode =
     echo " -- Initialized $1 --" % $ended.nanosecond
     echo "Initialization time: $1 " % $(ended - started)
     initialized = true
-    
+
 
 proc createApp*(state: JsonNode,
                 a: Table[cstring, proc(payload: JsonNode){.closure.}]) =
   actions = a
   appState = state
+  initNavigation()
   `kxi` = setRenderer(createDOM)
 

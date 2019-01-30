@@ -15,6 +15,11 @@ var defaultEvent: proc(name, id: string): proc(ev: Event, n: VNode)
 var appState, data, components: JsonNode
 
 
+type
+  Sections = enum
+    header, menu, body, footer
+
+
 proc toJson*(component: VNode): JsonNode =
   ## returns a JsonNode from a VNode
   result = %*{ "ui-type": $component.kind }
@@ -59,7 +64,6 @@ proc updateValue(vn: var VNode) =
     if not model.isNil and not name.isNil:
       if data.hasKey($model) and data[$model].haskey($name):
         if vn.kind == VnodeKind.input:
-          echo data[$model][$name].getStr
           setInputText(vn, data[$model][$name].getStr)
           
           
@@ -233,33 +237,8 @@ proc updateUIRaw*(state: JsonNode): VNode =
   if state.hasKey("data"):
     data = state["data"]
   result = buildComponent(state["ui"])
+
   
-
-#[
-  use the las part of the url to extract the part of the def
- for instance #/users/edit, will show the edit user
- there should be a user in the current
-
-  ui-def:{
-    "#/users":
-    {
-      show: {...},
-      "edit":
-      {
-        model:
-      }
-
-    }
-  }
-
-]#
-
-
-type
-  Sections = enum
-    header, menu, body, footer
-
-
 proc updateUI*(state: var JsonNode): VNode =
   var
     uiDef = state["definition"]
@@ -272,16 +251,19 @@ proc updateUI*(state: var JsonNode): VNode =
   if appState.hasKey("route") and appState["route"].getStr != "":
     let splitRoute = appState["route"].getStr.split("/")
     # just asume first item is `#`.
-    # use `#` in the ui definition to know it is a route.
+    # use `#` in the ui definition to know it is a route.    
     route = splitRoute[0..1].join("/")
     if splitRoute.len > 2: action = splitRoute[2]
-    
+
   result = newVNode(VnodeKind.tdiv)
   for section in Sections:
     var sectionDef = uiDef[$section]
     case $section
     of "body":
-      var routeSec = sectionDef[route][action]
+      var routeSec: JsonNode
+      if action == "": routeSec = sectionDef[route]
+      else: routeSec = sectionDef[route][action]
+      
       result.add buildBody(action, routeSec)
     of "header":
       result.add buildHeader(sectionDef)
