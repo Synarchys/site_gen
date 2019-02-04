@@ -12,5 +12,6 @@ installDirs   = @["baseapp"]
 # Dependencies
 
 requires "nim >= 0.19.0"
-requires "karax"
+requires "https://github.com/demianfe/karax.git"
+#requires "karax"
 

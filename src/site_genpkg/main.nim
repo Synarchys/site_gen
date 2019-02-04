@@ -19,12 +19,15 @@ const headers = [(cstring"Content-Type", cstring"application/json")]
 const definitionUrl = "/definition.json"
 const modelUrl = "/model.json"
 
+
+
 var
   initialized = false
   `kxi`: KaraxInstance
   appState: JsonNode
   actions: Table[cstring, proc(payload: JsonNode){.closure.}]
   dataListeners: Table[cstring, cstring]
+  prevHashPart: cstring
 
 # TODO: move all loading to the worker
 proc pareseJSonDefinion(resp: string): JsonNode = 
@@ -98,6 +101,7 @@ proc updateData(n: VNode) =
 
   
 proc reRender*()=
+  # wrap and expose redraw
   `kxi`.redraw()
 
     
@@ -125,28 +129,18 @@ proc bindDataListeners() =
     appState["dataListeners"].add(dl.getStr, component["id"])
 
 
-
-# type
-#   Navigation = ref object
-#     hashPart_prev, hashPart_current: cstring
-#     route_prev, route_current: cstring
-                   
-# var nav = Navigation()
-
-var hashPart_prev: cstring
-
-proc navigate(rd: RouterData) =  
-  if hashPart_prev != $rd.hashPart:
+proc navigate(rd: RouterData) = 
+  if prevHashPart != $rd.hashPart:
     appState["route"] = %($rd.hashPart)
-    hashPart_prev = $rd.hashPart
-  elif $hashPart_prev != appState["route"].getStr:
+    prevHashPart = $rd.hashPart
+  elif $prevHashPart != appState["route"].getStr:
     window.location.href = cstring(appState["route"].getStr)
-    hashPart_prev = window.location.href
+    prevHashPart = window.location.hash
 
     
 proc initNavigation() =
   appState["route"] = %($window.location.hash)
-  hashPart_prev = window.location.hash
+  prevHashPart = window.location.hash
 
     
 proc createDOM(rd: RouterData): VNode =
