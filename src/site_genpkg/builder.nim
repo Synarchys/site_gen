@@ -1,5 +1,5 @@
 
-import strutils
+import strutils, unicode
 
 import json, tables, jsffi, sequtils
 include karax / prelude 
@@ -13,7 +13,6 @@ var defaultEvent: proc(name, id: string): proc(ev: Event, n: VNode)
 
 # global variable that holds all components
 var appState, data, components: JsonNode
-
 
 type
   Sections = enum
@@ -54,7 +53,6 @@ proc toJson*(component: VNode): JsonNode =
 
 
 proc updateValue(vn: var VNode) =
-  # somehow no vnode is changed, no need to return
   # TODO: handle exceptions when de name of the model is not an object
   var value: string
   if not data.isNil:
@@ -158,8 +156,8 @@ proc formGroup(def: JsonNode): JsonNode =
     component["name"] = copy def["name"]
   if def.hasKey("model"):
     component["model"] = copy def["model"]
-          
-  result["children"][0]["text"] = copy def["label"]
+
+  result["children"][0]["text"] = %(def["label"].getStr & ":")
   result["children"][0]{"attributes","for"} = component["name"]
   result["children"].add(component)
 
@@ -170,7 +168,7 @@ proc edit(formDef: JsonNode): JsonNode =
     "name": formDef["name"],
     "model": formDef["model"]
   }
-               
+  
   form["children"] = newJArray()
   
   for k1, v1 in formDef.getFields:
@@ -178,7 +176,6 @@ proc edit(formDef: JsonNode): JsonNode =
       for item in v1.getElems:
         var child: JsonNode
         item["model"] = formDef["model"]
-        # echo "ui - type  ", item["ui-type"]
         if item["ui-type"].getStr == "button":
           # just build it
           child = copy components["button"]
@@ -196,10 +193,11 @@ proc edit(formDef: JsonNode): JsonNode =
 
 proc buildHeader(def: JsonNode): VNode =
   var h = copy components["header"]
+  # WARNING: hardcoded
   h["children"][0]["children"][0]["children"][0]["children"][0]["children"][0]["text"] = def["alternative"]
   result = buildComponent(h)
 
-  
+
 proc buildBody(action: string, bodyDefinition: var JsonNode): VNode =
   # builds the initial ui based on the definition and the components library
   # this part should understand and comply with the component definition specification  
@@ -209,7 +207,16 @@ proc buildBody(action: string, bodyDefinition: var JsonNode): VNode =
 
   case action
   of "edit":
-    var editForm = buildComponent(edit(def))
+    var
+      editForm = buildComponent(edit(def))
+      h3 = newVNode(VNodeKind.h3) # default heading file should come from configuration
+      label = ""
+      
+    if def.hasKey "label": label = def["label"].getStr
+    else: label = "Edit " & capitalize(def["model"].getStr)
+      
+    h3.add text(label)
+    editForm.insert(h3, 0)
     # preventing default submision
     editForm.addEventListener(EventKind.onsubmit,
                               proc(ev: Event, n: Vnode) =
@@ -251,7 +258,7 @@ proc updateUI*(state: var JsonNode): VNode =
   if appState.hasKey("route") and appState["route"].getStr != "":
     let splitRoute = appState["route"].getStr.split("/")
     # just asume first item is `#`.
-    # use `#` in the ui definition to know it is a route.    
+    # use `#` in the ui definition to know it is a route.
     route = splitRoute[0..1].join("/")
     if splitRoute.len > 2: action = splitRoute[2]
 
@@ -263,7 +270,6 @@ proc updateUI*(state: var JsonNode): VNode =
       var routeSec: JsonNode
       if action == "": routeSec = sectionDef[route]
       else: routeSec = sectionDef[route][action]
-      
       result.add buildBody(action, routeSec)
     of "header":
       result.add buildHeader(sectionDef)
@@ -271,7 +277,7 @@ proc updateUI*(state: var JsonNode): VNode =
       var uiType = sectionDef["ui-type"].getStr
       if not components.hasKey(uiType):
         uiType = "menu"
-        result.add buildComponent(components[uiType])
+      result.add buildComponent(components[uiType])
     else:
       if components.hasKey($section):
         result.add buildComponent(components[$section])
