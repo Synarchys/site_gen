@@ -1,18 +1,18 @@
 {
-  "header":{"id":"12e07c9e-6860-407b-ffd0-ab3f8e88567b5","ui-type":"div","children":[{"id":"dcb96cf6-4222-407c-b9a9-59ddca092cc74","ui-type":"header","class":"masthead","children":[{"id":"4d3ad72f-2435-4cd0-5fe1-7283b2429bb16","ui-type":"div","class":"container","children":[{"id":"920a5785-ab00-40c6-5137-b713d1f830162","ui-type":"div","class":"intro-text","children":[{"id":"b006cc80-f603-4b7b-9c0e-fae2737c7cf10","ui-type":"h1","children":[{"id":"9972159f-f70e-4fae-0b27-795cb53f0cf12","ui-type":"#text","text":"Todo App."}]}]}]}]}]},
-  "footer":{"id":"ed64953c-c9d7-43fa-f129-2f1556ebc010a","ui-type":"footer","class":"bg-dark","children":[{"id":"3a62156b-0ae4-48c9-c1f5-e0300aa90cb38","ui-type":"div","class":"container","children":[{"id":"8457b025-d7d4-49ff-9c0d-4e21d0dd1c93a","ui-type":"div","class":"row","children":[{"id":"7d22ebb3-d3f5-4a24-bd9f-cda0a1b41ab93","ui-type":"div","class":"col-md-4","children":[{"id":"58713ba9-41cf-4420-fab3-8c5a7ea4df1f0","ui-type":"span","class":"copyright","children":[{"id":"f14b15f7-60d5-4f6f-cf8b-fbc07313e4e37","ui-type":"#text","text":"Copyright © SiteGen 2018"}]}]}]}]}]},
+  "header":{"ui-type":"div","children":[{"ui-type":"header","class":"masthead","children":[{"ui-type":"div","class":"container","children":[{"ui-type":"div","class":"intro-text","children":[{"ui-type":"h1","children":[{"ui-type":"#text","text":"Todo App."}]}]}]}]}]},
+  "footer":{"ui-type":"footer","class":"bg-dark","children":[{"ui-type":"div","class":"container","children":[{"ui-type":"div","class":"row","children":[{"ui-type":"div","class":"col-md-4","children":[{"ui-type":"span","class":"copyright","children":[{"ui-type":"#text","text":"Copyright © SiteGen 2018"}]}]}]}]}]},
   "menu": {
-    "id": "26332420-9f85-49af-09be-143a50249f624",
+    
     "ui-type": "nav",
     "class": "navbar navbar-expand-lg navbar-dark fixed-top",
     "children": [
       {
-        "id": "b5b22be8-a0cf-473e-2046-c018d37daf079",
+        
         "ui-type": "div",
         "class": "container",
         "children": [
           {
-            "id": "f578c026-20d6-49ff-e557-1dc5afa3c7434",
+            
             "ui-type": "a",
             "class": "navbar-brand js-scroll-trigger",
             "attributes": {
@@ -20,14 +20,14 @@
             },
             "children": [
               {
-                "id": "f181db96-225c-4fc7-2fa6-591c954c2186e",
+                
                 "ui-type": "#text",
                 "text": "HOME"
               }
             ]
           },
           {
-            "id": "197ae2ad-d044-4b95-3d55-59da779c02df2",
+            
             "ui-type": "button",
             "class": "navbar-toggler navbar-toggler-right",
             "attributes": {
@@ -40,34 +40,34 @@
             },
             "children": [
               {
-                "id": "d251303d-91e8-412d-3475-37cc497c9309d",
+                
                 "ui-type": "#text",
                 "text": "Menu"
               },
               {
-                "id": "dffee841-7141-4c54-6900-ee0defa8601dd",
+                
                 "ui-type": "i",
                 "class": "fa fa-bars"
               }
             ]
           },
           {
-            "id": "3b5ccc05-4cfa-44ef-f95c-3dbf0d4dc2468",
+            
             "ui-type": "div",
             "class": "collapse navbar-collapse",
             "children": [
               {
-                "id": "82dddc9f-7b45-49e2-6fde-a3acac1655154",
+                
                 "ui-type": "ul",
                 "class": "navbar-nav text-uppercase ml-auto",
                 "children": [
                   {
-                    "id": "bf806433-7ff0-4f17-69fd-66032b3842c5a",
+                    
                     "ui-type": "li",
                     "class": "nav-item",
                     "children": [
                       {
-                        "id": "b8678b19-64c2-4fa9-dfac-a035de4ecc4be",
+                        
                         "ui-type": "a",
                         "class": "nav-link js-scroll-trigger",
                         "attributes": {
@@ -75,7 +75,7 @@
                         },
                         "children": [
                           {
-                            "id": "91f74337-8d1f-4f9f-0bd8-3fa973cc185cd",
+                            
                             "ui-type": "#text",
                             "text": "TODOS"
                           }
@@ -92,55 +92,55 @@
     ]
   },
   "body": {
-    "id": "a9c0b840-615f-4c11-c1f9-a41d24807fb7c",
+    
     "ui-type": "section",
     "class": "bg-white",
     "children": [
       {
-        "id": "f7e7d0c7-ddcf-47a0-4f73-762f67f9b13dd",
+        
         "ui-type": "div",
         "class": "container",
         "children": [
           {
-            "id": "335aa600-eefe-488b-c90e-92fdf1da72639",
+            
             "ui-type": "div",
             "class": "row",
             "children": [
               {
-                "id": "f88aaa59-4e80-4c58-df33-d261ccec50f84",
+                
                 "ui-type": "div",
                 "class": "col-md",
                 "children": [
                   {
-                    "id": "5e70c149-0cb0-4dea-7596-2c4e33c629c77",
+                    
                     "ui-type": "form",
                     "children": [
                       {
-                        "id": "8e119aba-539d-4b19-ed59-1011414d0a010",
+                        
                         "ui-type": "div",
                         "attributes": {
                           "class": "form-group"
                         },
                         "children": [
                           {
-                            "id": "011d7ebd-8515-44f0-1462-cca957ad3af63",
+                            
                             "ui-type": "label",
                             "attributes": {
                               "for": "f808ee69-6e24-4eaf-d0b8-a069c41a4be15"
                             },
                             "children": [
                               {
-                                "id": "e1008cd4-c66b-4612-8717-7ddff578259cf",
+                                
                                 "ui-type": "#text",
                                 "text": "Name"
                               }
                             ]
                           },
                           {
-                            "id": "158a0eed-f6fe-47dc-c7f4-503f1a5f8c510",
+                            
                             "ui-type": "input",
                             "attributes": {
-                              "id": "f808ee69-6e24-4eaf-d0b8-a069c41a4be15",
+                              
                               "placeholder": "Name",
                               "aria-describedby": "Name",
                               "class": "form-control"
@@ -149,31 +149,31 @@
                         ]
                       },
                       {
-                        "id": "87f48c59-c2de-4301-1f7b-591b792e5e275",
+                        
                         "ui-type": "div",
                         "attributes": {
                           "class": "form-group"
                         },
                         "children": [
                           {
-                            "id": "1239db0b-5fb6-40e5-992b-79f8fb61ba29f",
+                            
                             "ui-type": "label",
                             "attributes": {
                               "for": "68765dbb-9e75-480d-a19a-c209eb759b032"
                             },
                             "children": [
                               {
-                                "id": "57f66e8f-24ed-4a4e-ff90-dd99aeeb4999c",
+                                
                                 "ui-type": "#text",
                                 "text": "Description"
                               }
                             ]
                           },
                           {
-                            "id": "ffb78963-7f90-4885-7cb6-cf0464e165ae8",
+                            
                             "ui-type": "textarea",
                             "attributes": {
-                              "id": "68765dbb-9e75-480d-a19a-c209eb759b032",
+                              
                               "placeholder": "Description",
                               "aria-describedby": "Description",
                               "class": "form-control",
@@ -189,12 +189,12 @@
             ]
           },
           {
-            "id": "5511fb41-230e-4395-8a30-bb180cc41e7be",
+            
             "ui-type": "div",
             "class": "row",
             "children": [
               {
-                "id": "d2e898a3-a3e1-4d43-a2a1-79491566eb187",
+                
                 "ui-type": "div",
                 "class": "col-md"
               }
