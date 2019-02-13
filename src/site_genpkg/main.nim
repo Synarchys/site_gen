@@ -1,5 +1,5 @@
 
-import json, tables, jsffi
+import json, tables, jsffi, strutils, times
 
 include karax / prelude 
 import karax / prelude
@@ -7,19 +7,19 @@ import karax / [vdom, karaxdsl, errors, kdom, vstyles]
 
 import requestjs, uuidjs
 
-import builder, ui_utils, listeners
+import builder, ui_utils, ui_def_gen, listeners
 export builder, ui_utils
 
-import strutils, times
 
 var console {.importcpp, noDecl.}: JsObject 
 
 # global variables
-const headers = [(cstring"Content-Type", cstring"application/json")]
-const definitionUrl = "/definition.json"
-const modelUrl = "/model.json"
-
-
+const
+  HEADERS        = [(cstring"Content-Type", cstring"application/json")]
+  COMPONENTS_URL ="/components.json"
+  DEFINITION_URL = "/definition.json"
+  MODEL_URL      = "/model.json"
+  
 
 var
   initialized = false
@@ -29,7 +29,8 @@ var
   dataListeners: Table[cstring, cstring]
   prevHashPart: cstring
 
-# TODO: move all loading to the worker
+
+# TODO: move all loading
 proc pareseJSonDefinion(resp: string): JsonNode = 
   try:
     result = parseJson($resp)
@@ -39,29 +40,32 @@ proc pareseJSonDefinion(resp: string): JsonNode =
     appState["error"] = %msg
     echo "Error with message \n", msg
 
-    
+
 proc loadDefinition(appState: JsonNode) =
-  ajaxGet(definitionUrl,
-          headers,
+  ajaxGet(DEFINITION_URL,
+          HEADERS,
           proc(stat:int, resp:cstring) =
             appState["definition"] = pareseJSonDefinion($resp)
+            # update the definition using the model
+            updateDefinition(appState)
             # finally we redraw when we have everything loaded
             `kxi`.redraw()
   )
 
-  
+
 proc loadModel(appState: JsonNode) =
-  ajaxGet(modelUrl,
-          headers,
+  ajaxGet(MODEL_URL,
+          HEADERS,
           proc(stat:int, resp:cstring) =
             if stat == 200:
               appState["model"] = pareseJSonDefinion($resp)
-            loadDefinition(appState))
+            loadDefinition(appState)            
+  )
 
   
 proc loadComponents(appState: JsonNode) =
-  ajaxGet("/components.json",
-          headers,
+  ajaxGet(COMPONENTS_URL,
+          HEADERS,
           proc(stat:int, resp:cstring) =
             let components = pareseJSonDefinion($resp)
             if appState.hasKey("components"):
@@ -91,7 +95,7 @@ proc updateData(n: VNode) =
     let 
       model = $n.getAttr("model")
       field = $n.getAttr("name")
-    
+
     if not appState.hasKey("data"):
       appState.add("data", %*{})
     if not appState["data"].hasKey(model):
@@ -129,7 +133,8 @@ proc bindDataListeners() =
     appState["dataListeners"].add(dl.getStr, component["id"])
 
 
-proc navigate(rd: RouterData) = 
+proc navigate(rd: RouterData) =
+  echo $rd.hashPart
   if prevHashPart != $rd.hashPart:
     appState["route"] = %($rd.hashPart)
     prevHashPart = $rd.hashPart
@@ -143,7 +148,7 @@ proc initNavigation() =
   prevHashPart = window.location.hash
 
     
-proc createDOM(rd: RouterData): VNode =
+proc createDOM(rd: RouterData): VNode =  
   navigate(rd)
   
   if appState.hasKey("error"):
