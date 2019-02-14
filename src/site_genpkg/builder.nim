@@ -51,18 +51,21 @@ proc toJson*(component: VNode): JsonNode =
     events.add(%($ev[0]))
   if events.len > 0: result["events"] = events
 
-
+    
 proc updateValue(vn: var VNode) =
   # TODO: handle exceptions when de name of the model is not an object
   var value: string
   if not data.isNil:
     let
-      model = vn.getAttr("model")
-      name = vn.getAttr("name")
-    if not model.isNil and not name.isNil:
-      if data.hasKey($model) and data[$model].haskey($name):
-        if vn.kind == VnodeKind.input:
-          setInputText(vn, data[$model][$name].getStr)
+      modelName = vn.getAttr("model")
+      field = vn.getAttr("name")
+      
+    if not modelName.isNil and not field.isNil:
+      if data.hasKey($modelName) and data[$modelName].hasKey("current"):
+        let current = data[$modelName]["current"]
+        if $field != "id" and current.haskey($field):
+          if vn.kind == VnodeKind.input:
+            setInputText(vn, current[$field].getStr)
           
           
 proc buildComponent*(params: JsonNode): VNode =
@@ -84,10 +87,10 @@ proc buildComponent*(params: JsonNode): VNode =
   else:
     result = newVNode(nodeKind)
 
-  # if params.hasKey("component_id"):
-  #   result.setAttr("component_id", params["component_id"].getStr)
+  if params.hasKey("id"):
+    result.setAttr("id", params["id"].getStr)
   # else:
-  #   result.setAttr("component_id", genUUID())
+  #   result.setAttr("id", genUUID())
   
   if nodeKind == VNodeKind.label and params.hasKey("text"):
     result.add text(params["text"].getStr)
@@ -121,7 +124,9 @@ proc buildComponent*(params: JsonNode): VNode =
         # FIXME: the way events are named and referenced is too simple
         # it will colide if the same model is used in another part of
         let actionName = "$1_$2_$3" % [$result.getAttr("model"), $result.getAttr("name"), $evk]
-        result.addEventListener(evk, defaultEvent(actionName, "$result.id"))
+        var id = result.getAttr("id")
+        if id.isNil: id = ""
+        result.addEventListener(evk, defaultEvent(actionName, $id))
       #else:
       #  echo "WARNING: event ", $evk, " does not exists." 
   updateValue(result)
@@ -191,6 +196,92 @@ proc edit(formDef: JsonNode): JsonNode =
   form
 
 
+proc buildRow(): VNode =
+  result = buildHtml():
+    tdiv(class="container"):
+      tdiv(class="row"):
+        tdiv(class="col-sm"):
+          text "One of three columns"
+
+          
+proc list(def: JsonNode): JsonNode =
+  # use data to create the list
+  let modelName = def["model"].getStr
+  if appState["data"][modelName].hasKey("list"):
+    let modelList = appState["data"][modelName]["list"]
+    
+    result = %*{
+      "ui-type": "div",
+      "attributes": %*{"class": %"container"},
+      "children": %[]
+    }
+    
+    var row = %*{
+        "ui-type": %"div",
+        "attributes": %*{"class": %"row"},
+        "children": %[]
+      }  
+    # TODO: extract field names and use it as column headers
+    # Header
+    var header = copy row
+    for k, v in modelList[0].getFields:
+      # create header
+      var h = %*{
+          "ui-type": %"div",
+          "attributes": %*{"class": %"col-sm"},
+          "children": %[
+            %*{
+              "ui-type": "#text",
+              "text": %(capitalize k)
+            }
+          ]
+        }
+
+      header["children"].add h
+    result["children"].add header
+      
+    for elem in modelList.getElems:
+      # each item in one row
+      var r = copy row
+      for k, v in elem.getFields:
+      # each row will contain: fields values and buttons of edit/delete
+      # iterte over fields
+        var cellVal = v.getStr
+        var cell = %*{
+          "ui-type": %"div",
+          "attributes": %*{"class": %"col-sm"},
+          "children": %[
+            %*{
+              "ui-type": "#text",
+              "text": %cellVal
+            }
+          ]
+        }
+        
+        r["children"].add cell
+
+      var editButton = copy components["button"]
+      editButton["children"][0]["text"] = %"Edit"
+      editButton["events"] = %["onclick"]
+      editButton["id"] = elem["id"]
+      editButton["attributes"]= %*{
+        "model": %modelName,
+        "name": %("edit")
+      }
+      r["children"].add(editButton)
+      
+      var deleteButton = copy components["button"]
+      deleteButton["children"][0]["text"] = %"Delete"
+      deleteButton["events"] = %["onclick"]
+      deleteButton["id"] = elem["id"]
+      deleteButton["attributes"]= %*{
+        "model": %modelName,
+        "name": %("delete")
+      }
+      r["children"].add(deleteButton)      
+      result["children"].add r
+
+  
 proc buildHeader(def: JsonNode): VNode =
   var h = copy components["header"]
   # WARNING: hardcoded
@@ -214,7 +305,7 @@ proc buildBody(action: string, bodyDefinition: var JsonNode): VNode =
       
     if def.hasKey "label": label = def["label"].getStr
     else: label = "Edit " & capitalize(def["model"].getStr)
-      
+    
     h3.add text(label)
     editForm.insert(h3, 0)
     # preventing default submision
@@ -224,10 +315,7 @@ proc buildBody(action: string, bodyDefinition: var JsonNode): VNode =
     #elem["component_id"] = %($editForm.getAttr("component_id"))
     result.add(editForm)
   of "list":
-    # TODO:
-    var ul = newVNode(VnodeKind.ul)
-    result.add(ul)
-    echo "TODO: create a list with its childs or use the model if nothing is defined"
+    result.add buildComponent(list(def))
   of "gird":
     #TODO:
     echo "TODO: create a grid"

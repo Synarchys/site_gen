@@ -109,16 +109,17 @@ proc reRender*()=
   `kxi`.redraw()
 
     
-proc eventGen*(action, id: string): proc(ev: Event, n: VNode) =  
+proc eventGen*(action: string, id: string = ""): proc(ev: Event, n: VNode) =  
   result = proc (ev: Event, n: VNode) =
     ev.preventDefault()
     var payload = %*{}
     payload["ui"] = appState["ui"] # pass the ui status, should be cached
     payload["action"] = %action # the name of the action that is triggered
     # ignoring the id of the vnode, use component_id for internal reference
-    #payload["id"] = %id # the id of the component
+    if id != "": payload["id"] = %id # the id of the component
     if n.value != nil:
-      payload["value"] = %($n.value)    
+      payload["value"] = %($n.value)
+    
     callEventListener(payload, action, actions)
     appState["ui"] = payload["ui"]
     updateData(n)  
@@ -134,7 +135,6 @@ proc bindDataListeners() =
 
 
 proc navigate(rd: RouterData) =
-  echo $rd.hashPart
   if prevHashPart != $rd.hashPart:
     appState["route"] = %($rd.hashPart)
     prevHashPart = $rd.hashPart
