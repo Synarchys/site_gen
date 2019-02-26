@@ -1,14 +1,14 @@
+
 ## This module generates parts or the whole ui-definition based on the
 ## the model (the data schema).
 
 import json, tables, unicode
 
 
-
 proc editModel(appState, def: JsonNode) =
   let
     modelName = def["model"].getStr
-    model = appState["model"][modelName] # must exist in the model
+    model = appState["schema"][modelName]
     
   var newV = def
   newV.add("children", %[])
@@ -37,9 +37,8 @@ proc listModel(appState, def: JsonNode) =
   echo "TODO: Create list definition."
   let
     modelName = def["model"].getStr
-    model = appState["model"][modelName] # must exist in the model
+    model = appState["schema"][modelName]
 
-  
 
 proc showModel(appState, def: JsonNode) =
   echo "show the model"
@@ -47,23 +46,21 @@ proc showModel(appState, def: JsonNode) =
   
 proc updateDefinition*(appState: JsonNode) =
   ## Recieves an ui-definition and updates it
-  ## feeling the blanks with the model
+  ## filling the blanks with the model
 
-  # for the moment update the body part of the definition
-  # as there is where all action is.
-  
-  var body = appState["definition"]["body"]
-  for routes, content in body.getFields:
+  var uiBody = appState["definition"]["body"]
+  for routes, content in uiBody.getFields:
     # first level are the routes
-    var model: JsonNode
+    var modelName: string
     if content.hasKey("model"):
-      model = content["model"]
+      modelName = content["model"].getStr
       # delete, we won't be using afterwards
       content.delete "model"
-    for action, def in content.getFields:  
+    for action, def in content.getFields:
     # if the definition does not have children create them from model.js
-      if not def.hasKey("model"): def["model"] = model
-      if def.kind == JObject and not def.hasKey("children"):
+      if not def.hasKey("model"): def["model"] = %modelName
+      if def.kind == JObject and not def.hasKey("children") and
+         appState["schema"].hasKey(modelName):
         case action
         of "edit":
           editModel(appState, def)

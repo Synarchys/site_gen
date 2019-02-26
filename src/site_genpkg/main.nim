@@ -18,7 +18,7 @@ const
   HEADERS        = [(cstring"Content-Type", cstring"application/json")]
   COMPONENTS_URL ="/components.json"
   DEFINITION_URL = "/definition.json"
-  MODEL_URL      = "/model.json"
+  MODEL_URL      = "/auto/schema" #"/model.json"
   
 
 var
@@ -30,53 +30,59 @@ var
   prevHashPart: cstring
 
 
-# TODO: move all loading
-proc pareseJSonDefinion(resp: string): JsonNode = 
-  try:
-    result = parseJson($resp)
-  except:
-    # TODO: Show error component
-    let msg = getCurrentExceptionMsg()
-    appState["error"] = %msg
-    echo "Error with message \n", msg
+# # TODO: move all loading
+# proc parseJsonDefintion(resp: string): JsonNode = 
+#   try:
+#     result = parseJson($resp)
+#   except:
+#     # TODO: Show error component
+#     let msg = getCurrentExceptionMsg()
+#     appState["error"] = %msg
+#     echo "Error with message \n", msg
 
-
-proc loadDefinition(appState: JsonNode) =
-  ajaxGet(DEFINITION_URL,
-          HEADERS,
-          proc(stat:int, resp:cstring) =
-            appState["definition"] = pareseJSonDefinion($resp)
-            # update the definition using the model
-            updateDefinition(appState)
-            # finally we redraw when we have everything loaded
-            `kxi`.redraw()
-  )
-
-
-proc loadModel(appState: JsonNode) =
-  ajaxGet(MODEL_URL,
-          HEADERS,
-          proc(stat:int, resp:cstring) =
-            if stat == 200:
-              appState["model"] = pareseJSonDefinion($resp)
-            loadDefinition(appState)            
-  )
-
-  
-proc loadComponents(appState: JsonNode) =
-  ajaxGet(COMPONENTS_URL,
-          HEADERS,
-          proc(stat:int, resp:cstring) =
-            let components = pareseJSonDefinion($resp)
-            if appState.hasKey("components"):
-              # merge components
-              for k, v in components.getFields:
-                if not appState["components"].hasKey(k):
-                  # use components defined by the user if names colide
-                  appState{"components", k}= v
-            else:
-              appState["components"] = components
-            loadModel(appState))
+# proc loadDefinition(appState: JsonNode) =
+#   ajaxGet(DEFINITION_URL,
+#           HEADERS,
+#           proc(stat:int, resp:cstring) =
+#             appState["definition"] = parseJsonDefintion($resp)
+#             # update the definition using the model
+#             updateDefinition(appState)
+#             # finally we redraw when we have everything loaded
+#             `kxi`.redraw()
+#   )
+# proc processSchema(schema: JsonNode) =
+#   ## Adapts the schema to the ui data model
+#   var model = %*{}
+#   for tab in schema.getElems:
+#     let tableName = tab["name"].getStr
+#     model[tableName] = %*{"columns": %[]}
+#     for c in tab["columns"].getElems:
+#       # use column["type"]
+#       let columnName = c["name"].getStr
+#       model[tableName][columnName] = %"string"
+#       appState["model"] = model
+# proc loadModel(appState: JsonNode) =
+#   ajaxGet(MODEL_URL,
+#           HEADERS,
+#           proc(stat:int, resp:cstring) =            
+#             if stat == 200:
+#               processSchema(parseJsonDefintion($resp))
+#             loadDefinition(appState)            
+#   )  
+# proc loadComponents(appState: JsonNode) =
+#   ajaxGet(COMPONENTS_URL,
+#           HEADERS,
+#           proc(stat:int, resp:cstring) =
+#             let components = parseJsonDefintion($resp)
+#             if appState.hasKey("components"):
+#               # merge components
+#               for k, v in components.getFields:
+#                 if not appState["components"].hasKey(k):
+#                   # use components defined by the user if names colide
+#                   appState{"components", k}= v
+#             else:
+#               appState["components"] = components
+#             loadModel(appState))
 
 
 proc updateInput(payload: JsonNode) =
@@ -162,7 +168,7 @@ proc createDOM(rd: RouterData): VNode =
     appState["ui"] = result.toJson
     
   elif not appState.hasKey("definition"):
-    loadComponents(appState)
+    #loadComponents(appState)
     result = buildHtml(tdiv()):
       p:
         text "Loading Site..."
@@ -180,7 +186,7 @@ proc createDOM(rd: RouterData): VNode =
 
 
 proc createApp*(state: JsonNode,
-                a: Table[cstring, proc(payload: JsonNode){.closure.}]) =
+                a: Table[cstring, proc(payload: JsonNode){.closure.}]) =  
   actions = a
   appState = state
   initNavigation()

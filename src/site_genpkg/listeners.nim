@@ -70,7 +70,7 @@ proc addEventListener(n: NimNode): NimNode =
   )
 
  
-proc processEventHandlers(n: NimNode): untyped =  
+proc processEventHandlers(n: NimNode): NimNode =  
   result = nnkStmtList.newTree(
     nnkVarSection.newTree(
       createEventsTable()

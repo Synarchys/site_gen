@@ -70,7 +70,8 @@ proc updateValue(vn: var VNode) =
           
 proc buildComponent*(params: JsonNode): VNode =
   ## builds a component based on a json definition
-  var nodeKind: VNodeKind  
+  var nodeKind: VNodeKind
+
   for vnk in VNodeKind:
     if params.hasKey("ui-type"):
       if $vnk == params["ui-type"].getStr:
@@ -167,14 +168,14 @@ proc formGroup(def: JsonNode): JsonNode =
   result["children"].add(component)
 
   
-proc edit(formDef: JsonNode): JsonNode =
+proc edit(formDef: JsonNode): JsonNode =  
   var form = %*{
     "ui-type": "form",
     "name": formDef["name"],
     "model": formDef["model"]
   }
   
-  form["children"] = newJArray()
+  form["children"] = newJArray()  
   
   for k1, v1 in formDef.getFields:
     if k1 == "children":
@@ -195,40 +196,40 @@ proc edit(formDef: JsonNode): JsonNode =
         form["children"].add(child)
   form
 
-
-proc buildRow(): VNode =
-  result = buildHtml():
-    tdiv(class="container"):
-      tdiv(class="row"):
-        tdiv(class="col-sm"):
-          text "One of three columns"
-
           
 proc list(def: JsonNode): JsonNode =
+  # TODO: inform when theres no data
   # use data to create the list
+  
   let modelName = def["model"].getStr
-  if appState["data"][modelName].hasKey("list"):
-    let modelList = appState["data"][modelName]["list"]
-    
+  if appState.haskey("store") and appState["store"]["objects"][modelName].hasKey("list"):
+    var modelList = %[]
+    for objId in appState["store"]["objects"][modelName]["list"]:
+      modelList.add appState["store"]["data"][objId.getStr]
+
+    #echo modelList.pretty
+    result = %{"ui-type": %"div",
+                "attributes": %*{"class": %"container"},
+                "children": %[]}
     result = %*{
-      "ui-type": "div",
-      "attributes": %*{"class": %"container"},
+      "ui-type": "table",
+      "attributes": %*{"class": %"table"},
       "children": %[]
     }
     
     var row = %*{
-        "ui-type": %"div",
-        "attributes": %*{"class": %"row"},
+        "ui-type": %"tr",
         "children": %[]
       }  
     # TODO: extract field names and use it as column headers
     # Header
-    var header = copy row
+    var tr = copy row
+    
     for k, v in modelList[0].getFields:
       # create header
-      var h = %*{
-          "ui-type": %"div",
-          "attributes": %*{"class": %"col-sm"},
+      var th = %*{
+          "ui-type": %"th",
+          "attributes": %*{"scope": %"col"},
           "children": %[
             %*{
               "ui-type": "#text",
@@ -237,19 +238,19 @@ proc list(def: JsonNode): JsonNode =
           ]
         }
 
-      header["children"].add h
-    result["children"].add header
-      
+      tr["children"].add th
+    result["children"].add %{"ui-type": %"thead", "children": %[tr]}
+    var tbody = %*{"ui-type": %"tbody", "children": %[]}
+    
     for elem in modelList.getElems:
       # each item in one row
-      var r = copy row
+      var tr = copy row
       for k, v in elem.getFields:
       # each row will contain: fields values and buttons of edit/delete
-      # iterte over fields
+      # iterte over fields  
         var cellVal = v.getStr
         var cell = %*{
-          "ui-type": %"div",
-          "attributes": %*{"class": %"col-sm"},
+          "ui-type": %"td",
           "children": %[
             %*{
               "ui-type": "#text",
@@ -257,8 +258,12 @@ proc list(def: JsonNode): JsonNode =
             }
           ]
         }
-        
-        r["children"].add cell
+
+        if k == "id":
+          cell["ui-type"] = %"th"
+          cell["attributes"] = %*{"scope":"row"}
+                                 
+        tr["children"].add cell
 
       var editButton = copy components["button"]
       editButton["children"][0]["text"] = %"Edit"
@@ -268,7 +273,7 @@ proc list(def: JsonNode): JsonNode =
         "model": %modelName,
         "name": %("edit")
       }
-      r["children"].add(editButton)
+      tr["children"].add(editButton)
       
       var deleteButton = copy components["button"]
       deleteButton["children"][0]["text"] = %"Delete"
@@ -278,8 +283,10 @@ proc list(def: JsonNode): JsonNode =
         "model": %modelName,
         "name": %("delete")
       }
-      r["children"].add(deleteButton)      
-      result["children"].add r
+      tr["children"].add deleteButton
+      tbody["children"].add tr
+      
+    result["children"].add tbody
 
   
 proc buildHeader(def: JsonNode): VNode =
@@ -340,7 +347,7 @@ proc updateUI*(state: var JsonNode): VNode =
     definition = uiDef
 
   if state.hasKey("data"):
-    data = state["data"]
+    data = state["store"]
 
   var route, action: string
   if appState.hasKey("route") and appState["route"].getStr != "":
