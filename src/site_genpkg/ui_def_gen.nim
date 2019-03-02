@@ -34,16 +34,26 @@ proc editModel(appState, def: JsonNode) =
 
 proc listModel(appState, def: JsonNode) =
   # use data to create the list
-  echo "TODO: Create list definition."
   let
     modelName = def["model"].getStr
     model = appState["schema"][modelName]
 
 
 proc showModel(appState, def: JsonNode) =
-  echo "show the model"
+  discard
 
-  
+
+const ACTIONS = ["list", "show", "edit"]
+
+proc generateBody*(schema: JsonNode): JsonNode =
+  result = %*{}
+  for tabName, value in schema:
+    let route = "#/" & tabName
+    result[route] = %*{"model": %tabName}
+    for a in ACTIONS:
+      result[route][a] = %*{"name": %(a & capitalize tabName)}
+
+
 proc updateDefinition*(appState: JsonNode) =
   ## Recieves an ui-definition and updates it
   ## filling the blanks with the model
