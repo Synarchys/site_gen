@@ -17,16 +17,30 @@ proc bindDataListners(ui: JsonNode, dataListeners: var Table[cstring, cstring]) 
     dataListeners.add(listener, id)
 
 
-proc callEventListener*(payload: JsonNode, action: cstring,
-                       actions: Table[cstring, proc(payload: JsonNode){.closure.}]) =
-
-  if actions.hasKey(action):
-    var eventListener = actions[action]
-    eventListener(payload)
-  
-  else:
+proc noEventListener(payload: JsonNode, action: string): proc(payload: JsonNode){.closure.} =
+  result = proc(payload: JsonNode){.closure.} =
     echo "WARNING: Action $1 not found in the table." % $action
+
     
+proc callEventListener*(payload: JsonNode,
+                        actions: Table[cstring, proc(payload: JsonNode){.closure.}]) =
+
+  var eventListener: proc(payload: JsonNode){.closure.}
+  let action = "$1_$2_$3" % [payload["model"].getStr,
+                             payload["node_name"].getStr,
+                             payload["event_kind"].getStr]
+
+  
+  if actions.hasKey action:
+    eventListener = actions[action]
+  elif actions.hasKey "sitegen_default_action":
+    # default action
+    eventListener = actions["sitegen_default_action"]
+  else:
+    eventListener = noEventListener(payload, action)
+  eventListener payload
+    
+  
 proc createEventsTable(): NimNode =
   result = nnkIdentDefs.newTree(
     nnkPostfix.newTree(

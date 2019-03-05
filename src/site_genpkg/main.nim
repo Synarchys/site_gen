@@ -99,8 +99,8 @@ proc updateInput(payload: JsonNode) =
 proc updateData(n: VNode) =
   if not n.value.isNil:
     let 
-      model = $n.getAttr("model")
-      field = $n.getAttr("name")
+      model = $n.getAttr "model"
+      field = $n.getAttr "name"
 
     if not appState.hasKey("data"):
       appState.add("data", %*{})
@@ -115,19 +115,23 @@ proc reRender*()=
   `kxi`.redraw()
 
     
-proc eventGen*(action: string, id: string = ""): proc(ev: Event, n: VNode) =  
+proc eventGen*(eventKind: string, id: string = ""): proc(ev: Event, n: VNode) =  
   result = proc (ev: Event, n: VNode) =
     ev.preventDefault()
     var payload = %*{}
-    payload["ui"] = appState["ui"] # pass the ui status, should be cached
-    payload["action"] = %action # the name of the action that is triggered
+    #payload["ui"] = appState["ui"] # pass the ui status, should be cached
+    # FIXME: the way events are named and referenced is too simple
+    # it will colide if the same model is used in another part of
+    payload["model"] = %($n.getAttr "model")
+    payload["node_name"] = %($n.getAttr "name")
+    payload["event_kind"] = %eventKind
     # ignoring the id of the vnode, use component_id for internal reference
     if id != "": payload["id"] = %id # the id of the component
     if n.value != nil:
       payload["value"] = %($n.value)
     
-    callEventListener(payload, action, actions)
-    appState["ui"] = payload["ui"]
+    callEventListener(payload, actions)
+    #appState["ui"] = payload["ui"]
     updateData(n)  
     reRender()
   
@@ -154,7 +158,7 @@ proc initNavigation() =
   prevHashPart = window.location.hash
 
     
-proc createDOM(rd: RouterData): VNode =  
+proc createDOM(rd: RouterData): VNode =
   navigate(rd)
   
   if appState.hasKey("error"):
