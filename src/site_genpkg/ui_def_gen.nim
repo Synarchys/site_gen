@@ -16,22 +16,22 @@ proc editModel(appState, def: JsonNode) =
     if field != "id" and fieldType.getStr == "string":
       newV["children"].add(
         %*{
-          "name": %(field),
+          "name": %field,
           "label": %(capitalize field), # uppercase first character
           "type": fieldType,
           "ui-type": %"input"
       })
 
   # default submit button
-  newV["children"].add(
-    %*{
-      "name": %("save_button"),
+  var b =  %*{
+      "name": %"save_button",
       "ui-type": %"button",
       "label": %"Save",
       "events": %["onclick"]
-  })
-
-
+  }
+  if model.haskey "id": b["id"] = model["id"]
+  newV["children"].add b
+     
 proc listModel(appState, def: JsonNode) =
   # use data to create the list
   let
@@ -62,15 +62,15 @@ proc updateDefinition*(appState: JsonNode) =
   for routes, content in uiBody.getFields:
     # first level are the routes
     var modelName: string
-    if content.hasKey("model"):
+    if content.hasKey "model":
       modelName = content["model"].getStr
       # delete, we won't be using afterwards
       content.delete "model"
     for action, def in content.getFields:
     # if the definition does not have children create them from model.js
-      if not def.hasKey("model"): def["model"] = %modelName
-      if def.kind == JObject and not def.hasKey("children") and
-         appState["schema"].hasKey(modelName):
+      if not def.hasKey "model": def["model"] = %modelName
+      if def.kind == JObject and not (def.hasKey "children") and
+         appState["schema"].hasKey modelName:
         case action
         of "edit":
           editModel(appState, def)

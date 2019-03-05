@@ -52,24 +52,11 @@ proc toJson*(component: VNode): JsonNode =
   if events.len > 0: result["events"] = events
 
     
-proc updateValue(vn: var VNode) =
+proc updateValue(vn: var VNode, value: string) =
   # TODO: handle exceptions when de name of the model is not an object
-  var value: string
-  if appState.hasKey"store" and appState["store"].hasKey"objects":
-    let
-      dataStore = appState["store"]
-      modelName = vn.getAttr("model")
-      field = vn.getAttr("name")
-    
-    if not modelName.isNil and not field.isNil:
-      if (dataStore["objects"].hasKey $modelName) and (dataStore["objects"][$modelName].hasKey "current"):
-        let currId = dataStore["objects"][$modelName]["current"].getStr
-        if currId != "":
-          let current = dataStore["data"][currId]
-          if $field != "id" and current.haskey $field:
-            if vn.kind == VnodeKind.input:
-              setInputText vn, current[$field].getStr
-          
+  if vn.kind == VnodeKind.input:
+    setInputText vn, value
+      
           
 proc buildComponent*(params: JsonNode): VNode =
   ## builds a component based on a json definition
@@ -119,20 +106,16 @@ proc buildComponent*(params: JsonNode): VNode =
     result.setAttr "dataListener", params["dataListener"].getStr
   
   if params.hasKey "events":
-    # TODO: improve
-    # if the component does not have a name quit with a message
     let events = params["events"]      
     for evk in EventKind:
       if events.contains %($evk):
-        # FIXME: the way events are named and referenced is too simple
-        # it will colide if the same model is used in another part of
-        let actionName = "$1_$2_$3" % [$result.getAttr "model", $result.getAttr "name", $evk]
         var id = result.getAttr "id"
         if id.isNil: id = ""
-        result.addEventListener evk, defaultEvent(actionName, $id)
-      #else:
-      #  echo "WARNING: event ", $evk, " does not exists." 
-  updateValue result
+        result.addEventListener evk, defaultEvent($evk, $id)
+        
+  # updateValue result
+  if params.haskey "value": result.updateValue params["value"].getStr
+    
   if params.hasKey "children":
     for child in params["children"].getElems:
       result.add buildComponent child
@@ -165,36 +148,13 @@ proc formGroup(def: JsonNode): JsonNode =
   if def.hasKey "model":
     component["model"] = copy def["model"]
 
+  if def.hasKey "value":
+    component["value"] = copy def["value"]
+
   result["children"][0]["text"] = %(def["label"].getStr & ":")
   result["children"][0]{"attributes","for"} = component["name"]
   result["children"].add component
 
-  
-proc edit(formDef: JsonNode): JsonNode =  
-  var form = %*{
-    "ui-type": "form",
-    "name": formDef["name"],
-    "model": formDef["model"]
-  }
-  form["children"] = newJArray() 
-  for k1, v1 in formDef.getFields:
-    if k1 == "children":
-      for item in v1.getElems:
-        var child: JsonNode
-        item["model"] = formDef["model"]
-        if item["ui-type"].getStr == "button":
-          # just build it
-          child = copy components["button"]
-          # add the label or text as child so it can be displayed on the button
-          child["model"] = formDef["model"]
-          child["name"] = copy item["name"]
-          child["events"] = copy item["events"]
-          child["children"][0]["text"] = item["label"]
-        else:
-          # if item is input use formGroup
-          child = formGroup item
-        form["children"].add child
-  form
 
 
 proc ignore(key: string): bool =
@@ -202,6 +162,42 @@ proc ignore(key: string): bool =
   if key == "id" or key == "relations" or key == "type" or
      key.contains("_id") or key.contains("id_"):
     result = true
+
+  
+proc edit(formDef: JsonNode): JsonNode =
+  let modelName = formDef["model"].getStr
+  
+  var form = %*{
+    "ui-type": "form",
+    "name": formDef["name"],
+    "model": formDef["model"]
+  }
+  let current = getCurrent(appState, modelName)
+  form["children"] = newJArray()
+  # for k1, v1 in formDef.getFields:
+  #   if k1 == "children":
+  for item in formDef["children"].getElems:
+      #for item in v1.getElems:
+    let fieldName = item["name"].getStr
+    if not ignore fieldName:
+      var child: JsonNode
+      item["model"] = %modelName
+      if item["ui-type"].getStr == "button":
+        # just build it
+        child = copy components["button"]
+        # add the label or text as child so it can be displayed on the button
+        child["model"] = %modelName
+        child["name"] = if item.hasKey fieldName: copy item[fieldName] else: %fieldName
+        child["events"] = copy item["events"]
+        child["children"][0]["text"] = item["label"]
+        if not current.isNil: child["id"] = current["id"]
+      else:
+        # if item is input use formGroup
+        if not current.isNil: item["value"] = current[fieldName]
+        child = formGroup item
+          
+        form["children"].add child
+  form
     
 
 proc list(modelName: string, ids: JsonNode): JsonNode =
@@ -269,12 +265,12 @@ proc list(modelName: string, ids: JsonNode): JsonNode =
           tr["children"].add cell
 
       var b = copy components["button"]
-      b["children"][0]["text"] = %"Details"
+      b["children"][0]["text"] = %"Detail"
       b["events"] = %["onclick"]
       b["id"] = elem["id"]
       b["attributes"]= %*{
         "model": %modelName,
-        "name": %("details")
+        "name": %("show")
       }
       tr["children"].add(b)
       tbody["children"].add tr      
@@ -298,7 +294,7 @@ proc sectionHeader(obj: JsonNode): JsonNode =
   b["children"][0]["text"] = %"Edit"
   b["events"] = %["onclick"]
   b["id"] = obj["id"]
-  b["attributes"]= %*{"model": %(obj["type"]), "name": %("edit")}
+  b["attributes"]= %*{"model": %(obj["type"]), "name": %"edit"}
   
   var hc = copy components["gridColumn"]
   hc["children"].add %*{
