@@ -20,6 +20,11 @@ proc setCurrent*(appState:JsonNode, objType, id: string) =
   if appState["store"].haskey("objects") and appState["store"]["objects"].haskey(objType):
     appState["store"]["objects"][objType]["current"] = %id
 
+
+proc setFieldValue*(appState:JsonNode, objType, field, value: string) =
+  var c = getCurrent(appState, objType)
+  c[field] = %value
+
     
 proc getList*(appState:JsonNode, objType: string): JsonNode =
   # returns a jsnode of kind array

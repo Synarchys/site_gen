@@ -16,15 +16,17 @@ proc editModel(appState, def: JsonNode) =
     if field != "id" and fieldType.getStr == "string":
       newV["children"].add(
         %*{
+          "ui-type": %"input",
           "name": %field,
           "label": %(capitalize field), # uppercase first character
           "type": fieldType,
-          "ui-type": %"input"
+          "events": ["onkeyup"]
+            
       })
 
   # default submit button
   var b =  %*{
-      "name": %"save_button",
+      "name": %"save",
       "ui-type": %"button",
       "label": %"Save",
       "events": %["onclick"]

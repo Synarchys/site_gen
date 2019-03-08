@@ -33,6 +33,8 @@ proc callEventListener*(payload: JsonNode,
   
   if actions.hasKey action:
     eventListener = actions[action]
+  elif payload["node_kind"].getStr == "input" and actions.hasKey "sitegen_input_action":
+    eventListener = actions["sitegen_input_action"]
   elif actions.hasKey "sitegen_default_action":
     # default action
     eventListener = actions["sitegen_default_action"]

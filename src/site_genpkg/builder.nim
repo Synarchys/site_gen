@@ -106,7 +106,7 @@ proc buildComponent*(params: JsonNode): VNode =
     result.setAttr "dataListener", params["dataListener"].getStr
   
   if params.hasKey "events":
-    let events = params["events"]      
+    let events = params["events"]
     for evk in EventKind:
       if events.contains %($evk):
         var id = result.getAttr "id"
@@ -138,7 +138,6 @@ proc formGroup(def: JsonNode): JsonNode =
       # TODO: raise error
       echo "Error: ui-type ", uiType, "not found."
 
-  #component["component_id"] = %genUUID 
 
   if def.hasKey "events":
     # add events to component we are preparing
@@ -174,18 +173,13 @@ proc edit(formDef: JsonNode): JsonNode =
   }
   let current = getCurrent(appState, modelName)
   form["children"] = newJArray()
-  # for k1, v1 in formDef.getFields:
-  #   if k1 == "children":
   for item in formDef["children"].getElems:
-      #for item in v1.getElems:
     let fieldName = item["name"].getStr
     if not ignore fieldName:
       var child: JsonNode
       item["model"] = %modelName
       if item["ui-type"].getStr == "button":
-        # just build it
         child = copy components["button"]
-        # add the label or text as child so it can be displayed on the button
         child["model"] = %modelName
         child["name"] = if item.hasKey fieldName: copy item[fieldName] else: %fieldName
         child["events"] = copy item["events"]
@@ -194,9 +188,8 @@ proc edit(formDef: JsonNode): JsonNode =
       else:
         # if item is input use formGroup
         if not current.isNil: item["value"] = current[fieldName]
-        child = formGroup item
-          
-        form["children"].add child
+        child = formGroup item    
+      form["children"].add child
   form
     
 
@@ -217,25 +210,18 @@ proc list(modelName: string, ids: JsonNode): JsonNode =
       "children": %[]
     }
     
-    var row = %*{
-        "ui-type": %"tr",
-        "children": %[]
-      }  
+    var row = %*{ "ui-type": %"tr", "children": %[] }  
     # TODO: extract field names and use it as column headers
     # Header
     var tr = copy row    
     for k, v in modelList[0].getFields:
       # create header
       if not ignore k:
-        var th = %*{
-          "ui-type": %"th",
-          "attributes": %*{"scope": %"col"},
-          "children": %[
-            %*{
-              "ui-type": "#text",
-              "text": %(capitalize k)
-            }
-          ]
+        var th =
+          %*{
+            "ui-type": %"th",
+            "attributes": %*{"scope": %"col"},
+            "children": %[%*{ "ui-type": "#text", "text": %(capitalize k)}]
         }
         tr["children"].add th
         result["children"].add %{"ui-type": %"thead", "children": %[tr]}
@@ -252,12 +238,7 @@ proc list(modelName: string, ids: JsonNode): JsonNode =
           var cellVal = v.getStr
           var cell = %*{
             "ui-type": %"td",
-            "children": %[
-              %*{
-                "ui-type": "#text",
-                "text": %cellVal
-              }
-            ]
+            "children": %[ %*{ "ui-type": "#text", "text": %cellVal } ]
           }
           if k == "id":
             cell["ui-type"] = %"th"
@@ -423,5 +404,5 @@ proc initApp*(state: var JsonNode,
   let definition = state["definition"]
   appState = state
   components = state["components"]
-  defaultEvent = event  
+  defaultEvent = event
   result = updateUI state

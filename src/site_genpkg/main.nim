@@ -85,17 +85,6 @@ var
 #             loadModel(appState))
 
 
-proc updateInput(payload: JsonNode) =
-  # deprecate (?)
-  # sync with the vnode
-  let
-    id = payload["id"].getStr
-    value = payload["value"].getStr    
-  var ui = payload["ui"]
-  updateValue(ui, id, value)
-  payload["ui"] = ui
-
-
 proc updateData(n: VNode) =
   if not n.value.isNil:
     let 
@@ -124,6 +113,7 @@ proc eventGen*(eventKind: string, id: string = ""): proc(ev: Event, n: VNode) =
     # it will colide if the same model is used in another part of
     payload["model"] = %($n.getAttr "model")
     payload["node_name"] = %($n.getAttr "name")
+    payload["node_kind"] = %($n.kind)
     payload["event_kind"] = %eventKind
     # ignoring the id of the vnode, use component_id for internal reference
     if id != "": payload["id"] = %id # the id of the component
@@ -164,7 +154,7 @@ proc createDOM(rd: RouterData): VNode =
   if appState.hasKey("error"):
     result = buildHtml(tdiv()):
       p:
-        text appState["error"].getStr        
+        text appState["error"].getStr
     appState.delete("error")
     
   elif initialized:
@@ -195,4 +185,3 @@ proc createApp*(state: JsonNode,
   appState = state
   initNavigation()
   `kxi` = setRenderer(createDOM)
-
