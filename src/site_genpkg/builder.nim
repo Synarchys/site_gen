@@ -7,6 +7,7 @@ import karax / prelude
 import karax / [errors, kdom, vstyles]
 
 import store, uuidjs
+import components/date_picker
 
 
 var defaultEvent: proc(name, id: string): proc(ev: Event, n: VNode)
@@ -71,6 +72,7 @@ proc buildComponent*(params: JsonNode): VNode =
       # TODO raise error.
       echo "Error: component not found"
       break
+
     
   if nodeKind == VNodeKind.text:
     # text kind has its own constructor
@@ -138,7 +140,6 @@ proc formGroup(def: JsonNode): JsonNode =
       # TODO: raise error
       echo "Error: ui-type ", uiType, "not found."
 
-
   if def.hasKey "events":
     # add events to component we are preparing
     component["events"] = copy def["events"]    
@@ -146,14 +147,12 @@ proc formGroup(def: JsonNode): JsonNode =
     component["name"] = copy def["name"]
   if def.hasKey "model":
     component["model"] = copy def["model"]
-
   if def.hasKey "value":
     component["value"] = copy def["value"]
 
   result["children"][0]["text"] = %(def["label"].getStr & ":")
   result["children"][0]{"attributes","for"} = component["name"]
   result["children"].add component
-
 
 
 proc ignore(key: string): bool =
@@ -188,8 +187,11 @@ proc edit(formDef: JsonNode): JsonNode =
       else:
         # if item is input use formGroup
         if not current.isNil: item["value"] = current[fieldName]
-        child = formGroup item    
+        child = formGroup item
       form["children"].add child
+
+  var dp = date_picker.render(components, %*{})
+    
   form
     
 
@@ -199,10 +201,6 @@ proc list(modelName: string, ids: JsonNode): JsonNode =
     var modelList = %[]
     for objId in ids:
       modelList.add appState.getItem objId.getStr
-    
-    result = %{"ui-type": %"div",
-                "attributes": %*{"class": %"container"},
-                "children": %[]}
               
     result = %*{
       "ui-type": "table",
@@ -210,18 +208,17 @@ proc list(modelName: string, ids: JsonNode): JsonNode =
       "children": %[]
     }
     
-    var row = %*{ "ui-type": %"tr", "children": %[] }  
+    var row = %*{ "ui-type": %"tr", "children": %[] }
     # TODO: extract field names and use it as column headers
     # Header
     var tr = copy row    
     for k, v in modelList[0].getFields:
       # create header
       if not ignore k:
-        var th =
-          %*{
-            "ui-type": %"th",
-            "attributes": %*{"scope": %"col"},
-            "children": %[%*{ "ui-type": "#text", "text": %(capitalize k)}]
+        var th = %*{
+          "ui-type": %"th",
+          "attributes": %*{"scope": %"col"},
+          "children": %[%*{ "ui-type": "#text", "text": %(capitalize k)}]
         }
         tr["children"].add th
         result["children"].add %{"ui-type": %"thead", "children": %[tr]}
@@ -238,21 +235,18 @@ proc list(modelName: string, ids: JsonNode): JsonNode =
           var cellVal = v.getStr
           var cell = %*{
             "ui-type": %"td",
-            "children": %[ %*{ "ui-type": "#text", "text": %cellVal } ]
+            "children": %[%*{"ui-type": "#text", "text": %cellVal}]
           }
           if k == "id":
             cell["ui-type"] = %"th"
-            cell["attributes"] = %*{"scope":"row"}              
+            cell["attributes"] = %*{"scope":"row"}
           tr["children"].add cell
 
       var b = copy components["button"]
       b["children"][0]["text"] = %"Detail"
       b["events"] = %["onclick"]
       b["id"] = elem["id"]
-      b["attributes"]= %*{
-        "model": %modelName,
-        "name": %("show")
-      }
+      b["attributes"]= %*{"model": %modelName, "name": %("show")}
       tr["children"].add(b)
       tbody["children"].add tr      
     result["children"].add tbody
@@ -285,11 +279,14 @@ proc sectionHeader(obj: JsonNode): JsonNode =
   var hr = copy components["gridRow"]
   hr["children"].add hc
   hr["children"].add b
+  #hr["children"].add DatePicker(components, %*{"model": %(obj["type"])})
+  
   result = copy components["container"]
   result["children"].add hr
   
   for key, val in obj.getFields:
     if not ignore key:
+      # fileds
       var
         fr = copy components["gridRow"]
         fkc = copy components["gridColumn"]
@@ -306,7 +303,8 @@ proc sectionHeader(obj: JsonNode): JsonNode =
       fr["children"].add fkc
       fr["children"].add fvc
       result["children"].add fr
-        
+
+
 proc show(def: JsonNode): VNode =
   ## Generates a Header using the main object and
   ## generates lists with its relations

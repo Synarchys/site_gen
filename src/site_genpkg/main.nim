@@ -106,7 +106,11 @@ proc reRender*()=
     
 proc eventGen*(eventKind: string, id: string = ""): proc(ev: Event, n: VNode) =  
   result = proc (ev: Event, n: VNode) =
-    ev.preventDefault()
+    if n.kind == VnodeKind.input and n.getAttr("type") == kstring"date":
+      discard
+    else:
+      ev.preventDefault()
+      
     var payload = %*{}
     #payload["ui"] = appState["ui"] # pass the ui status, should be cached
     # FIXME: the way events are named and referenced is too simple

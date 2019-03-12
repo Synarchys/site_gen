@@ -30,7 +30,6 @@ proc callEventListener*(payload: JsonNode,
                              payload["node_name"].getStr,
                              payload["event_kind"].getStr]
 
-  
   if actions.hasKey action:
     eventListener = actions[action]
   elif payload["node_kind"].getStr == "input" and actions.hasKey "sitegen_input_action":
@@ -105,5 +104,3 @@ macro Listeners*(n: untyped): untyped =
         if x[0].eqident("EventHandlers"):
           result.add x[1]
           result.add processEventHandlers(x[1])
-          
-
