@@ -126,6 +126,6 @@ var actions = initTable[cstring, proc(payload: JsonNode){.closure.}]()
 type
   DatePicker = object of BaseComponent
 
-var date_picker* = DatePicker()
-date_picker.render = render
-date_picker.actions = actions
+# var date_picker* = DatePicker()
+# date_picker.render = render
+# date_picker.actions = actions

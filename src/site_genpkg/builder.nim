@@ -7,7 +7,7 @@ import karax / prelude
 import karax / [errors, kdom, vstyles]
 
 import store, uuidjs
-import components/date_picker
+
 
 
 var defaultEvent: proc(name, id: string): proc(ev: Event, n: VNode)
@@ -189,8 +189,6 @@ proc edit(formDef: JsonNode): JsonNode =
         if not current.isNil: item["value"] = current[fieldName]
         child = formGroup item
       form["children"].add child
-
-  var dp = date_picker.render(components, %*{})
     
   form
     
