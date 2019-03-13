@@ -78,7 +78,6 @@ proc buildComponent*(params: JsonNode): VNode =
       echo "Error: component not found"
       break
 
-    
   if nodeKind == VNodeKind.text:
     # text kind has its own constructor
     result = text params["text"].getStr
