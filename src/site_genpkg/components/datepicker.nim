@@ -1,6 +1,5 @@
 
 import json, tables, sequtils, times, strutils
-
 import ./uicomponent
 
 proc getMonthWithDays(m: Month, year: int): OrderedTableRef[string, seq[int]] =  
@@ -94,8 +93,7 @@ proc DaysTable(components, data: JsonNode, month: Month, year: int): JsonNode =
   result["children"].add tbody
   
   
-proc Header(components, data: JsonNode): JsonNode =
-  
+proc Header(components, data: JsonNode): JsonNode =  
   result = %*{"ui-type": %"div", "children": %[]}
   for action in ["<", "Year Month", ">"]:
     var b = copy components["button"]
@@ -103,12 +101,11 @@ proc Header(components, data: JsonNode): JsonNode =
     b["events"] = %[%"onclick"]
     b["model"] = %"date_picker"
     b["name"] = %"encrease_decrease"
-    #b["id"] = %"increase_decrease"
-    
+    #b["id"] = %"increase_decrease"    
     result["children"].add b
 
       
-proc render(components, data: JsonNode): JsonNode =
+proc renderImpl(components, def: JsonNode, data: JsonNode = nil): JsonNode =
   result = %*{"ui-type": %"div", "children": %[]}
   # get the month and create the element
   var
@@ -124,8 +121,7 @@ proc render(components, data: JsonNode): JsonNode =
 var actions = initTable[cstring, proc(payload: JsonNode){.closure.}]()
 
 type
-  DatePicker = object of BaseComponent
+  DatePicker* = object of BaseComponent
 
-# var date_picker* = DatePicker()
-# date_picker.render = render
-# date_picker.actions = actions
+proc newDatePicker*(): DatePicker = 
+  result = newBaseComponent(DatePicker, renderImpl)

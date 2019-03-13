@@ -7,7 +7,7 @@ import karax / prelude
 import karax / [errors, kdom, vstyles]
 
 import store, uuidjs
-
+import components/ [editform, datepicker]
 
 
 var defaultEvent: proc(name, id: string): proc(ev: Event, n: VNode)
@@ -19,6 +19,11 @@ type
   Sections = enum
     header, menu, body, footer
 
+
+# ui components
+var
+  dp = newDatePicker()
+  ef = newEditForm()
 
 proc toJson*(component: VNode): JsonNode =
   ## returns a JsonNode from a VNode
@@ -123,75 +128,12 @@ proc buildComponent*(params: JsonNode): VNode =
       result.add buildComponent child
   
 
-proc formGroup(def: JsonNode): JsonNode =
-  result = copy components["formGroup"]  
-  var component: JsonNode
-  let uiType = $def["ui-type"].getStr  
-  if components.haskey uiType:
-    component = copy components[uiType]
-  else:    
-    if uiType == "check":
-      component = copy components["checkbox"]
-    elif uiType == "text":
-      component = copy components["textarea"]
-    elif uiType == "input":
-      component = copy components["input"]
-    else:
-      # TODO: raise error
-      echo "Error: ui-type ", uiType, "not found."
-
-  if def.hasKey "events":
-    # add events to component we are preparing
-    component["events"] = copy def["events"]    
-  if def.hasKey "name":
-    component["name"] = copy def["name"]
-  if def.hasKey "model":
-    component["model"] = copy def["model"]
-  if def.hasKey "value":
-    component["value"] = copy def["value"]
-
-  result["children"][0]["text"] = %(def["label"].getStr & ":")
-  result["children"][0]{"attributes","for"} = component["name"]
-  result["children"].add component
-
-
 proc ignore(key: string): bool =
   #returns true if the row has to be ignored
   if key == "id" or key == "relations" or key == "type" or
      key.contains("_id") or key.contains("id_"):
     result = true
 
-  
-proc edit(formDef: JsonNode): JsonNode =
-  let modelName = formDef["model"].getStr
-  
-  var form = %*{
-    "ui-type": "form",
-    "name": formDef["name"],
-    "model": formDef["model"]
-  }
-  let current = getCurrent(appState, modelName)
-  form["children"] = newJArray()
-  for item in formDef["children"].getElems:
-    let fieldName = item["name"].getStr
-    if not ignore fieldName:
-      var child: JsonNode
-      item["model"] = %modelName
-      if item["ui-type"].getStr == "button":
-        child = copy components["button"]
-        child["model"] = %modelName
-        child["name"] = if item.hasKey fieldName: copy item[fieldName] else: %fieldName
-        child["events"] = copy item["events"]
-        child["children"][0]["text"] = item["label"]
-        if not current.isNil: child["id"] = current["id"]
-      else:
-        # if item is input use formGroup
-        if not current.isNil: item["value"] = current[fieldName]
-        child = formGroup item
-      form["children"].add child
-    
-  form
-    
 
 proc list(modelName: string, ids: JsonNode): JsonNode =
   # ids is a jsonNode of kind jsArray
@@ -327,8 +269,11 @@ proc buildBody(action: string, bodyDefinition: var JsonNode): VNode =
   of "show":
     result.add show def
   of "edit":
+    let
+      modelName = def["model"].getStr
     var
-      editForm = buildComponent edit def
+      current = getCurrent(appState, modelName)
+      form = buildComponent ef.renderImpl(components, def, current)
       h3 = newVNode VNodeKind.h3 # default heading file should come from configuration
       label = ""
       
@@ -336,13 +281,12 @@ proc buildBody(action: string, bodyDefinition: var JsonNode): VNode =
     else: label = "Edit " & capitalize def["model"].getStr
     
     h3.add text label
-    editForm.insert h3, 0
+    form.insert h3, 0
     # preventing default submision
-    editForm.addEventListener EventKind.onsubmit,
+    form.addEventListener EventKind.onsubmit,
                               proc (ev: Event, n: Vnode) =
-                                ev.preventDefault 
-    #elem["component_id"] = % $editForm.getAttr "component_id"
-    result.add editForm
+                                ev.preventDefault
+    result.add form
   of "list":
     let
       modelName = def["model"].getStr
