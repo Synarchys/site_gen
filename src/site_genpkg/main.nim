@@ -107,36 +107,23 @@ proc reRender*()=
 proc eventGen*(eventKind: string, id: string = ""): proc(ev: Event, n: VNode) =  
   result = proc (ev: Event, n: VNode) =
     if n.kind == VnodeKind.input and n.getAttr("type") == kstring"date":
+      # let the dom handle the events for the `input date`
       discard
     else:
       ev.preventDefault()
-      
     var payload = %*{}
-    #payload["ui"] = appState["ui"] # pass the ui status, should be cached
-    # FIXME: the way events are named and referenced is too simple
-    # it will colide if the same model is used in another part of
     payload["model"] = %($n.getAttr "model")
     payload["node_name"] = %($n.getAttr "name")
     payload["node_kind"] = %($n.kind)
     payload["event_kind"] = %eventKind
-    # ignoring the id of the vnode, use component_id for internal reference
-    if id != "": payload["id"] = %id # the id of the component
+    if id != "": payload["id"] = %id
     if n.value != nil:
       payload["value"] = %($n.value)
     
     callEventListener(payload, actions)
-    #appState["ui"] = payload["ui"]
-    updateData(n)  
-    reRender()
+    updateData(n)
+    #reRender()
   
-
-proc bindDataListeners() =
-  # binds a ui component id to a proc  
-  appState.add("dataListeners", %*{})
-  for component in findElementsByAttrKey(appState["ui"], "dataListener"):
-    let dl = component["attributes"]["dataListener"]
-    appState["dataListeners"].add(dl.getStr, component["id"])
-
 
 proc navigate(rd: RouterData) =
   if prevHashPart != $rd.hashPart:
@@ -163,10 +150,9 @@ proc createDOM(rd: RouterData): VNode =
     
   elif initialized:
     result = updateUI(appState)
-    appState["ui"] = result.toJson
+    #appState["ui"] = result.toJson
     
   elif not appState.hasKey("definition"):
-    #loadComponents(appState)
     result = buildHtml(tdiv()):
       p:
         text "Loading Site..."
@@ -175,8 +161,7 @@ proc createDOM(rd: RouterData): VNode =
     let started = now()
     echo " -- Initializing $1 --" % $started.nanosecond
     result = initApp(appState, eventGen)
-    appState["ui"] = result.toJson
-    bindDataListeners()
+    # appState["ui"] = result.toJson
     let ended = now()
     echo " -- Initialized $1 --" % $ended.nanosecond
     echo "Initialization time: $1 " % $(ended - started)

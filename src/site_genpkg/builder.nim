@@ -7,7 +7,7 @@ import karax / prelude
 import karax / [errors, kdom, vstyles]
 
 import store, uuidjs
-import components/ [editform, datepicker]
+import components / [showmodel, listmodel, editmodel, datepicker]
 
 
 var defaultEvent: proc(name, id: string): proc(ev: Event, n: VNode)
@@ -23,8 +23,10 @@ type
 # ui components
 var
   dp = newDatePicker()
-  ef = newEditForm()
-
+  em = newEditModel()
+  lm = newListModel()
+  sm = newShowModel()
+    
 proc toJson*(component: VNode): JsonNode =
   ## returns a JsonNode from a VNode
   result = %*{ "ui-type": $component.kind }
@@ -134,163 +136,58 @@ proc ignore(key: string): bool =
     result = true
 
 
-proc list(modelName: string, ids: JsonNode): JsonNode =
-  # ids is a jsonNode of kind jsArray
-  if ids.len > 0:
-    var modelList = %[]
-    for objId in ids:
-      modelList.add appState.getItem objId.getStr
-              
-    result = %*{
-      "ui-type": "table",
-      "attributes": %*{"class": %"table"},
-      "children": %[]
-    }
+proc getModelList(ids: JsonNode): JsonNode =
+  # helper proc that returns a list of entities
+  result = %[]
+  for objId in ids:
+    result.add appState.getItem objId.getStr
+
     
-    var row = %*{ "ui-type": %"tr", "children": %[] }
-    # TODO: extract field names and use it as column headers
-    # Header
-    var tr = copy row    
-    for k, v in modelList[0].getFields:
-      # create header
-      if not ignore k:
-        var th = %*{
-          "ui-type": %"th",
-          "attributes": %*{"scope": %"col"},
-          "children": %[%*{ "ui-type": "#text", "text": %(capitalize k)}]
-        }
-        tr["children"].add th
-        result["children"].add %{"ui-type": %"thead", "children": %[tr]}
-
-    var tbody = %*{"ui-type": %"tbody", "children": %[]}
-    
-    for elem in modelList.getElems:
-      # each item in one row
-      var tr = copy row
-      for k, v in elem.getFields:
-        if not ignore k:
-          # each row will contain: fields and values, and detail button
-          # iterte over fields  
-          var cellVal = v.getStr
-          var cell = %*{
-            "ui-type": %"td",
-            "children": %[%*{"ui-type": "#text", "text": %cellVal}]
-          }
-          if k == "id":
-            cell["ui-type"] = %"th"
-            cell["attributes"] = %*{"scope":"row"}
-          tr["children"].add cell
-
-      var b = copy components["button"]
-      b["children"][0]["text"] = %"Detail"
-      b["events"] = %["onclick"]
-      b["id"] = elem["id"]
-      b["attributes"]= %*{"model": %modelName, "name": %("show")}
-      tr["children"].add(b)
-      tbody["children"].add tr      
-    result["children"].add tbody
-
-  
 proc buildHeader(def: JsonNode): VNode =
   var h = copy components["header"]
   # WARNING: hardcoded
   h["children"][0]["children"][0]["children"][0]["children"][0]["children"][0]["text"] = def["alternative"]
   result = buildComponent h
 
-
-proc sectionHeader(obj: JsonNode): JsonNode =
-  # get definition from schema
-  let currentType = obj["type"].getStr
-  
-  # Displays the entity and its fields as header
-  # ignore fileds `ìd`, `type`, `relations`, `id_*` and `_id*`
-  var b = copy components["button"]
-  b["children"][0]["text"] = %"Edit"
-  b["events"] = %["onclick"]
-  b["id"] = obj["id"]
-  b["attributes"]= %*{"model": %(obj["type"]), "name": %"edit"}
-  
-  var hc = copy components["gridColumn"]
-  hc["children"].add %*{
-    "ui-type": %"h3",
-    "children": %[ %*{"ui-type": "#text", "text": %(capitalize currentType)}]}
-  
-  var hr = copy components["gridRow"]
-  hr["children"].add hc
-  hr["children"].add b
-  #hr["children"].add DatePicker(components, %*{"model": %(obj["type"])})
-  
-  result = copy components["container"]
-  result["children"].add hr
-  
-  for key, val in obj.getFields:
-    if not ignore key:
-      # fileds
-      var
-        fr = copy components["gridRow"]
-        fkc = copy components["gridColumn"]
-        fvc = copy components["gridColumn"]
-      
-      fkc["children"].add %*{
-        "ui-type": %"h4",
-        "children": %[%*{"ui-type": "#text", "text": %(capitalize key & ":")}]}
-      
-      fvc["children"].add %*{
-        "ui-type": %"h5",
-        "children": %[%*{"ui-type": "#text", "text": %(val.getStr)}]}
-      
-      fr["children"].add fkc
-      fr["children"].add fvc
-      result["children"].add fr
-
-
-proc show(def: JsonNode): VNode =
-  ## Generates a Header using the main object and
-  ## generates lists with its relations
-  let current = getCurrent(appState, def["model"].getStr)
-  result = buildComponent sectionHeader current
-  if current.hasKey("relations"):
-    for relType, relationIds in current["relations"].getFields:
-      let l = buildHtml():
-        tdiv():
-          h4: text capitalize relType
-          buildComponent(list(relType, relationIds))
-      result.add l
-
-
 proc buildBody(action: string, bodyDefinition: var JsonNode): VNode =
   # builds the initial ui based on the definition and the components library
-  # this part should understand and comply with the component definition specification  
+  # this part should understand and comply with the component definition specification
   var def = bodyDefinition
   result = newVNode VnodeKind.tdiv
   result.class = "container"
   case action
   of "show":
-    result.add show def
+    # for some reason it fails with a second redraw, `copy` prevents it.
+    let current = copy getCurrent(appState, def["model"].getStr)
+    # get the list of entities related to the current selected entity
+    if current.hasKey "relations":
+      for relType, relIds in current["relations"].getFields:
+        current{"relations", relType} = getModelList relIds
+    result.add buildComponent sm.renderImpl(components, def, current)
   of "edit":
     let
       modelName = def["model"].getStr
     var
       current = getCurrent(appState, modelName)
-      form = buildComponent ef.renderImpl(components, def, current)
+      form = buildComponent em.renderImpl(components, def, current)
       h3 = newVNode VNodeKind.h3 # default heading file should come from configuration
       label = ""
       
     if def.hasKey "label": label = def["label"].getStr
     else: label = "Edit " & capitalize def["model"].getStr
-    
     h3.add text label
     form.insert h3, 0
     # preventing default submision
-    form.addEventListener EventKind.onsubmit,
-                              proc (ev: Event, n: Vnode) =
-                                ev.preventDefault
+    form.addEventListener EventKind.onsubmit, proc (ev: Event, n: Vnode) =
+                                                ev.preventDefault
     result.add form
   of "list":
     let
       modelName = def["model"].getStr
       ids = appState.getList modelName
-    result.add buildComponent list(modelName, ids)
+    if ids.len > 0:
+      let modelList = getModelList ids
+      result.add buildComponent lm.renderImpl(components, def, modelList)
   else:
     # look up in the components table and try to build it
     discard

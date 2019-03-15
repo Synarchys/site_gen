@@ -1,3 +1,4 @@
+
 import json, tables, sequtils, strutils
 import ./uicomponent
 
@@ -49,6 +50,7 @@ proc render(components, formDef: JsonNode, data:JsonNode = nil): JsonNode =
     "name": formDef["name"],
     "model": formDef["model"]
   }
+  
   let current = data #getCurrent(appState, modelName)
   form["children"] = newJArray()
   for item in formDef["children"].getElems:
@@ -72,7 +74,7 @@ proc render(components, formDef: JsonNode, data:JsonNode = nil): JsonNode =
 
 
 type
-  EditForm* = object of BaseComponent
+  EditModel* = object of BaseComponent
 
-proc newEditForm*(): EditForm = 
-  result = newBaseComponent(EditForm, render)
+proc newEditModel*(): EditModel = 
+  result = newBaseComponent(EditModel, render)

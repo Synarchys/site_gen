@@ -2,9 +2,10 @@ import json
 
 # general store procs
 
-proc getItem*(appState:JsonNode, id: string): JsonNode =
+proc getItem*(appState: JsonNode, id: string): JsonNode =
   if appState.hasKey("store") and appState["store"].haskey("data"):
-    result = appState["store"]["data"][id]
+    if appState{"store", "data"}.hasKey id:
+      result = appState{"store", "data", id}
 
 
 proc getCurrent*(appState:JsonNode, objType: string): JsonNode =
