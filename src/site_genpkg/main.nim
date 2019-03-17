@@ -10,13 +10,15 @@ import requestjs, uuidjs
 import builder, ui_utils, ui_def_gen, listeners
 export builder, ui_utils
 
+import components / components
+export components
 
 var console {.importcpp, noDecl.}: JsObject 
 
 # global variables
 const
   HEADERS        = [(cstring"Content-Type", cstring"application/json")]
-  COMPONENTS_URL ="/components.json"
+  TEMPLATES_URL  = "/templates.json"
   DEFINITION_URL = "/definition.json"
   MODEL_URL      = "/auto/schema" #"/model.json"
   
@@ -28,8 +30,8 @@ var
   actions: Table[cstring, proc(payload: JsonNode){.closure.}]
   dataListeners: Table[cstring, cstring]
   prevHashPart: cstring
-
-
+  componentsTable = initComponents()
+    
 # # TODO: move all loading
 # proc parseJsonDefintion(resp: string): JsonNode = 
 #   try:
@@ -160,7 +162,7 @@ proc createDOM(rd: RouterData): VNode =
   else:
     let started = now()
     echo " -- Initializing $1 --" % $started.nanosecond
-    result = initApp(appState, eventGen)
+    result = initApp(appState, componentsTable, eventGen)
     # appState["ui"] = result.toJson
     let ended = now()
     echo " -- Initialized $1 --" % $ended.nanosecond
@@ -169,8 +171,13 @@ proc createDOM(rd: RouterData): VNode =
 
 
 proc createApp*(state: JsonNode,
+                c: Table[string, BaseComponent],
                 a: Table[cstring, proc(payload: JsonNode){.closure.}]) =  
   actions = a
   appState = state
   initNavigation()
+  # pass components as parameter
+  # merge components
+  for k, v in c.pairs:
+    componentsTable[k] = v
   `kxi` = setRenderer(createDOM)

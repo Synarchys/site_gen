@@ -7,22 +7,20 @@ import karax / prelude
 import karax / [errors, kdom, vstyles]
 
 import store, uuidjs
-import components / components
+import components / uicomponent
 
 
 var defaultEvent: proc(name, id: string): proc(ev: Event, n: VNode)
 
 # global variable that holds all components
 var appState, templates: JsonNode
+var componentsTable: Table[string, BaseComponent]
 
 const ACTIONS = ["list", "show", "edit", "raw"]
 
 type
   Sections = enum
     header, menu, body, footer
-
-
-var componentsTable = initComponents()
 
 
 proc toJson*(component: VNode): JsonNode =
@@ -178,7 +176,6 @@ proc buildBody(action: string, bodyDefinition: var JsonNode): VNode =
       let modelList = getModelList ids
       result.add buildComponent componentsTable["list"].renderImpl(templates, def, modelList)
   else:
-    echo bodyDefinition
     result.add buildComponent bodyDefinition
 
 
@@ -230,19 +227,24 @@ proc updateUI*(state: var JsonNode): VNode =
     of "header":
       result.add buildHeader sectionDef
     of "menu":
-      var uiType = sectionDef["ui-type"].getStr
-      if not templates.hasKey uiType:
-        uiType = "menu"
-      result.add buildComponent templates[uiType]
+      # get data from store
+      result.add buildComponent componentsTable["menu"].renderImpl(templates, sectionDef)
+      # var uiType = sectionDef["ui-type"].getStr
+      # if not templates.hasKey uiType:
+      #   uiType = "menu"
+      #   # try to build component first if it fails fall back to template
+      # result.add buildComponent templates[uiType]
     else:
       if componentsTable.hasKey $section:
         result.add buildComponent templates[$section]
 
     
 proc initApp*(state: var JsonNode,
+              components: Table[string, BaseComponent],
               event: proc(name, id: string): proc(ev: Event, n: VNode)): VNode =    
   let definition = state["definition"]
   appState = state
-  templates = state["components"]
+  templates = state["templates"]
+  componentsTable = components
   defaultEvent = event
   result = updateUI state
