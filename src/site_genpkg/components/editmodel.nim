@@ -10,19 +10,19 @@ proc ignore(key: string): bool =
     result = true
 
 
-proc formGroup(components, def: JsonNode): JsonNode =
-  result = copy components["formGroup"]  
+proc formGroup(templates, def: JsonNode): JsonNode =
+  result = copy templates["formGroup"]  
   var component: JsonNode
   let uiType = $def["ui-type"].getStr  
-  if components.haskey uiType:
-    component = copy components[uiType]
+  if templates.haskey uiType:
+    component = copy templates[uiType]
   else:    
     if uiType == "check":
-      component = copy components["checkbox"]
+      component = copy templates["checkbox"]
     elif uiType == "text":
-      component = copy components["textarea"]
+      component = copy templates["textarea"]
     elif uiType == "input":
-      component = copy components["input"]
+      component = copy templates["input"]
     else:
       # TODO: raise error
       echo "Error: ui-type ", uiType, "not found."
@@ -42,7 +42,7 @@ proc formGroup(components, def: JsonNode): JsonNode =
   result["children"].add component
 
     
-proc render(components, formDef: JsonNode, data:JsonNode = nil): JsonNode =
+proc render(templates, formDef: JsonNode, data:JsonNode = nil): JsonNode =
   let modelName = formDef["model"].getStr
   
   var form = %*{
@@ -59,7 +59,7 @@ proc render(components, formDef: JsonNode, data:JsonNode = nil): JsonNode =
       var child: JsonNode
       item["model"] = %modelName
       if item["ui-type"].getStr == "button":
-        child = copy components["button"]
+        child = copy templates["button"]
         child["model"] = %modelName
         child["name"] = if item.hasKey fieldName: copy item[fieldName] else: %fieldName
         child["events"] = copy item["events"]
@@ -68,7 +68,7 @@ proc render(components, formDef: JsonNode, data:JsonNode = nil): JsonNode =
       else:
         # if item is input use formGroup
         if not current.isNil: item["value"] = current[fieldName]
-        child = formGroup(components, item)
+        child = formGroup(templates, item)
       form["children"].add child
   form
 

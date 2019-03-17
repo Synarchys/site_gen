@@ -12,7 +12,7 @@ proc ignore(key: string): bool =
 
 
 # proc list(modelName: string, ids: JsonNode): JsonNode =
-proc render(components, def: JsonNode, modelList: JsonNode = nil): JsonNode =
+proc render(templates, def: JsonNode, modelList: JsonNode = nil): JsonNode =
   # `modelList` is of kind jsonArray with the objects
   if not modelList.isNil:
     let modelName = def["model"].getStr
@@ -43,7 +43,7 @@ proc render(components, def: JsonNode, modelList: JsonNode = nil): JsonNode =
             "children": %[%*{"ui-type": "#text", "text": %cellVal}]
           }
           tr["children"].add cell
-      var b = copy components["button"]
+      var b = copy templates["button"]
       b["children"][0]["text"] = %"Detail"
       b["events"] = %["onclick"]
       b["attributes"]= %*{"model": %modelName, "name": %("show")}

@@ -7,26 +7,24 @@ import karax / prelude
 import karax / [errors, kdom, vstyles]
 
 import store, uuidjs
-import components / [showmodel, listmodel, editmodel, datepicker]
+import components / components
 
 
 var defaultEvent: proc(name, id: string): proc(ev: Event, n: VNode)
 
 # global variable that holds all components
-var appState, components: JsonNode
+var appState, templates: JsonNode
+
+const ACTIONS = ["list", "show", "edit", "raw"]
 
 type
   Sections = enum
     header, menu, body, footer
 
 
-# ui components
-var
-  dp = newDatePicker()
-  em = newEditModel()
-  lm = newListModel()
-  sm = newShowModel()
-    
+var componentsTable = initComponents()
+
+
 proc toJson*(component: VNode): JsonNode =
   ## returns a JsonNode from a VNode
   result = %*{ "ui-type": $component.kind }
@@ -77,7 +75,7 @@ proc buildComponent*(params: JsonNode): VNode =
         break
     else:
       # TODO raise error.
-      echo "Error: component not found"
+      echo "Error: ui-type not defined or component not found."
       break
 
   if nodeKind == VNodeKind.text:
@@ -126,14 +124,7 @@ proc buildComponent*(params: JsonNode): VNode =
     
   if params.hasKey "children":
     for child in params["children"].getElems:
-      result.add buildComponent child
-  
-
-proc ignore(key: string): bool =
-  #returns true if the row has to be ignored
-  if key == "id" or key == "relations" or key == "type" or
-     key.contains("_id") or key.contains("id_"):
-    result = true
+      result.add buildComponent child  
 
 
 proc getModelList(ids: JsonNode): JsonNode =
@@ -144,13 +135,14 @@ proc getModelList(ids: JsonNode): JsonNode =
 
     
 proc buildHeader(def: JsonNode): VNode =
-  var h = copy components["header"]
+  var h = copy templates["header"]
   # WARNING: hardcoded
   h["children"][0]["children"][0]["children"][0]["children"][0]["children"][0]["text"] = def["alternative"]
   result = buildComponent h
 
+
 proc buildBody(action: string, bodyDefinition: var JsonNode): VNode =
-  # builds the initial ui based on the definition and the components library
+  # builds the initial ui based on the definition and the componentsTable library
   # this part should understand and comply with the component definition specification
   var def = bodyDefinition
   result = newVNode VnodeKind.tdiv
@@ -163,23 +155,20 @@ proc buildBody(action: string, bodyDefinition: var JsonNode): VNode =
     if current.hasKey "relations":
       for relType, relIds in current["relations"].getFields:
         current{"relations", relType} = getModelList relIds
-    result.add buildComponent sm.renderImpl(components, def, current)
+    result.add buildComponent componentsTable["show"].renderImpl(templates, def, current)
   of "edit":
-    let
-      modelName = def["model"].getStr
+    let modelName = def["model"].getStr
     var
       current = getCurrent(appState, modelName)
-      form = buildComponent em.renderImpl(components, def, current)
+      form = buildComponent componentsTable["edit"].renderImpl(templates, def, current)
       h3 = newVNode VNodeKind.h3 # default heading file should come from configuration
       label = ""
-      
     if def.hasKey "label": label = def["label"].getStr
     else: label = "Edit " & capitalize def["model"].getStr
     h3.add text label
     form.insert h3, 0
     # preventing default submision
-    form.addEventListener EventKind.onsubmit, proc (ev: Event, n: Vnode) =
-                                                ev.preventDefault
+    form.addEventListener EventKind.onsubmit, proc (ev: Event, n: Vnode) = ev.preventDefault
     result.add form
   of "list":
     let
@@ -187,20 +176,23 @@ proc buildBody(action: string, bodyDefinition: var JsonNode): VNode =
       ids = appState.getList modelName
     if ids.len > 0:
       let modelList = getModelList ids
-      result.add buildComponent lm.renderImpl(components, def, modelList)
+      result.add buildComponent componentsTable["list"].renderImpl(templates, def, modelList)
   else:
-    # look up in the components table and try to build it
-    discard
-    # var compDef = copy components[k]
-    # let c = buildComponent compDef
-    # result.add c
+    echo bodyDefinition
+    result.add buildComponent bodyDefinition
 
-  
+
 proc updateUIRaw*(state: JsonNode): VNode =
   # builds the vdom tree using the ui attribute
   result = buildComponent state["ui"]
 
-  
+let ErrorPage =
+  buildHtml():
+  tdiv:
+    h4:
+      text "Error - Page Not Found."
+
+    
 proc updateUI*(state: var JsonNode): VNode =
   var
     uiDef = state["definition"]
@@ -219,26 +211,38 @@ proc updateUI*(state: var JsonNode): VNode =
     var sectionDef = uiDef[$section]
     case $section
     of "body":
-      var routeSec: JsonNode
-      if action == "": routeSec = sectionDef[route]
-      else: routeSec = sectionDef[route][action]
-      result.add buildBody(action, routeSec)
+      var
+        routeSec: JsonNode
+        b: VNode
+      if sectionDef.hasKey route:
+        if action == "":
+          # the first action is the default
+          for a in ACTIONS:
+            if sectionDef[route].hasKey a:
+              action = a
+              routeSec = sectionDef[route][a]
+              break
+        routeSec = sectionDef[route][action]
+        b = buildBody(action, routeSec)
+      else:
+        b = ErrorPage
+      result.add b
     of "header":
       result.add buildHeader sectionDef
     of "menu":
       var uiType = sectionDef["ui-type"].getStr
-      if not components.hasKey uiType:
+      if not templates.hasKey uiType:
         uiType = "menu"
-      result.add buildComponent components[uiType]
+      result.add buildComponent templates[uiType]
     else:
-      if components.hasKey $section:
-        result.add buildComponent components[$section]
+      if componentsTable.hasKey $section:
+        result.add buildComponent templates[$section]
 
     
 proc initApp*(state: var JsonNode,
               event: proc(name, id: string): proc(ev: Event, n: VNode)): VNode =    
   let definition = state["definition"]
   appState = state
-  components = state["components"]
+  templates = state["components"]
   defaultEvent = event
   result = updateUI state

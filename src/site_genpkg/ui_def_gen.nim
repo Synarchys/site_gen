@@ -69,7 +69,7 @@ proc updateDefinition*(appState: JsonNode) =
       # delete, we won't be using afterwards
       content.delete "model"
     for action, def in content.getFields:
-    # if the definition does not have children create them from model.js
+      # if the definition does not have children create them from model.js
       if not def.hasKey "model": def["model"] = %modelName
       if def.kind == JObject and not (def.hasKey "children") and
          appState["schema"].hasKey modelName:
