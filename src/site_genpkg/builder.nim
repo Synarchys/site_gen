@@ -228,7 +228,8 @@ proc updateUI*(state: var JsonNode): VNode =
       result.add buildHeader sectionDef
     of "menu":
       # get data from store
-      result.add buildComponent componentsTable["menu"].renderImpl(templates, sectionDef)
+      let data = appState["schema"]
+      result.add buildComponent componentsTable["menu"].renderImpl(templates, sectionDef, data)
       # var uiType = sectionDef["ui-type"].getStr
       # if not templates.hasKey uiType:
       #   uiType = "menu"
