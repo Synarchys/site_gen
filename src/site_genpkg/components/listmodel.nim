@@ -16,7 +16,7 @@ proc render(templates, def: JsonNode, modelList: JsonNode = nil): JsonNode =
   # `modelList` is of kind jsonArray with the objects
   if not modelList.isNil:
     let modelName = def["model"].getStr
-    result = %*{"ui-type": "table", "attributes": %*{"class": %"table"}, "children": %[]}
+    result = %*{"ui-type": "table", "attributes": %*{"class": %"table table-condensed table-responsive"}, "children": %[]}
     var
       row = %*{ "ui-type": %"tr", "children": %[] }
       trh = copy row
