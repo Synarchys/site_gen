@@ -143,8 +143,7 @@ proc buildBody(action: string, bodyDefinition: var JsonNode): VNode =
   # builds the initial ui based on the definition and the componentsTable library
   # this part should understand and comply with the component definition specification
   var def = bodyDefinition
-  result = newVNode VnodeKind.tdiv
-  result.class = "container"
+  result = buildComponent copy templates["container"]  
   case action
   of "show":
     # for some reason it fails with a second redraw, `copy` prevents it.
