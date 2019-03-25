@@ -14,3 +14,7 @@ template newBaseComponent*[T](t: typeDesc[T],
                               render: (proc(lib, def: JsonNode, data: JsonNode = nil): JsonNode)): T =
   T(renderImpl: render)
                               
+template newBaseComponent*[T](t: typeDesc[T],
+                              render: (proc(lib, def: JsonNode, data: JsonNode = nil): JsonNode),
+                              a: Table[cstring, proc(payload: JsonNode){.closure.}]): T =
+  T(renderImpl: render, actions: a)
