@@ -111,11 +111,19 @@ proc buildComponent*(params: JsonNode): VNode =
   
   if params.hasKey "events":
     let events = params["events"]
-    for evk in EventKind:
-      if events.contains %($evk):
-        var id = result.getAttr "id"
-        if id.isNil: id = ""
-        result.addEventListener evk, defaultEvent($evk, $id)
+    var id = result.getAttr "id"
+    if id.isNil: id = ""
+    if events.kind == JString:
+      for evk in EventKind:
+        if events.getStr == $evk:
+          result.addEventListener evk, defaultEvent($evk, $id)
+    elif events.kind == JArray:
+      for evk in EventKind:
+        if events.contains %($evk):
+          result.addEventListener evk, defaultEvent($evk, $id)
+    else:
+      let comp = params["model"].getStr & "_" &  params["name"].getStr
+      echo "$1 - Wrong defenition of events, should be a String or an Array." % comp
         
   # updateValue result
   if params.haskey "value": result.updateValue params["value"].getStr
@@ -139,12 +147,25 @@ proc buildHeader(def: JsonNode): VNode =
   result = buildComponent h
 
 
+let ErrorPage =
+  buildHtml(tdiv(class="container-fluid")):
+  tdiv(class="alert alert-danger",role="alert"):
+    h4:
+      text "Error - Page Not Found."
+    a(href="#/home"):
+      text "Go back home."
+
+
 proc buildBody(action: string, bodyDefinition: var JsonNode): VNode =
   # builds the initial ui based on the definition and the componentsTable library
   # this part should understand and comply with the component definition specification
   var def = bodyDefinition
-  result = newVNode VnodeKind.tdiv
-  result.class = "container-fluid"
+  result = buildComponent copy templates["container"]
+  if appState.hasKey "message":
+    var msgCmpnt = componentsTable["msg"].renderImpl(templates, def, appState["message"])
+    # we've shown it, delete it from the state
+    appState.delete "message"
+    result.add buildComponent msgCmpnt
   case action
   of "show":
     # for some reason it fails with a second redraw, `copy` prevents it.
@@ -182,12 +203,6 @@ proc buildBody(action: string, bodyDefinition: var JsonNode): VNode =
 proc updateUIRaw*(state: JsonNode): VNode =
   # builds the vdom tree using the ui attribute
   result = buildComponent state["ui"]
-
-let ErrorPage =
-  buildHtml():
-  tdiv:
-    h4:
-      text "Error - Page Not Found."
 
     
 proc updateUI*(state: var JsonNode): VNode =

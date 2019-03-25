@@ -30,7 +30,7 @@ var
   actions: Table[cstring, proc(payload: JsonNode){.closure.}]
   dataListeners: Table[cstring, cstring]
   prevHashPart: cstring
-  componentsTable = initComponents()
+  componentsTable: Table[string, BaseComponent]
     
 # # TODO: move all loading
 # proc parseJsonDefintion(resp: string): JsonNode = 
@@ -125,7 +125,7 @@ proc eventGen*(eventKind: string, id: string = ""): proc(ev: Event, n: VNode) =
     callEventListener(payload, actions)
     updateData(n)
     #reRender()
-  
+
 
 proc navigate(rd: RouterData) =
   if prevHashPart != $rd.hashPart:
@@ -135,6 +135,20 @@ proc navigate(rd: RouterData) =
     window.location.href = cstring(appState["route"].getStr)
     prevHashPart = window.location.hash
 
+
+proc showError(): VNode =
+  result = buildHtml(tdiv(class="container-fluid")):
+    tdiv(class="alert alert-danger",role="alert"):
+      h3:
+        text "Error:"
+      p:
+        text appState["error"].getStr
+      a(href="#/home"):
+        text "Go back home."
+  reRender()      
+  appState.delete("error")
+  
+
     
 proc initNavigation() =
   appState["route"] = %($window.location.hash)
@@ -143,41 +157,44 @@ proc initNavigation() =
     
 proc createDOM(rd: RouterData): VNode =
   navigate(rd)
-  
-  if appState.hasKey("error"):
-    result = buildHtml(tdiv()):
-      p:
-        text appState["error"].getStr
-    appState.delete("error")
+  try:
+    if appState.hasKey("error"):
+      result = showError()
+    elif initialized:
+      result = updateUI(appState)
+    elif not appState.hasKey("definition"):
+      result = buildHtml(tdiv()):
+        p:
+          text "Loading Site..."
+    else:
+      let started = now()
+      echo " -- Initializing $1 --" % $started.nanosecond
+      result = initApp(appState, componentsTable, eventGen)
+      let ended = now()
+      echo " -- Initialized $1 --" % $ended.nanosecond
+      echo "Initialization time: $1 " % $(ended - started)
+      initialized = true
+  except:    
+    let e = getCurrentException()
+    var msg: string
+    if not e.isNil:
+      msg = e.getStackTrace()
+      echo("===================================== ERROR ===================================")
+      echo getCurrentExceptionMsg()
+      echo(msg)
+      echo("================================================================================")
+    else:
+      msg = "Somthing went wrong."
+    appState["error"] = %msg
+    result = showError()
     
-  elif initialized:
-    result = updateUI(appState)
-    #appState["ui"] = result.toJson
-    
-  elif not appState.hasKey("definition"):
-    result = buildHtml(tdiv()):
-      p:
-        text "Loading Site..."
-
-  else:
-    let started = now()
-    echo " -- Initializing $1 --" % $started.nanosecond
-    result = initApp(appState, componentsTable, eventGen)
-    # appState["ui"] = result.toJson
-    let ended = now()
-    echo " -- Initialized $1 --" % $ended.nanosecond
-    echo "Initialization time: $1 " % $(ended - started)
-    initialized = true
-
 
 proc createApp*(state: JsonNode,
                 c: Table[string, BaseComponent],
                 a: Table[cstring, proc(payload: JsonNode){.closure.}]) =  
   actions = a
+  actions["render"] = proc (payload: JsonNode) = reRender()
   appState = state
   initNavigation()
-  # pass components as parameter
-  # merge components
-  for k, v in c.pairs:
-    componentsTable[k] = v
+  componentsTable = initComponents(c, actions)
   `kxi` = setRenderer(createDOM)
