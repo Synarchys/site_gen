@@ -5,7 +5,6 @@ import uicomponent, showmodel, listmodel, editmodel, datepicker, messages
 export uicomponent, showmodel, listmodel, editmodel, datepicker, messages
 
 
-
 proc updateActions(bc: BaseComponent,
                    a: var Table[cstring, proc(payload: JsonNode){.closure.}]) =
   
@@ -13,7 +12,8 @@ proc updateActions(bc: BaseComponent,
     echo "Updating actions"
     if a.hasKey name: echo "WARNING: overrading handler: " & $name
     a[name] = handler
-  
+
+
 proc initComponents*(c: Table[string, BaseComponent],
                      a: var Table[cstring, proc(payload: JsonNode){.closure.}]):
                        Table[string, BaseComponent] =
@@ -24,12 +24,15 @@ proc initComponents*(c: Table[string, BaseComponent],
   result["show"] = newShowModel()
   result["msg"]  = newMessages(a)
 
-  updateActions(result["msg"],a)
+  updateActions(result["msg"], a)
   
   for k, v in c.pairs:
     echo "component ", k
     result[k] = v
     updateActions(v, a)
     
-        
 
+
+# macro to instantiate and load components
+# the macro should have a global context defined
+# with the app state and actions and ui_components lookup table

@@ -40,7 +40,7 @@ proc callEventListener*(payload: JsonNode,
   else:
     eventListener = noEventListener(payload, action)
   eventListener payload
-    
+
   
 proc createEventsTable(): NimNode =
   result = nnkIdentDefs.newTree(

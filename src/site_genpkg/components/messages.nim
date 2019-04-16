@@ -46,18 +46,21 @@ proc renderImpl(templates, def: JsonNode, data: JsonNode = nil): JsonNode =
     
 var actions = initTable[cstring, proc(payload: JsonNode){.closure.}]()
 
-proc messages_nav_onclick(payload: JsonNode) =
-  var render = actions["render"]
-  render(payload)
+template initActions*(value: string) =
   
-actions.add("messages_nav_onclick", messages_nav_onclick)
+  proc messages_nav_onclick(payload: JsonNode) =
+    var render = actions["render"]
+    render(payload)
+    echo value
+  
+  actions.add("messages_nav_onclick", messages_nav_onclick)
 
 
 type
   Messages* = object of BaseComponent
 
 proc newMessages*(a: var Table[cstring, proc(payload: JsonNode){.closure.}]): Messages =
+  initActions("init actions")
   for name, handler in a.pairs():
     actions.add(name, handler)
   result = newBaseComponent(Messages, renderImpl, actions)
-
