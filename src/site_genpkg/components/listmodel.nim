@@ -11,12 +11,19 @@ proc ignore(key: string): bool =
     result = true
 
 
-# proc list(modelName: string, ids: JsonNode): JsonNode =
 proc render(templates, def: JsonNode, modelList: JsonNode = nil): JsonNode =
   # `modelList` is of kind jsonArray with the objects
-  if not modelList.isNil:
-    let modelName = def["model"].getStr
+  if modelList.isNil:
+    result = %*{"ui-type": %"div", "children": %[]}
+    var b = copy templates["button"]
+    b["children"][0]["text"] = %"New"
+    b["model"]  = def["model"]
+    b["name"]   = %"edit"
+    b["events"] = %["onclick"]
+    result["children"].add b
+  else:
     result = copy templates["table"]
+    let modelName = def["model"].getStr    
     var
       row = %*{ "ui-type": %"tr", "children": %[] }
       trh = copy row
@@ -55,6 +62,7 @@ proc render(templates, def: JsonNode, modelList: JsonNode = nil): JsonNode =
   
 type
   ListModel* = object of BaseComponent
+
 
 proc newListModel*(): ListModel = 
   result = newBaseComponent(ListModel, render)
