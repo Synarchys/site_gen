@@ -31,8 +31,3 @@ proc initComponents*(c: Table[string, BaseComponent],
     result[k] = v
     updateActions(v, a)
     
-
-
-# macro to instantiate and load components
-# the macro should have a global context defined
-# with the app state and actions and ui_components lookup table
