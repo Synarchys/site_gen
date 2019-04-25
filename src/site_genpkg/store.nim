@@ -31,3 +31,14 @@ proc getList*(appState:JsonNode, objType: string): JsonNode =
   # returns a jsnode of kind array
   if appState["store"].haskey("objects") and appState["store"]["objects"].haskey(objType):
     result = appState["store"]["objects"][objType]["list"]
+
+
+proc addToStore*(appState, obj: JsonNode, resource: string) =
+  obj["type"] = %resource
+  appState{"store", "data", obj["id"].getStr} = obj
+  # add to the objects
+  if not appState["store"].hasKey "objects":
+    appState{"store", "objects"} = %*{}
+    if not appState{"store", "objects"}.hasKey resource:
+      appState{"store", "objects", resource} = %*{"current": %"", "list": %[]}
+  appState{"store", "objects", resource, "list"}.add obj["id"]
