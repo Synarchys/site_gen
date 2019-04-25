@@ -67,7 +67,8 @@ proc render(templates, formDef: JsonNode, data:JsonNode = nil): JsonNode =
         if not current.isNil: child["id"] = current["id"]
       else:
         # if item is input use formGroup
-        if not current.isNil: item["value"] = current[fieldName]
+        if not current.isNil and current.hasKey(fieldName):
+          item["value"] = current[fieldName]
         child = formGroup(templates, item)
       form["children"].add child
   form

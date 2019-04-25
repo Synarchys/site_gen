@@ -193,9 +193,10 @@ proc buildBody(action: string, bodyDefinition: var JsonNode): VNode =
     let
       modelName = def["model"].getStr
       ids = appState.getList modelName
-    if ids.len > 0:
-      let modelList = getModelList ids
-      result.add buildComponent componentsTable["list"].renderImpl(templates, def, modelList)
+    var modelList: JsonNode
+    if not ids.isNil and ids.len > 0:
+      modelList = getModelList ids
+    result.add buildComponent componentsTable["list"].renderImpl(templates, def, modelList)
   else:
     result.add buildComponent bodyDefinition
 
