@@ -3,7 +3,7 @@ import json
 # general store procs
 
 proc getItem*(appState: JsonNode, id: string): JsonNode =
-  if appState.hasKey("store") and appState["store"].haskey("data"):
+  if  appState["store"].haskey("data"):
     if appState{"store", "data"}.hasKey id:
       result = appState{"store", "data", id}
 
@@ -32,6 +32,14 @@ proc getList*(appState:JsonNode, objType: string): JsonNode =
   if appState["store"].haskey("objects") and appState["store"]["objects"].haskey(objType):
     result = appState["store"]["objects"][objType]["list"]
 
+
+proc getModelList*(appState, ids: JsonNode): JsonNode =
+  # helper proc that returns a list of entities
+  result = %[]
+  for objId in ids:
+    result.add appState.getItem objId.getStr
+
+    
 
 proc addToStore*(appState, obj: JsonNode, objType: string) =
   obj["type"] = %objType
