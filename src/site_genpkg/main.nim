@@ -5,7 +5,7 @@ include karax / prelude
 import karax / prelude
 import karax / [vdom, karaxdsl, errors, kdom, vstyles]
 
-import requestjs, uuidjs
+import uuidjs
 
 import builder, ui_utils, ui_def_gen, listeners
 export builder, ui_utils
@@ -118,7 +118,9 @@ proc eventGen*(eventKind: string, id: string = ""): proc(ev: Event, n: VNode) =
     payload["node_name"] = %($n.getAttr "name")
     payload["node_kind"] = %($n.kind)
     payload["event_kind"] = %eventKind
-    if id != "": payload["id"] = %id
+    if id != "":
+      payload["id"] = %id # deprecate de use of `id`
+      payload["objid"] = %id
     if n.value != nil:
       payload["value"] = %($n.value)
     

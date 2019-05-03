@@ -27,10 +27,9 @@ proc toJson*(component: VNode): JsonNode =
   ## returns a JsonNode from a VNode
   result = %*{ "ui-type": $component.kind }
              
-  # if component.getAttr("compnent_id") != nil:
-  #   result["component_id"] = %($component.getAttr("compnent_id"))
-  # else:
-  #   result["component_id"] = %genUUID()
+  if component.getAttr("objid") != nil:
+    result["id"] = %($component.getAttr("objid"))
+ 
   
   if component.class != nil: result["class"] = %($component.class)
   if component.text != nil or component.value != nil:
@@ -111,7 +110,10 @@ proc buildComponent*(params: JsonNode): VNode =
   
   if params.hasKey "events":
     let events = params["events"]
-    var id = result.getAttr "id"
+    
+    var id = if params.hasKey "objid": kstring(params["objid"].getStr)
+             else: result.getAttr "id" # deprecate de use of `id`
+    
     if id.isNil: id = ""
     if events.kind == JString:
       for evk in EventKind:
@@ -133,7 +135,7 @@ proc buildComponent*(params: JsonNode): VNode =
       result.add buildComponent child  
 
 
-proc getModelList(ids: JsonNode): JsonNode =
+proc getModelList(ids: JsonNode): JsonNode {.deprecated: "use site_gen's instead".} =
   # helper proc that returns a list of entities
   result = %[]
   for objId in ids:
@@ -244,8 +246,11 @@ proc updateUI*(state: var JsonNode): VNode =
       result.add buildHeader sectionDef
     of "menu":
       # get data from store
-      let data = appState["schema"]
-      result.add buildComponent componentsTable["menu"].renderImpl(templates, sectionDef, data)
+      # let data = %*{
+      #   "schema": appState["schema"],
+      #   "store": 
+      # }
+      result.add buildComponent componentsTable["menu"].renderImpl(templates, sectionDef, appState)
       # var uiType = sectionDef["ui-type"].getStr
       # if not templates.hasKey uiType:
       #   uiType = "menu"

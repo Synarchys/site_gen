@@ -10,7 +10,7 @@ proc ignore(key: string): bool =
   if key == "id" or key == "relations" or key == "type" or
      key.contains("_id") or key.contains("id_"):
     result = true
-
+  result = false
 
 proc sectionHeader(templates, obj: JsonNode): JsonNode =
   # get definition from schema
@@ -27,7 +27,7 @@ proc sectionHeader(templates, obj: JsonNode): JsonNode =
   var hc = copy templates["gridColumn"]
   hc["children"].add %*{
     "ui-type": %"h3",
-    "children": %[ %*{"ui-type": "#text", "text": %(capitalize currentType)}]}
+    "children": %[ %*{"ui-type": "#text", "text": %(capitalize currentType)} ]}
   
   var hr = copy templates["gridRow"]
   hr["children"].add hc
@@ -77,6 +77,7 @@ proc render(templates, def: JsonNode, data: JsonNode = nil): JsonNode =
 
 type
   ShowModel* = object of BaseComponent
+
 
 proc newShowModel*(): ShowModel = 
   result = newBaseComponent(ShowModel, render)
