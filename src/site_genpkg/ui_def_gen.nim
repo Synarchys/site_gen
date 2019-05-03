@@ -1,7 +1,7 @@
 
 ## This module generates parts or the whole ui-definition based on the
 ## the model (the data schema).
-
+{.deprecated: "most of the code here should go to the specific components".}
 import json, tables, unicode
 
 
@@ -12,18 +12,25 @@ proc editModel(appState, def: JsonNode) =
     
   var newV = def
   newV.add("children", %[])
-  for field, fieldType in model.getFields:
-    if field != "id" and fieldType.getStr == "string":
+  for field, fieldProps in model.pairs:
+    if fieldProps.kind == JObject and fieldProps.hasKey "type":
+      
+      let fieldType = fieldProps["type"]
+      # FIXME: all this code should go to the component
+      # implement here how is input to be rendered
+      # according to is type or if explicitly defined
+      #if field != "id" and fieldType.getStr == "string":
+      # move this code to edit-render
+      
       newV["children"].add(
         %*{
           "ui-type": %"input",
           "name": %field,
           "label": %(capitalize field), # uppercase first character
-          "type": fieldType,
+          "type": %"string",
           "events": ["onkeyup"]
-            
       })
-
+  
   # default submit button
   var b =  %*{
       "name": %"save",

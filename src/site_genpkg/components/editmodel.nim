@@ -8,6 +8,8 @@ proc ignore(key: string): bool =
   if key == "id" or key == "relations" or key == "type" or
      key.contains("_id") or key.contains("id_"):
     result = true
+  # FIXME:
+  result = false
 
 
 proc formGroup(templates, def: JsonNode): JsonNode =
