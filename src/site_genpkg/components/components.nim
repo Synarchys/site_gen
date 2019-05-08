@@ -9,8 +9,8 @@ proc updateActions(bc: BaseComponent,
                    a: var Table[cstring, proc(payload: JsonNode){.closure.}]) =
   
   for name, handler in bc.actions.pairs:
-    echo "Updating actions"
-    if a.hasKey name: echo "WARNING: overrading handler: " & $name
+    #echo "Updating actions"
+    #if a.hasKey name: echo "WARNING: overrading handler: " & $name
     a[name] = handler
 
 
@@ -27,7 +27,7 @@ proc initComponents*(c: Table[string, BaseComponent],
   updateActions(result["msg"], a)
   
   for k, v in c.pairs:
-    echo "component ", k
+    #echo "Adding component ", k
     result[k] = v
     updateActions(v, a)
     

@@ -8,8 +8,6 @@ proc ignore(key: string): bool =
   if key == "id" or key == "relations" or key == "type" or
      key.contains("_id") or key.contains("id_"):
     result = true
-  # FIXME:
-  result = false
 
 
 proc formGroup(templates, def: JsonNode): JsonNode =
@@ -31,7 +29,7 @@ proc formGroup(templates, def: JsonNode): JsonNode =
 
   if def.hasKey "events":
     # add events to component we are preparing
-    component["events"] = copy def["events"]    
+    component["events"] = copy def["events"]
   if def.hasKey "name":
     component["name"] = copy def["name"]
   if def.hasKey "model":
@@ -44,8 +42,11 @@ proc formGroup(templates, def: JsonNode): JsonNode =
   result["children"].add component
 
     
-proc render(templates, formDef: JsonNode, data:JsonNode = nil): JsonNode =
-  let modelName = formDef["model"].getStr
+proc render(appState, formDef: JsonNode, data: JsonNode = nil): JsonNode =
+  echo data.pretty 
+  let
+    templates = appState["templates"]
+    modelName = formDef["model"].getStr
   
   var form = %*{
     "ui-type": "form",
@@ -56,14 +57,19 @@ proc render(templates, formDef: JsonNode, data:JsonNode = nil): JsonNode =
   let current = data #getCurrent(appState, modelName)
   form["children"] = newJArray()
   for item in formDef["children"].getElems:
-    let fieldName = item["name"].getStr
+    var fieldName: string
+    if item.haskey "action":
+      fieldName = item["action"].getStr
+    elif item.haskey "name":
+      fieldName = item["name"].getStr
+    
     if not ignore fieldName:
       var child: JsonNode
       item["model"] = %modelName
       if item["ui-type"].getStr == "button":
         child = copy templates["button"]
         child["model"] = %modelName
-        child["name"] = if item.hasKey fieldName: copy item[fieldName] else: %fieldName
+        child["action"] = if item.hasKey fieldName: copy item[fieldName] else: %fieldName
         child["events"] = copy item["events"]
         child["children"][0]["text"] = item["label"]
         if not current.isNil: child["id"] = current["id"]
@@ -73,6 +79,23 @@ proc render(templates, formDef: JsonNode, data:JsonNode = nil): JsonNode =
           item["value"] = current[fieldName]
         child = formGroup(templates, item)
       form["children"].add child
+      
+  # var saveb =  %*{
+  #   "action": %"save",
+  #   "ui-type": %"button",
+  #   "label": %"Save",
+  #   "events": %["onclick"]
+  # }
+  # var cancelb =  %*{
+  #   "action": %"cancel",
+  #   "ui-type": %"button",
+  #   "label": %"Cancel",
+  #   "events": %["onclick"]
+  # }
+  # if data.haskey "id": saveb["id"] = data["id"]  
+  # form["children"].add saveb
+  # form["children"].add cancelb
+
   form
 
 

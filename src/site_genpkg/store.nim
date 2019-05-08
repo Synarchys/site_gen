@@ -29,6 +29,7 @@ proc setFieldValue*(appState:JsonNode, objType, field, value: string) =
     
 proc getList*(appState:JsonNode, objType: string): JsonNode =
   # returns a jsnode of kind array
+  #result = %[]
   if appState["store"].haskey("objects") and appState["store"]["objects"].haskey(objType):
     result = appState["store"]["objects"][objType]["list"]
 
@@ -39,7 +40,6 @@ proc getModelList*(appState, ids: JsonNode): JsonNode =
   for objId in ids:
     result.add appState.getItem objId.getStr
 
-    
 
 proc addToStore*(appState, obj: JsonNode, objType: string) =
   obj["type"] = %objType

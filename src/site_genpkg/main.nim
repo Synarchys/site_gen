@@ -31,60 +31,7 @@ var
   dataListeners: Table[cstring, cstring]
   prevHashPart: cstring
   componentsTable: Table[string, BaseComponent]
-    
-# # TODO: move all loading
-# proc parseJsonDefintion(resp: string): JsonNode = 
-#   try:
-#     result = parseJson($resp)
-#   except:
-#     # TODO: Show error component
-#     let msg = getCurrentExceptionMsg()
-#     appState["error"] = %msg
-#     echo "Error with message \n", msg
-
-# proc loadDefinition(appState: JsonNode) =
-#   ajaxGet(DEFINITION_URL,
-#           HEADERS,
-#           proc(stat:int, resp:cstring) =
-#             appState["definition"] = parseJsonDefintion($resp)
-#             # update the definition using the model
-#             updateDefinition(appState)
-#             # finally we redraw when we have everything loaded
-#             `kxi`.redraw()
-#   )
-# proc processSchema(schema: JsonNode) =
-#   ## Adapts the schema to the ui data model
-#   var model = %*{}
-#   for tab in schema.getElems:
-#     let tableName = tab["name"].getStr
-#     model[tableName] = %*{"columns": %[]}
-#     for c in tab["columns"].getElems:
-#       # use column["type"]
-#       let columnName = c["name"].getStr
-#       model[tableName][columnName] = %"string"
-#       appState["model"] = model
-# proc loadModel(appState: JsonNode) =
-#   ajaxGet(MODEL_URL,
-#           HEADERS,
-#           proc(stat:int, resp:cstring) =            
-#             if stat == 200:
-#               processSchema(parseJsonDefintion($resp))
-#             loadDefinition(appState)            
-#   )  
-# proc loadComponents(appState: JsonNode) =
-#   ajaxGet(COMPONENTS_URL,
-#           HEADERS,
-#           proc(stat:int, resp:cstring) =
-#             let components = parseJsonDefintion($resp)
-#             if appState.hasKey("components"):
-#               # merge components
-#               for k, v in components.getFields:
-#                 if not appState["components"].hasKey(k):
-#                   # use components defined by the user if names colide
-#                   appState{"components", k}= v
-#             else:
-#               appState["components"] = components
-#             loadModel(appState))
+  history = %*{}
 
 
 proc updateData(n: VNode) =
@@ -92,7 +39,6 @@ proc updateData(n: VNode) =
     let 
       model = $n.getAttr "model"
       field = $n.getAttr "name"
-
     if not appState.hasKey("data"):
       appState.add("data", %*{})
     if not appState["data"].hasKey(model):
@@ -105,8 +51,65 @@ proc reRender*()=
   # wrap and expose redraw
   `kxi`.redraw()
 
+
+proc navigate(viewid: string, payload: JsonNode): JsonNode =
+  # `viewid` is where the actions come from
+  # if we are going to show an action+model that does not exists
+  #   create a new viewid and its navigations status and add it to the history
+  # if it already exists, show it.
+
+  # Types of Actions
+  # there are two kinds of actions.
+  # - singular: show, edit, add, list(singular mode)
+  #     do not depend on anything. go back to previous `viewid`.
+  # - dependant:  save, select, done, cancel.
+  #     are attached to a previous `viewid` and the behaivor is determined by the parent `viewid`.
+  result = payload
+  
+  var
+    model = payload["model"].getStr
+    action = payload["action"].getStr
+    sourceView = history[viewid]
+    targetView: JsonNode
+    targetViewId: string
     
-proc eventGen*(eventKind: string, id: string = ""): proc(ev: Event, n: VNode) =  
+  case action
+  of "save", "select", "done", "cancel":
+    targetView = history[sourceView["source"].getStr]
+    targetViewId = targetView["id"].getStr
+    
+  of "delete":
+    # do not redirect
+    targetView = sourceView
+    if (targetView.haskey "payload") and (targetView["payload"].haskey "objid"):
+      result["parent"] = targetView["payload"]["objid"]
+    
+  of "show","edit", "list", "add":
+    targetViewId = genUUID()
+    if action == "add":
+      action = "list"
+      result["action"] = %action
+      
+    targetView = %*{
+      "id": %targetViewId,
+      "action": %action,
+      "model": %model,
+      "source": %viewid,
+      "payload": payload
+    }
+
+  # add the entity id as parent of the current
+  if (targetView.haskey "payload") and (targetView["payload"].haskey "objid"):
+    result["parent"] = targetView["payload"]["objid"]
+  
+  history[targetViewId] = targetView
+  appState["viewid"] = %targetViewId
+  
+  let route = "#/$1/$2" % [targetView["model"].getStr, targetView["action"].getStr]
+  appState["route"] = %route
+  
+
+proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Event, n: VNode) =
   result = proc (ev: Event, n: VNode) =
     if n.kind == VnodeKind.input and n.getAttr("type") == kstring"date":
       # let the dom handle the events for the `input date`
@@ -114,28 +117,41 @@ proc eventGen*(eventKind: string, id: string = ""): proc(ev: Event, n: VNode) =
     else:
       ev.preventDefault()
     var payload = %*{}
+
+    # payload["viewid"] = viewid
     payload["model"] = %($n.getAttr "model")
-    payload["node_name"] = %($n.getAttr "name")
     payload["node_kind"] = %($n.kind)
     payload["event_kind"] = %eventKind
+    
+    if n.getAttr("action") != nil:
+      payload["action"] = %($n.getAttr "action")
+    
+    if n.getAttr("name") != nil:
+      payload["node_name"] = %($n.getAttr "name")
+    
     if id != "":
-      payload["id"] = %id # deprecate de use of `id`
+      payload["id"] = %id # deprecate de use of `id`  
       payload["objid"] = %id
     if n.value != nil:
       payload["value"] = %($n.value)
-    
+
+    if payload.haskey "action":
+      payload = navigate(viewid, payload)
     callEventListener(payload, actions)
+
+    #if payload.haskey "action":
+    reRender()
+    
     updateData(n)
-    #reRender()
 
 
-proc navigate(rd: RouterData) =
+proc setHashRoute(rd: RouterData) =
   if prevHashPart != $rd.hashPart:
     appState["route"] = %($rd.hashPart)
     prevHashPart = $rd.hashPart
   elif $prevHashPart != appState["route"].getStr:
     window.location.href = cstring(appState["route"].getStr)
-    prevHashPart = window.location.hash
+    prevHashPart = window.location.hash  
 
 
 proc showError(): VNode =
@@ -150,20 +166,25 @@ proc showError(): VNode =
   reRender()      
   appState.delete("error")
   
-
     
 proc initNavigation() =
   appState["route"] = %($window.location.hash)
   prevHashPart = window.location.hash
+  # init history
+  let vid = genUUID()
+  history[vid] = %*{"id": %vid, "action": appState["route"]}
+  appState["viewid"] = %vid
 
     
 proc createDOM(rd: RouterData): VNode =
-  navigate(rd)
+  setHashRoute(rd)
   try:
     if appState.hasKey("error"):
       result = showError()
+      
     elif initialized:
       result = updateUI(appState)
+      
     elif not appState.hasKey("definition"):
       result = buildHtml(tdiv()):
         p:
@@ -176,7 +197,8 @@ proc createDOM(rd: RouterData): VNode =
       echo " -- Initialized $1 --" % $ended.nanosecond
       echo "Initialization time: $1 " % $(ended - started)
       initialized = true
-  except:    
+      
+  except:
     let e = getCurrentException()
     var msg: string
     if not e.isNil:
@@ -186,7 +208,7 @@ proc createDOM(rd: RouterData): VNode =
       echo(msg)
       echo("================================================================================")
     else:
-      msg = "Somthing went wrong."
+      msg = "Builder Error: Somthing went wrong."
     appState["error"] = %msg
     result = showError()
     

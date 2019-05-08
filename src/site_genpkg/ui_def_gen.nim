@@ -32,14 +32,22 @@ proc editModel(appState, def: JsonNode) =
       })
   
   # default submit button
-  var b =  %*{
-      "name": %"save",
-      "ui-type": %"button",
-      "label": %"Save",
-      "events": %["onclick"]
+  var saveb =  %*{
+    "action": %"save",
+    "ui-type": %"button",
+    "label": %"Save",
+    "events": %["onclick"]
   }
-  if model.haskey "id": b["id"] = model["id"]
-  newV["children"].add b
+  var cancelb =  %*{
+    "action": %"cancel",
+    "ui-type": %"button",
+    "label": %"Cancel",
+    "events": %["onclick"]
+  }
+  newV["children"].add saveb
+  newV["children"].add cancelb
+  if model.haskey "id": saveb["id"] = model["id"]
+  
      
 proc listModel(appState, def: JsonNode) =
   # use data to create the list
@@ -87,5 +95,3 @@ proc updateDefinition*(appState: JsonNode) =
            listModel(appState, def)
         of "show":
           showModel(appState, def)
-          
-        

@@ -10,7 +10,7 @@ import store, uuidjs
 import components / uicomponent
 
 
-var defaultEvent: proc(name, id: string): proc(ev: Event, n: VNode)
+var defaultEvent: proc(name, id, viewid: string): proc(ev: Event, n: VNode)
 
 # global variable that holds all components
 var appState, templates: JsonNode
@@ -29,8 +29,7 @@ proc toJson*(component: VNode): JsonNode =
              
   if component.getAttr("objid") != nil:
     result["id"] = %($component.getAttr("objid"))
- 
-  
+   
   if component.class != nil: result["class"] = %($component.class)
   if component.text != nil or component.value != nil:
     if component.kind == VNodeKind.input:
@@ -61,7 +60,7 @@ proc updateValue(vn: var VNode, value: string) =
     setInputText vn, value
       
           
-proc buildComponent*(params: JsonNode): VNode =
+proc buildComponent*(viewid: string, params: JsonNode): VNode =
   ## builds a component based on a json definition
   var nodeKind: VNodeKind
 
@@ -83,11 +82,13 @@ proc buildComponent*(params: JsonNode): VNode =
 
   if params.hasKey "id":
     result.setAttr "id", params["id"].getStr
-  # else:
-  #   result.setAttr "id", genUUID 
-  
+
+  if params.hasKey "objid":
+    result.setAttr "objid", params["objid"].getStr
+    
   if nodeKind == VNodeKind.label and params.hasKey "text":
     result.add text params["text"].getStr
+    
   if nodeKind == VNodeKind.form:
     result.addEventListener EventKind.onsubmit,
                               proc(ev: Event, n: Vnode) =
@@ -104,13 +105,15 @@ proc buildComponent*(params: JsonNode): VNode =
 
   if params.hasKey "name":
     result.setAttr "name", params["name"].getStr
+    
+  if params.hasKey "action":
+    result.setAttr "action", params["action"].getStr
 
   if params.hasKey "dataListener":
     result.setAttr "dataListener", params["dataListener"].getStr
-  
+
   if params.hasKey "events":
     let events = params["events"]
-    
     var id = if params.hasKey "objid": kstring(params["objid"].getStr)
              else: result.getAttr "id" # deprecate de use of `id`
     
@@ -118,11 +121,11 @@ proc buildComponent*(params: JsonNode): VNode =
     if events.kind == JString:
       for evk in EventKind:
         if events.getStr == $evk:
-          result.addEventListener evk, defaultEvent($evk, $id)
+          result.addEventListener evk, defaultEvent($evk, $id, viewid)
     elif events.kind == JArray:
       for evk in EventKind:
         if events.contains %($evk):
-          result.addEventListener evk, defaultEvent($evk, $id)
+          result.addEventListener evk, defaultEvent($evk, $id, viewid)
     else:
       let comp = params["model"].getStr & "_" &  params["name"].getStr
       echo "$1 - Wrong defenition of events, should be a String or an Array." % comp
@@ -132,7 +135,7 @@ proc buildComponent*(params: JsonNode): VNode =
     
   if params.hasKey "children":
     for child in params["children"].getElems:
-      result.add buildComponent child  
+      result.add buildComponent(viewid, child)
 
 
 proc getModelList(ids: JsonNode): JsonNode {.deprecated: "use site_gen's instead".} =
@@ -146,7 +149,7 @@ proc buildHeader(def: JsonNode): VNode =
   var h = copy templates["header"]
   # WARNING: hardcoded
   h["children"][0]["children"][0]["children"][0]["children"][0]["children"][0]["text"] = def["alternative"]
-  result = buildComponent h
+  result = buildComponent(genUUID(), h)
 
 
 let ErrorPage =
@@ -158,39 +161,49 @@ let ErrorPage =
       text "Go back home."
 
 
-proc buildBody(action: string, bodyDefinition: var JsonNode): VNode =
+proc buildBody(viewid, action: string, bodyDefinition: var JsonNode): VNode =
   # builds the initial ui based on the definition and the componentsTable library
   # this part should understand and comply with the component definition specification
   var def = bodyDefinition
-  result = buildComponent copy templates["container"]
+  result = buildComponent(viewid, copy templates["container"])
+
+  result.setAttr("viewid", viewid)
+  
   if appState.hasKey "message":
     var msgCmpnt = componentsTable["msg"].renderImpl(templates, def, appState["message"])
     # we've shown it, delete it from the state
     appState.delete "message"
-    result.add buildComponent msgCmpnt
+    result.add buildComponent(viewid, msgCmpnt)
+    
   case action
+    
   of "show":
     # for some reason it fails with a second redraw, `copy` prevents it.
     let current = copy getCurrent(appState, def["model"].getStr)
+    
     # get the list of entities related to the current selected entity
     if current.hasKey "relations":
       for relType, relIds in current["relations"].getFields:
-        current{"relations", relType} = getModelList relIds
-    result.add buildComponent componentsTable["show"].renderImpl(templates, def, current)
+        current{"relations", relType} = getModelList relIds    
+    result.add buildComponent(viewid, componentsTable["show"].renderImpl(appState, def, current))
+    
   of "edit":
     let modelName = def["model"].getStr
     var
       current = getCurrent(appState, modelName)
-      form = buildComponent componentsTable["edit"].renderImpl(templates, def, current)
+      form = buildComponent(viewid, componentsTable["edit"].renderImpl(appState, def, current))
       h3 = newVNode VNodeKind.h3 # default heading file should come from configuration
       label = ""
+
     if def.hasKey "label": label = def["label"].getStr
     else: label = "Edit " & capitalize def["model"].getStr
+
     h3.add text label
     form.insert h3, 0
     # preventing default submision
     form.addEventListener EventKind.onsubmit, proc (ev: Event, n: Vnode) = ev.preventDefault
     result.add form
+    
   of "list":
     let
       modelName = def["model"].getStr
@@ -198,22 +211,23 @@ proc buildBody(action: string, bodyDefinition: var JsonNode): VNode =
     var modelList: JsonNode
     if not ids.isNil and ids.len > 0:
       modelList = getModelList ids
-    result.add buildComponent componentsTable["list"].renderImpl(templates, def, modelList)
+    result.add buildComponent(viewid, componentsTable["list"].renderImpl(appState, def, modelList))
   else:
-    result.add buildComponent bodyDefinition
+    result.add buildComponent(viewid, bodyDefinition)
 
 
 proc updateUIRaw*(state: JsonNode): VNode =
   # builds the vdom tree using the ui attribute
-  result = buildComponent state["ui"]
+  result = buildComponent(genUUID(), state["ui"])
 
     
 proc updateUI*(state: var JsonNode): VNode =
   var
     uiDef = state["definition"]
     definition = uiDef
-
-  var route, action: string
+    viewid = state["viewid"].getStr
+    route, action: string
+  
   if appState.hasKey("route") and appState["route"].getStr != "":
     let splitRoute = appState["route"].getStr.split "/"
     # just asume first item is `#`.
@@ -238,32 +252,23 @@ proc updateUI*(state: var JsonNode): VNode =
               routeSec = sectionDef[route][a]
               break
         routeSec = sectionDef[route][action]
-        b = buildBody(action, routeSec)
+        b = buildBody(viewid, action, routeSec)
       else:
         b = ErrorPage
       result.add b
     of "header":
       result.add buildHeader sectionDef
     of "menu":
-      # get data from store
-      # let data = %*{
-      #   "schema": appState["schema"],
-      #   "store": 
-      # }
-      result.add buildComponent componentsTable["menu"].renderImpl(templates, sectionDef, appState)
-      # var uiType = sectionDef["ui-type"].getStr
-      # if not templates.hasKey uiType:
-      #   uiType = "menu"
-      #   # try to build component first if it fails fall back to template
-      # result.add buildComponent templates[uiType]
+      result.add buildComponent(viewid, componentsTable["menu"].renderImpl(templates, sectionDef, appState))
     else:
+      # try to build as template
       if componentsTable.hasKey $section:
-        result.add buildComponent templates[$section]
+        result.add buildComponent(viewid, templates[$section])
 
     
 proc initApp*(state: var JsonNode,
               components: Table[string, BaseComponent],
-              event: proc(name, id: string): proc(ev: Event, n: VNode)): VNode =    
+              event: proc(name, id, viewid: string): proc(ev: Event, n: VNode)): VNode =    
   let definition = state["definition"]
   appState = state
   templates = state["templates"]

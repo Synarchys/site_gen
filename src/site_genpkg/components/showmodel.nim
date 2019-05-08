@@ -6,23 +6,21 @@ import ./listmodel
 var lm = newListModel()
 
 proc ignore(key: string): bool =
+  # ignore fileds `ìd`, `type`, `relations`, `id_*` and `_id*`
   #returns true if the row has to be ignored
   if key == "id" or key == "relations" or key == "type" or
      key.contains("_id") or key.contains("id_"):
     result = true
-  result = false
 
 proc sectionHeader(templates, obj: JsonNode): JsonNode =
   # get definition from schema
   let currentType = obj["type"].getStr
   
-  # Displays the entity and its fields as header
-  # ignore fileds `ìd`, `type`, `relations`, `id_*` and `_id*`
   var b = copy templates["button"]
   b["children"][0]["text"] = %"Edit"
   b["events"] = %["onclick"]
   b["id"] = obj["id"]
-  b["attributes"]= %*{"model": %(obj["type"]), "name": %"edit"}
+  b["attributes"]= %*{"model": %(obj["type"]), "action": %"edit"}
   
   var hc = copy templates["gridColumn"]
   hc["children"].add %*{
@@ -57,22 +55,43 @@ proc sectionHeader(templates, obj: JsonNode): JsonNode =
       result["children"].add fr
 
 
-proc render(templates, def: JsonNode, data: JsonNode = nil): JsonNode =
+proc render(appState, def: JsonNode, data: JsonNode = nil): JsonNode =
   ## Generates a Header using the main object and
   ## generates lists with its relations
+  let
+    templates = appState["templates"]
+    tschema = appState["schema"][def["model"].getStr]
+    
   if not data.isNil:
     result = sectionHeader(templates, data)
-    if data.hasKey("relations"):
-      for relType, modelList in data["relations"].getFields:
-        var l = %*{"ui-type": %"div",
-                    "children": %[
-                      %*{"ui-type": %"h4", "children":
-                        %[ %*{"ui-type": %"text", "text": %(capitalize relType)}]}
-                  ]}
-        let child = lm.renderImpl(templates, %*{"model": %relType}, modelList)
-        if not child.isNil:
-          l["children"].add child
-        result["children"].add l
+    var dataRelations: seq[string] = @[]
+    
+    if tschema.hasKey "relations":
+      for relType, props in tschema["relations"].getFields:
+        var l: JsonNode
+        
+        #if we have data use the list component
+        if (data.hasKey "relations") and (data["relations"].hasKey relType):
+          let modelList = data["relations"][relType]
+          l = lm.renderImpl(appState, %*{"model": %relType, "mode": "add"}, modelList)
+          
+        else:
+          l = lm.renderImpl(appState, %*{"model": %relType, "mode": "add"})
+          
+          # let relname = capitalize relType.replace("_", " ")
+          # l = %*{"ui-type": %"div",
+          #       "children": %[
+          #         %*{"ui-type": %"h4", "children":
+          #           %[ %*{"ui-type": %"text", "text": %(relname)}]}
+          #       ]}
+          # var b = copy templates["button"]
+          # b["children"][0]["text"] = %"Add"
+          # b["events"] = %["onclick"]
+          # b["attributes"]= %*{"model": %(relType), "action": %"list"}
+          # l["children"].add b
+                  
+        if not l.isNil:
+          result["children"].add l
 
 
 type
