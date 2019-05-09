@@ -52,6 +52,16 @@ proc reRender*()=
   `kxi`.redraw()
 
 
+proc newView(action, model, sourceId: string, payload: JsonNode):JSonNode =
+  result  = %*{
+    "id": %genUUID(),
+    "action": %action,
+    "model": %model,
+    "source": %sourceid,
+    "payload": payload
+  }
+
+ 
 proc navigate(viewid: string, payload: JsonNode): JsonNode =
   # `viewid` is where the actions come from
   # if we are going to show an action+model that does not exists
@@ -71,12 +81,13 @@ proc navigate(viewid: string, payload: JsonNode): JsonNode =
     action = payload["action"].getStr
     sourceView = history[viewid]
     targetView: JsonNode
-    targetViewId: string
     
   case action
   of "save", "select", "done", "cancel":
     targetView = history[sourceView["source"].getStr]
-    targetViewId = targetView["id"].getStr
+    
+    if action == "save" and not targetView.haskey "model":
+      targetView = newView("list", model, sourceView["id"].getStr, payload)
     
   of "delete":
     # do not redirect
@@ -85,25 +96,19 @@ proc navigate(viewid: string, payload: JsonNode): JsonNode =
       result["parent"] = targetView["payload"]["objid"]
     
   of "show","edit", "list", "add":
-    targetViewId = genUUID()
     if action == "add":
       action = "list"
       result["action"] = %action
-      
-    targetView = %*{
-      "id": %targetViewId,
-      "action": %action,
-      "model": %model,
-      "source": %viewid,
-      "payload": payload
-    }
+    
+    targetView = newView(action, model, sourceView["id"].getStr, payload)
+
 
   # add the entity id as parent of the current
   if (targetView.haskey "payload") and (targetView["payload"].haskey "objid"):
     result["parent"] = targetView["payload"]["objid"]
   
-  history[targetViewId] = targetView
-  appState["viewid"] = %targetViewId
+  history[targetView["id"].getStr] = targetView
+  appState["viewid"] = targetView["id"]
   
   let route = "#/$1/$2" % [targetView["model"].getStr, targetView["action"].getStr]
   appState["route"] = %route
@@ -132,9 +137,10 @@ proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Eve
     if id != "":
       payload["id"] = %id # deprecate de use of `id`  
       payload["objid"] = %id
+      
     if n.value != nil:
-      payload["value"] = %($n.value)
-
+      payload["value"] = %($n.value)    
+    
     if payload.haskey "action":
       payload = navigate(viewid, payload)
     callEventListener(payload, actions)

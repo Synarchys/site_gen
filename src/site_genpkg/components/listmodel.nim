@@ -31,8 +31,7 @@ proc render(appState, def: JsonNode, modelList: JsonNode = nil): JsonNode =
   
   var b = copy templates["button"]
   
-  b["children"][0]["text"] = if def.hasKey "mode": def["mode"] else: %"New"
-  
+  b["children"][0]["text"] = if def.hasKey "mode": def["mode"] else: %"New"  
   b["model"]  = def["model"]
   b["action"]  = if def.hasKey("mode") and def["mode"] == %"add": %"add"
                  else: %"edit"

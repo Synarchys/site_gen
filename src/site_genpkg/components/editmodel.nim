@@ -43,7 +43,6 @@ proc formGroup(templates, def: JsonNode): JsonNode =
 
     
 proc render(appState, formDef: JsonNode, data: JsonNode = nil): JsonNode =
-  echo data.pretty 
   let
     templates = appState["templates"]
     modelName = formDef["model"].getStr
@@ -95,7 +94,6 @@ proc render(appState, formDef: JsonNode, data: JsonNode = nil): JsonNode =
   # if data.haskey "id": saveb["id"] = data["id"]  
   # form["children"].add saveb
   # form["children"].add cancelb
-
   form
 
 

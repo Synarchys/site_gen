@@ -180,11 +180,12 @@ proc buildBody(viewid, action: string, bodyDefinition: var JsonNode): VNode =
   of "show":
     # for some reason it fails with a second redraw, `copy` prevents it.
     let current = copy getCurrent(appState, def["model"].getStr)
-    
+  
     # get the list of entities related to the current selected entity
     if current.hasKey "relations":
       for relType, relIds in current["relations"].getFields:
-        current{"relations", relType} = getModelList relIds    
+        current{"relations", relType} = getModelList relIds
+    
     result.add buildComponent(viewid, componentsTable["show"].renderImpl(appState, def, current))
     
   of "edit":
