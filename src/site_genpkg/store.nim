@@ -1,4 +1,5 @@
-import json
+
+import json, sequtils
 
 # general store procs
 
@@ -49,4 +50,6 @@ proc addToStore*(appState, obj: JsonNode, objType: string) =
     appState{"store", "objects"} = %*{}
   if not appState{"store", "objects"}.hasKey objType:
     appState{"store", "objects", objType} = %*{"current": %"", "list": %[]}
-  appState{"store", "objects", objType, "list"}.add obj["id"]
+
+  if appState{"store", "objects", objType, "list"}.to(seq[string]).count(obj["id"].getStr) == 0:
+    appState{"store", "objects", objType, "list"}.add obj["id"]
