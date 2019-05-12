@@ -1,6 +1,25 @@
 
-import json, jsffi, tables, strutils
+import json, jsffi, tables, strutils, unicode
 
+
+proc newButton*(b: JsonNode, id="", model, action: string, text="", mode= ""): JsonNode =
+  result = copy b
+  result["children"][0]["text"] = if text != "": %text else: %(capitalize action)
+  result["events"] = %["onclick"]
+  result["attributes"]= %*{"model": %model, "action": %action}
+  if id != "":
+    result["id"] = %id
+    result["objid"] = %id
+  if mode != "": result["objid"] = %mode
+    
+                          
+proc genLabel*(text: string): string =
+  result = ""
+  for i in text.split "_":
+    result = result & " " &  (capitalize i)
+
+
+# helper procs to retrieve and set values    
 proc getElement*(uiComponent: JsonNode, key, value: string): JsonNode =
   # returns the first match
   if uiComponent.hasKey(key) and uiComponent[key] == %value:
@@ -11,7 +30,7 @@ proc getElement*(uiComponent: JsonNode, key, value: string): JsonNode =
       if result != nil:
         break
 
-
+      
 proc getValue*(uiComponent: JsonNode, key, attr: string): JsonNode =
   let elem = getElement(uiComponent, key, attr)
   if elem.hasKey("value"):

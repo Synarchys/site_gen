@@ -31,22 +31,22 @@ proc editModel(appState, def: JsonNode) =
           "events": ["onkeyup"]
       })
   
-  # default submit button
-  var saveb =  %*{
-    "action": %"save",
-    "ui-type": %"button",
-    "label": %"Save",
-    "events": %["onclick"]
-  }
-  var cancelb =  %*{
-    "action": %"cancel",
-    "ui-type": %"button",
-    "label": %"Cancel",
-    "events": %["onclick"]
-  }
-  newV["children"].add saveb
-  newV["children"].add cancelb
-  if model.haskey "id": saveb["id"] = model["id"]
+  # # default submit button
+  # var saveb =  %*{
+  #   "action": %"save",
+  #   "ui-type": %"button",
+  #   "label": %"Save",
+  #   "events": %["onclick"]
+  # }
+  # var cancelb =  %*{
+  #   "action": %"cancel",
+  #   "ui-type": %"button",
+  #   "label": %"Cancel",
+  #   "events": %["onclick"]
+  # }
+  # newV["children"].add saveb
+  # newV["children"].add cancelb
+  # if model.haskey "id": saveb["id"] = model["id"]
   
      
 proc listModel(appState, def: JsonNode) =
