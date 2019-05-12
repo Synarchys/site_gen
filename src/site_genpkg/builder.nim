@@ -153,12 +153,12 @@ proc buildHeader(def: JsonNode): VNode =
 
 
 let ErrorPage =
-  buildHtml(tdiv(class="container-fluid")):
-  tdiv(class="alert alert-danger",role="alert"):
-    h4:
-      text "Error - Page Not Found."
-    a(href="#/home"):
-      text "Go back home."
+  %* {"ui-type":"div","class":"container-fluid",
+       "children":[{"ui-type":"div","class":"alert alert-danger","attributes":{"role":"alert"},
+                     "children":[{"ui-type":"h4",
+                                   "children":[{"ui-type":"#text","text":"Error - Page Not Found."}]},
+                                 {"ui-type":"a","attributes":{"href":"#/home"},
+                                   "children":[{"ui-type":"#text","text":"Go back home."}]}]}]}
 
 
 proc buildBody(viewid, action: string, bodyDefinition: var JsonNode): VNode =
@@ -193,16 +193,6 @@ proc buildBody(viewid, action: string, bodyDefinition: var JsonNode): VNode =
     var
       current = getCurrent(appState, modelName)
       form = buildComponent(viewid, componentsTable["edit"].renderImpl(appState, def, current))
-      h3 = newVNode VNodeKind.h3 # default heading file should come from configuration
-      label = ""
-
-    if def.hasKey "label": label = def["label"].getStr
-    else: label = "Edit " & capitalize def["model"].getStr
-
-    h3.add text label
-    form.insert h3, 0
-    # preventing default submision
-    form.addEventListener EventKind.onsubmit, proc (ev: Event, n: Vnode) = ev.preventDefault
     result.add form
     
   of "list":
@@ -255,7 +245,7 @@ proc updateUI*(state: var JsonNode): VNode =
         routeSec = sectionDef[route][action]
         b = buildBody(viewid, action, routeSec)
       else:
-        b = ErrorPage
+        b = buildComponent(genUUID(), templates["fatalError"]) #ErrorPage
       result.add b
     of "header":
       result.add buildHeader sectionDef
