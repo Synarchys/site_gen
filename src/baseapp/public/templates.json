@@ -299,5 +299,7 @@
   },
   "container": {"ui-type": "div", "attributes": {"class": "container"}, "children": []},
   "gridColumn": {"ui-type": "div", "attributes": {"class": "col"}, "children": []},
-  "gridRow": {"ui-type": "div", "attributes": {"class": "row"}, "children": []}
+  "gridRow": {"ui-type": "div", "attributes": {"class": "row"}, "children": []},
+  "fatalError": {"ui-type":"div","class":"container-fluid","children":[{"ui-type":"div","class":"alert alert-danger","attributes":{"role":"alert"},"children":[{"ui-type":"h4","children":[{"ui-type":"#text","text":"Error - Page Not Found."}]},{"ui-type":"a","attributes":{"href":"#/home"},"children":[{"ui-type":"#text","text":"Go back home."}]}]}]}
+  
 }
