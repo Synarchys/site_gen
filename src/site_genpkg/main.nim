@@ -85,9 +85,15 @@ proc navigate(viewid: string, payload: JsonNode): JsonNode =
   case action
   of "save", "select", "done", "cancel":
     targetView = history[sourceView["source"].getStr]
-    
-    if action == "save" and not targetView.haskey "model":
+
+    if not targetView.haskey "model":
+      # we are showing a msg o generic view, go to listing model.
       targetView = newView("list", model, sourceView["id"].getStr, payload)
+      
+    if action == "done":
+      # goes to prevous viewid, changes should be persisted.
+      action = targetView["action"].getStr
+      result["action"] = %action
     
   of "delete":
     # do not redirect
@@ -101,7 +107,6 @@ proc navigate(viewid: string, payload: JsonNode): JsonNode =
       result["action"] = %action
     
     targetView = newView(action, model, sourceView["id"].getStr, payload)
-
 
   # add the entity id as parent of the current
   if (targetView.haskey "payload") and (targetView["payload"].haskey "objid"):
@@ -130,6 +135,9 @@ proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Eve
     
     if n.getAttr("action") != nil:
       payload["action"] = %($n.getAttr "action")
+
+    if n.getAttr("mode") != nil:
+      payload["mode"] = %($n.getAttr "mode")
     
     if n.getAttr("name") != nil:
       payload["node_name"] = %($n.getAttr "name")
