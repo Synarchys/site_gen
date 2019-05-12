@@ -1,8 +1,8 @@
 
-import json, tables, sequtils, strutils
-import ./uicomponent
+import json, tables, sequtils, strutils, unicode
+import ./uicomponent, ../ui_utils
 
-
+    
 proc ignore(key: string): bool =
   #returns true if the row has to be ignored
   if key == "id" or key == "relations" or key == "type" or
@@ -55,6 +55,14 @@ proc render(appState, formDef: JsonNode, data: JsonNode = nil): JsonNode =
   
   let current = data #getCurrent(appState, modelName)
   form["children"] = newJArray()
+
+  form["children"].add %*{"ui-type": %"h3",
+                           "children": [{
+                             "ui-type": %"text",
+                             "text": %genLabel(modelName)}
+                           ]
+                         }
+  
   for item in formDef["children"].getElems:
     var fieldName: string
     if item.haskey "action":
@@ -66,34 +74,24 @@ proc render(appState, formDef: JsonNode, data: JsonNode = nil): JsonNode =
       var child: JsonNode
       item["model"] = %modelName
       if item["ui-type"].getStr == "button":
+        # deprecated
         child = copy templates["button"]
         child["model"] = %modelName
         child["action"] = if item.hasKey fieldName: copy item[fieldName] else: %fieldName
         child["events"] = copy item["events"]
         child["children"][0]["text"] = item["label"]
         if not current.isNil: child["id"] = current["id"]
+        
       else:
         # if item is input use formGroup
         if not current.isNil and current.hasKey(fieldName):
           item["value"] = current[fieldName]
         child = formGroup(templates, item)
       form["children"].add child
-      
-  # var saveb =  %*{
-  #   "action": %"save",
-  #   "ui-type": %"button",
-  #   "label": %"Save",
-  #   "events": %["onclick"]
-  # }
-  # var cancelb =  %*{
-  #   "action": %"cancel",
-  #   "ui-type": %"button",
-  #   "label": %"Cancel",
-  #   "events": %["onclick"]
-  # }
-  # if data.haskey "id": saveb["id"] = data["id"]  
-  # form["children"].add saveb
-  # form["children"].add cancelb
+  let id = if data.haskey "id": data["id"].getStr else: ""
+  form["children"].add newButton(templates["button"], id, data["type"].getStr, "save")
+  form["children"].add newButton(templates["button"], id, data["type"].getStr, "cancel")
+  
   form
 
 

@@ -14,8 +14,6 @@ proc render(appState, def: JsonNode, data: JsonNode = nil): JsonNode =
     templates = appState["templates"]
     tschema = appState["schema"][def["model"].getStr]
 
-  echo data.pretty
-  
   if not data.isNil:    
     result = dm.renderImpl(appState, def, data)
     
@@ -29,7 +27,6 @@ proc render(appState, def: JsonNode, data: JsonNode = nil): JsonNode =
           l = lm.renderImpl(appState, %*{"model": %relType, "mode": "add"}, modelList)
         else:
           l = lm.renderImpl(appState, %*{"model": %relType, "mode": "add"})
-        
                             
         if not l.isNil:
           result["children"].add l

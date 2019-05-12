@@ -1,8 +1,9 @@
 
 
 import json, tables, sequtils, strutils, unicode
-import ./uicomponent
+import ./uicomponent, ../ui_utils
 
+  
 proc ignore(key: string): bool =
   # ignore fileds `ìd`, `type`, `relations`, `id_*` and `_id*`
   #returns true if the row has to be ignored
@@ -15,20 +16,15 @@ proc sectionHeader(templates, obj: JsonNode): JsonNode =
   # get definition from schema
   let currentType = obj["type"].getStr
   
-  var b = copy templates["button"]
-  b["children"][0]["text"] = %"Edit"
-  b["events"] = %["onclick"]
-  b["id"] = obj["id"]
-  b["attributes"]= %*{"model": %(obj["type"]), "action": %"edit"}
-  
   var hc = copy templates["gridColumn"]
   hc["children"].add %*{
     "ui-type": %"h3",
-    "children": %[ %*{"ui-type": "#text", "text": %(capitalize currentType)} ]}
+    "children": %[ %*{"ui-type": "#text", "text": %(genLabel currentType)} ]}
   
   var hr = copy templates["gridRow"]
   hr["children"].add hc
-  hr["children"].add b
+  hr["children"].add newButton(templates["button"], obj["id"].getStr, currentType, "edit")
+  hr["children"].add newButton(templates["button"], obj["id"].getStr, currentType, "done")
   
   result = copy templates["container"]
   result["children"].add hr
@@ -52,7 +48,6 @@ proc sectionHeader(templates, obj: JsonNode): JsonNode =
       fr["children"].add fkc
       fr["children"].add fvc
       result["children"].add fr
-
 
 
 proc render(appState, def: JsonNode, data: JsonNode = nil): JsonNode =

@@ -1,6 +1,6 @@
 
 import json, tables, sequtils, strutils, unicode
-import ./uicomponent
+import ./uicomponent, ../ui_utils
 
 # List based in the model object with a select button
 
@@ -19,7 +19,7 @@ proc render(appState, def: JsonNode, modelList: JsonNode = nil): JsonNode =
 
   let
     modelName = def["model"].getStr
-    l = capitalize modelName.replace("_", " ")
+    l = genLabel modelName
   
   var h = %*{"ui-type": %"div",
               "children": %[
@@ -28,16 +28,12 @@ proc render(appState, def: JsonNode, modelList: JsonNode = nil): JsonNode =
             ]}
             
   result["children"].add h
-  
-  var b = copy templates["button"]
-  
-  b["children"][0]["text"] = if def.hasKey "mode": def["mode"] else: %"New"  
-  b["model"]  = def["model"]
-  b["action"]  = if def.hasKey("mode") and def["mode"] == %"add": %"add"
-                 else: %"edit"
-  
-  b["events"] = %["onclick"]
-  result["children"].add b
+
+  let
+    txt = if def.hasKey "mode": capitalize(def["mode"].getStr) else: "New"  
+    ac = if def.hasKey("mode") and def["mode"].getStr == "add": "add"
+                  else: "edit"
+  result["children"].add newButton(templates["button"], "", def["model"].getStr, ac, txt)
   
   if not modelList.isNil and modelList.len > 0:
     var
@@ -51,7 +47,7 @@ proc render(appState, def: JsonNode, modelList: JsonNode = nil): JsonNode =
         var th = %*{
           "ui-type": %"th",
           "attributes": %*{"scope": %"col"},
-          "children": %[%*{ "ui-type": "#text", "text": %(capitalize k)}]
+          "children": %[%*{ "ui-type": "#text", "text": %(genLabel k)}]
         }
         trh["children"].add th
     tab["children"].add %{"ui-type": %"thead", "children": %[trh]}
@@ -69,28 +65,16 @@ proc render(appState, def: JsonNode, modelList: JsonNode = nil): JsonNode =
             "children": %[%*{"ui-type": "#text", "text": %cellVal}]
           }
           tr["children"].add cell
-        
-      var detailB = copy templates["button"]
-      detailB["children"][0]["text"] = %"Detail"
-      detailB["events"] = %["onclick"]
-      detailB["attributes"]= %*{"model": %modelName, "action": %("show")}
-      detailB["id"] = elem["id"]
-      detailB["objid"] = elem["id"]
-      tr["children"].add detailB
 
+      tr["children"].add newButton(templates["button"], elem["id"].getStr, modelName, "show")
       # if we are listing as add mode, the list is inside a show component
+      
       let act = if def.hasKey("mode") and def["mode"] == %"add": "delete"
                 else: "select"
       let txt = if def.hasKey("mode") and def["mode"] == %"add": "Remove"
                 else: "Select"
       
-      var selectB = copy templates["button"]
-      selectB["children"][0]["text"] = %txt
-      selectB["events"] = %["onclick"]
-      selectB["attributes"]= %*{"model": %modelName, "action": %(act), "objid": elem["id"]}
-      selectB["id"] = elem["id"]
-      selectB["objid"] = elem["id"]
-      tr["children"].add selectB 
+      tr["children"].add newButton(templates["button"], elem["id"].getStr, modelName, act, txt)
       
       tbody["children"].add tr
     tab["children"].add tbody
