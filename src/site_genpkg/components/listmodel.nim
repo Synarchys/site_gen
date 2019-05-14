@@ -29,10 +29,14 @@ proc render(appState, def: JsonNode, modelList: JsonNode = nil): JsonNode =
             
   result["children"].add h
 
+  # `add` action redirects to a list to select one
+  # `new` redirects to edit mode with a new object set as current
+  
   let
     txt = if def.hasKey "mode": capitalize(def["mode"].getStr) else: "New"  
     ac = if def.hasKey("mode") and def["mode"].getStr == "add": "add"
-                  else: "edit"
+                  else: "new"
+  
   result["children"].add newButton(templates["button"], "", def["model"].getStr, ac, txt)
   
   if not modelList.isNil and modelList.len > 0:

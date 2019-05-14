@@ -24,7 +24,7 @@ proc initComponents*(c: Table[string, BaseComponent],
   result["show"] = newShowModel()
   result["msg"]  = newMessages(a)
 
-  updateActions(result["msg"], a)
+  #updateActions(result["msg"], a)
   
   for k, v in c.pairs:
     #echo "Adding component ", k

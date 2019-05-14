@@ -101,10 +101,15 @@ proc navigate(viewid: string, payload: JsonNode): JsonNode =
     if (targetView.haskey "payload") and (targetView["payload"].haskey "objid"):
       result["parent"] = targetView["payload"]["objid"]
     
-  of "show","edit", "list", "add":
+  of "new", "show","edit", "list", "add":
     if action == "add":
       action = "list"
       result["action"] = %action
+      
+    if action == "new":
+      action = "edit"
+      result["action"] = %action
+      result["mode"] = %"new"
     
     targetView = newView(action, model, sourceView["id"].getStr, payload)
 
@@ -155,7 +160,6 @@ proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Eve
 
     #if payload.haskey "action":
     reRender()
-    
     updateData(n)
 
 

@@ -11,7 +11,7 @@ proc ignore(key: string): bool =
 
 
 proc formGroup(templates, def: JsonNode): JsonNode =
-  result = copy templates["formGroup"]  
+  result = copy templates["formGroup"]
   var component: JsonNode
   let uiType = $def["ui-type"].getStr  
   if templates.haskey uiType:
@@ -46,16 +46,16 @@ proc render(appState, formDef: JsonNode, data: JsonNode = nil): JsonNode =
   let
     templates = appState["templates"]
     modelName = formDef["model"].getStr
-  
+    
+    
   var form = %*{
     "ui-type": "form",
     "name": formDef["name"],
     "model": formDef["model"]
   }
   
-  let current = data #getCurrent(appState, modelName)
+  let current = data
   form["children"] = newJArray()
-
   form["children"].add %*{"ui-type": %"h3",
                            "children": [{
                              "ui-type": %"text",
@@ -89,6 +89,7 @@ proc render(appState, formDef: JsonNode, data: JsonNode = nil): JsonNode =
         child = formGroup(templates, item)
       form["children"].add child
   let id = if data.haskey "id": data["id"].getStr else: ""
+  
   form["children"].add newButton(templates["button"], id, data["type"].getStr, "save")
   form["children"].add newButton(templates["button"], id, data["type"].getStr, "cancel")
   
