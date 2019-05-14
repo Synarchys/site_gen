@@ -21,32 +21,24 @@ proc editModel(appState, def: JsonNode) =
       # according to is type or if explicitly defined
       #if field != "id" and fieldType.getStr == "string":
       # move this code to edit-render
-      
-      newV["children"].add(
-        %*{
-          "ui-type": %"input",
-          "name": %field,
-          "label": %(capitalize field), # uppercase first character
-          "type": %"string",
-          "events": ["onkeyup"]
-      })
-  
-  # # default submit button
-  # var saveb =  %*{
-  #   "action": %"save",
-  #   "ui-type": %"button",
-  #   "label": %"Save",
-  #   "events": %["onclick"]
-  # }
-  # var cancelb =  %*{
-  #   "action": %"cancel",
-  #   "ui-type": %"button",
-  #   "label": %"Cancel",
-  #   "events": %["onclick"]
-  # }
-  # newV["children"].add saveb
-  # newV["children"].add cancelb
-  # if model.haskey "id": saveb["id"] = model["id"]
+
+      if fieldType.getStr == "date":
+        newV["children"].add(
+          %*{
+            "ui-type": %"date",
+            "name": %field,
+            "label": %(capitalize field), # uppercase first character
+            "type": %"date"
+        })
+      else:
+        newV["children"].add(
+          %*{
+            "ui-type": %"input",
+            "name": %field,
+            "label": %(capitalize field), # uppercase first character
+            "type": %"string",
+            "events": ["onkeyup"]
+        })
   
      
 proc listModel(appState, def: JsonNode) =
