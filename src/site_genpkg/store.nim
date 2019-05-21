@@ -27,6 +27,11 @@ proc setFieldValue*(appState:JsonNode, objType, field, value: string) =
   var c = getCurrent(appState, objType)
   c[field] = %value
 
+
+proc getFieldValue*(appState:JsonNode, objType, field: string): JsonNode =
+  var c = getCurrent(appState, objType)
+  result = c[field]
+
     
 proc getList*(appState:JsonNode, objType: string): JsonNode =
   # returns a jsnode of kind array
