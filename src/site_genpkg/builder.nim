@@ -21,8 +21,8 @@ const ACTIONS = ["list", "show", "edit", "raw"]
 type
   Sections = enum
     header, menu, body, footer
-
-
+  
+    
 proc toJson*(component: VNode): JsonNode =
   ## returns a JsonNode from a VNode
   result = %*{ "ui-type": $component.kind }
@@ -153,7 +153,7 @@ proc buildHeader(def: JsonNode): VNode =
 
 
 let ErrorPage =
-  %* {"ui-type":"div","class":"container-fluid",
+  %*{"ui-type":"div","class":"container-fluid",
        "children":[{"ui-type":"div","class":"alert alert-danger","attributes":{"role":"alert"},
                      "children":[{"ui-type":"h4",
                                    "children":[{"ui-type":"#text","text":"Error - Page Not Found."}]},

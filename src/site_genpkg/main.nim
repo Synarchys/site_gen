@@ -34,7 +34,7 @@ var
   history = %*{}
 
 
-proc updateData(n: VNode) =
+proc updateData(n: VNode){.deprecated.} =
   if not n.value.isNil:
     let 
       model = $n.getAttr "model"
@@ -126,15 +126,30 @@ proc navigate(viewid: string, payload: JsonNode): JsonNode =
 
 proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Event, n: VNode) =
   result = proc (ev: Event, n: VNode) =
-    if n.kind == VnodeKind.input and n.getAttr("type") == kstring"date":
+    let
+      evt = ev.`type`
+      model = $n.getAttr "model"
+      
+    var
+      payload = %*{"value": %""}
+      event = %*{"type": %($evt)}
+
+    # TODO: improve event data passed.
+    if not evt.isNil and evt.contains "key":
+      event["keyCode"] = %(cast[KeyboardEvent](ev).keyCode)
+      event["key"] = %($cast[KeyboardEvent](ev).key)
+ 
+    payload["event"] = event
+    if n.kind == VnodeKind.input:
+      payload["type"] = %($n.getAttr "type")
+    
+    if payload.haskey("type") and payload["type"].getStr == "date":
       # let the dom handle the events for the `input date`
       discard
     else:
       ev.preventDefault()
-    var payload = %*{}
-
-    # payload["viewid"] = viewid
-    payload["model"] = %($n.getAttr "model")
+    
+    payload["model"] = %model
     payload["node_kind"] = %($n.kind)
     payload["event_kind"] = %eventKind
     
@@ -150,18 +165,16 @@ proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Eve
     if id != "":
       payload["id"] = %id # deprecate de use of `id`  
       payload["objid"] = %id
-      
-    if n.value != nil:
-      payload["value"] = %($n.value)    
+
+    if not n.value.isNil:
+      payload["value"] = %($n.value)
     
     if payload.haskey "action":
       payload = navigate(viewid, payload)
-    callEventListener(payload, actions)
-
-    #if payload.haskey "action":
+      
+    callEventListener(payload, actions)    
     reRender()
-    updateData(n)
-
+      
 
 proc setHashRoute(rd: RouterData) =
   if prevHashPart != $rd.hashPart:
@@ -181,7 +194,7 @@ proc showError(): VNode =
         text appState["error"].getStr
       a(href="#/home"):
         text "Go back home."
-  reRender()      
+  reRender()
   appState.delete("error")
   
     
