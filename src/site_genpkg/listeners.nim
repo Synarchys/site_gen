@@ -31,15 +31,18 @@ proc callEventListener*(payload: JsonNode,
     a = payload["node_name"].getStr
   elif payload.haskey("action"):
     a = payload["action"].getStr
-     
-  let sitegen_action = "$1_$2_$3" % [payload["model"].getStr,
-                                     a,
-                                     payload["event_kind"].getStr]
+
+  let
+    nodeKind = payload["node_kind"].getStr
+    eventKind = payload["event_kind"].getStr.replace("on", "")
+    defaultNodeAction = "default_action_" & nodeKind & "_" & eventKind
+    sitegen_action = "$1_$2_$3" % [payload["model"].getStr, a, eventKind]
+
 
   if actions.hasKey sitegen_action:
     eventListener = actions[sitegen_action]
-  elif payload["node_kind"].getStr == "input" and actions.hasKey "sitegen_input_action":
-    eventListener = actions["sitegen_input_action"]
+  elif actions.hasKey defaultNodeAction:
+    eventListener = actions[defaultNodeAction]
   elif actions.hasKey "sitegen_default_action":
     # default action
     eventListener = actions["sitegen_default_action"]
