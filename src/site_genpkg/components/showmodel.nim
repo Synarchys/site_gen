@@ -22,7 +22,7 @@ proc render(appState, def: JsonNode, data: JsonNode = nil): JsonNode =
     if tschema.hasKey "relations":
       for relType, props in tschema["relations"].getFields:
         var l: JsonNode
-        if (data.hasKey "relations") and (data["relations"].hasKey relType):
+        if data.hasKey("relations") and data["relations"].hasKey(relType):
           let modelList = data["relations"][relType]
           l = lm.renderImpl(appState, %*{"model": %relType, "mode": "add"}, modelList)
         else:

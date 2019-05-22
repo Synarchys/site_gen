@@ -1,28 +1,36 @@
 
-import json, tables, sequtils, strutils, unicode
+import json, tables, sequtils, strutils, unicode, times
 import ./uicomponent, ../ui_utils
 
-    
-proc ignore(key: string): bool =
-  #returns true if the row has to be ignored
-  if key == "id" or key == "relations" or key == "type" or
-     key.contains("_id") or key.contains("id_"):
-    result = true
 
-
-proc formGroup(templates, def: JsonNode): JsonNode =
+proc formGroup(templates, uidef: JsonNode): JsonNode =
+  
   result = copy templates["formGroup"]
-  var component: JsonNode
-  let uiType = $def["ui-type"].getStr  
+  var
+    def = uidef
+    component: JsonNode
+  
+  let uiType = $def["ui-type"].getStr
+  
   if templates.haskey uiType:
     component = copy templates[uiType]
-  else:    
-    if uiType == "check":
+  else:
+    if uiType == "check" or uiType == "checkbox":
       component = copy templates["checkbox"]
+      if def.haskey("type") and def["type"] == %"boolean":
+        if def.hasKey("value") and def["value"] == %"true":
+          component{"attributes","checked"} = %"true"
+        elif component.haskey("attributes") and component["attributes"].haskey("checked"):
+          delete(component["attributes"], "checked")
+        
     elif uiType == "text":
       component = copy templates["textarea"]
     elif uiType == "input":
       component = copy templates["input"]
+    elif uiType == "datetime":
+      component = copy templates["input"]
+      component{"attributes","type"} = %"datetime"
+
     else:
       # TODO: raise error
       echo "Error: ui-type ", uiType, "not found."
@@ -41,12 +49,18 @@ proc formGroup(templates, def: JsonNode): JsonNode =
   result["children"][0]{"attributes","for"} = component["name"]
   result["children"].add component
 
+
+proc ignore(key: string): bool =
+  #returns true if the row has to be ignored
+  if key == "id" or key == "relations" or key == "type" or
+     key.contains("_id") or key.contains("id_"):
+    result = true
+
     
 proc render(appState, formDef: JsonNode, data: JsonNode = nil): JsonNode =
   let
     templates = appState["templates"]
     modelName = formDef["model"].getStr
-    
     
   var form = %*{
     "ui-type": "form",
@@ -83,7 +97,6 @@ proc render(appState, formDef: JsonNode, data: JsonNode = nil): JsonNode =
         if not current.isNil: child["id"] = current["id"]
         
       else:
-        # if item is input use formGroup
         if not current.isNil and current.hasKey(fieldName):
           item["value"] = current[fieldName]
         child = formGroup(templates, item)

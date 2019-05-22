@@ -22,13 +22,23 @@ proc editModel(appState, def: JsonNode) =
       #if field != "id" and fieldType.getStr == "string":
       # move this code to edit-render
 
-      if fieldType.getStr == "date":
+      if fieldType.getStr == "datetime":
         newV["children"].add(
           %*{
-            "ui-type": %"date",
+            "ui-type": %"datetime",
             "name": %field,
             "label": %(capitalize field), # uppercase first character
-            "type": %"date"
+            "type": %"datetime",            
+            "events": ["onkeyup"]
+        })
+      elif fieldType.getStr == "boolean":
+        newV["children"].add(
+          %*{
+            "ui-type": %"check",
+            "name": %field,
+            "label": %(capitalize field), # uppercase first character
+            "type": %"boolean",    
+            "events": ["onclick"]
         })
       else:
         newV["children"].add(
