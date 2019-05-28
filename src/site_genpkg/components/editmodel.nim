@@ -1,4 +1,4 @@
-
+ 
 import json, tables, sequtils, strutils, unicode, times
 import ./uicomponent, ../ui_utils
 
@@ -57,7 +57,7 @@ proc ignore(key: string): bool =
     result = true
 
     
-proc render(appState, formDef: JsonNode, data: JsonNode = nil): JsonNode =
+var EditModel* =proc(appState, formDef: JsonNode, data: JsonNode = nil): JsonNode =
   let
     templates = appState["templates"]
     modelName = formDef["model"].getStr
@@ -107,10 +107,3 @@ proc render(appState, formDef: JsonNode, data: JsonNode = nil): JsonNode =
   form["children"].add newButton(templates["button"], id, data["type"].getStr, "cancel")
   
   form
-
-
-type
-  EditModel* = object of BaseComponent
-
-proc newEditModel*(): EditModel = 
-  result = newBaseComponent(EditModel, render)

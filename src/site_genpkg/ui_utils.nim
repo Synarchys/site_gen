@@ -19,7 +19,24 @@ proc genLabel*(text: string): string =
     result = result & " " &  (capitalize i)
 
 
-# helper procs to retrieve and set values    
+# ui helper procs 
+proc addChild*(parent: var JsonNode, child: JsonNode)  =
+  if not parent.haskey "children": parent["children"] = %[]
+  parent["children"].add child
+
+
+proc setAttribute*(parent: var JsonNode, key, value: string) =
+  ## if it does not exist it is added
+  parent{"attributes", key} = %value
+
+
+proc addEvent*(parent: var JsonNode, event: string) =
+  ## if it does not exist it is added
+  if not parent.haskey "events": parent["events"] = %[]
+  if not parent["events"].contains %event:
+    parent["events"].add %event
+
+  
 proc getElement*(uiComponent: JsonNode, key, value: string): JsonNode =
   # returns the first match
   if uiComponent.hasKey(key) and uiComponent[key] == %value:
@@ -64,6 +81,7 @@ proc getAttribute*(uiComponent: var JsonNode, id, attr: string): JsonNode =
 
       
 proc setAttribute*(uiComponent: var JsonNode, id, attr, value: string) =
+  # looks up in the components graph
   var element = getElement(uiComponent, "id", id)
   if not element.hasKey("attributes"):
     element["attributes"] = %*{}

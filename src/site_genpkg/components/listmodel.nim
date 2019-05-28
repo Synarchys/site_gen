@@ -11,12 +11,12 @@ proc ignore(key: string): bool =
     result = true
 
 
-proc render(appState, def: JsonNode, modelList: JsonNode = nil): JsonNode =
+proc ListModel*(appState, def: JsonNode, modelList: JsonNode = nil): JsonNode =
   # `modelList` is of kind jsonArray with the objects
 
   let templates = appState["templates"]
   result = %*{"ui-type": %"div", "children": %[]}
-
+  
   let
     modelName = def["model"].getStr
     l = genLabel modelName
@@ -83,11 +83,3 @@ proc render(appState, def: JsonNode, modelList: JsonNode = nil): JsonNode =
       tbody["children"].add tr
     tab["children"].add tbody
     result["children"].add tab
-
-  
-type
-  ListModel* = object of BaseComponent
-
-
-proc newListModel*(): ListModel = 
-  result = newBaseComponent(ListModel, render)

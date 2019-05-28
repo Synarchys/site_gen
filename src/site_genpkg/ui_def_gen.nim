@@ -70,7 +70,7 @@ proc generateBody*(schema: JsonNode): JsonNode =
     let route = "#/" & tabName
     result[route] = %*{"model": %tabName}
     for a in ACTIONS:
-      result[route][a] = %*{"name": %(a & capitalize tabName)}
+      result[route][a] = %*{"name": %(a & "_"  & tabName)}
 
 
 proc updateDefinition*(appState: JsonNode) =

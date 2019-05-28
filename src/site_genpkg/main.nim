@@ -27,12 +27,11 @@ var
   initialized = false
   `kxi`: KaraxInstance
   appState: JsonNode
-  actions: Table[cstring, proc(payload: JsonNode){.closure.}]
-  dataListeners: Table[cstring, cstring]
   prevHashPart: cstring
-  componentsTable: Table[string, BaseComponent]
+  actions: Table[cstring, proc(payload: JsonNode){.closure.}]
+  componentsTable: Table[string, proc(appSatus, uidef, payload: JsonNode): JsonNode]
   history = %*{}
-
+  #dataListeners: Table[cstring, cstring]
 
 proc updateData(n: VNode){.deprecated.} =
   if not n.value.isNil:
@@ -61,7 +60,7 @@ proc newView(action, model, sourceId: string, payload: JsonNode):JSonNode =
     "payload": payload
   }
 
- 
+
 proc navigate(viewid: string, payload: JsonNode): JsonNode =
   # `viewid` is where the actions come from
   # if we are going to show an action+model that does not exists
@@ -75,13 +74,13 @@ proc navigate(viewid: string, payload: JsonNode): JsonNode =
   # - dependant:  save, select, done, cancel.
   #     are attached to a previous `viewid` and the behaivor is determined by the parent `viewid`.
   result = payload
-  
+        
   var
     model = payload["model"].getStr
     action = payload["action"].getStr
     sourceView = history[viewid]
     targetView: JsonNode
-    
+      
   case action
   of "save", "select", "done", "cancel":
     targetView = history[sourceView["source"].getStr]
@@ -104,6 +103,7 @@ proc navigate(viewid: string, payload: JsonNode): JsonNode =
   of "new", "show","edit", "list", "add":
     if action == "add":
       action = "list"
+      # result["mode"] = %"add"
       result["action"] = %action
       
     if action == "new":
@@ -113,6 +113,10 @@ proc navigate(viewid: string, payload: JsonNode): JsonNode =
     
     targetView = newView(action, model, sourceView["id"].getStr, payload)
 
+  else:
+    # show the same 
+    targetView = sourceView
+    
   # add the entity id as parent of the current
   if (targetView.haskey "payload") and (targetView["payload"].haskey "objid"):
     result["parent"] = targetView["payload"]["objid"]
@@ -244,9 +248,10 @@ proc createDOM(rd: RouterData): VNode =
     result = showError()
     
 
+
 proc createApp*(state: JsonNode,
-                c: Table[string, BaseComponent],
-                a: Table[cstring, proc(payload: JsonNode){.closure.}]) =  
+                c: Table[string, proc(appSatus, uidef, payload: JsonNode): JsonNode],
+                a: Table[cstring, proc(payload: JsonNode){.closure.}]) =
   actions = a
   actions["render"] = proc (payload: JsonNode) = reRender()
   appState = state

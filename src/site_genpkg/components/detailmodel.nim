@@ -1,5 +1,4 @@
 
-
 import json, tables, sequtils, strutils, unicode
 import ./uicomponent, ../ui_utils
 
@@ -50,7 +49,7 @@ proc sectionHeader(templates, obj: JsonNode): JsonNode =
       result["children"].add fr
 
 
-proc render(appState, def: JsonNode, data: JsonNode = nil): JsonNode =
+var DetailModel* = proc(appState, def: JsonNode, data: JsonNode = nil): JsonNode =
   let
     templates = appState["templates"]
     tschema = appState["schema"][def["model"].getStr]
@@ -58,10 +57,3 @@ proc render(appState, def: JsonNode, data: JsonNode = nil): JsonNode =
   if not data.isNil:
     result = sectionHeader(templates, data)
   
-
-type
-  DetailModel* = object of BaseComponent
-
-
-proc newDetailModel*(): DetailModel = 
-  result = newBaseComponent(DetailModel, render)
