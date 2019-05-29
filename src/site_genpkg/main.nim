@@ -144,10 +144,11 @@ proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Eve
       event["key"] = %($cast[KeyboardEvent](ev).key)
  
     payload["event"] = event
+    
     if n.kind == VnodeKind.input:
       payload["type"] = %($n.getAttr "type")
-    
-    if payload.haskey("type") and payload["type"].getStr == "date":
+
+    if payload.haskey("type") and (payload["type"].getStr == "date" or payload["type"].getStr == "checkbox"):
       # let the dom handle the events for the `input date`
       discard
     else:
@@ -198,8 +199,9 @@ proc showError(): VNode =
         text appState["error"].getStr
       a(href="#/home"):
         text "Go back home."
-  reRender()
   appState.delete("error")
+  reRender()
+  
   
     
 proc initNavigation() =

@@ -34,11 +34,10 @@ proc editModel(appState, def: JsonNode) =
       elif fieldType.getStr == "boolean":
         newV["children"].add(
           %*{
-            "ui-type": %"check",
+            "ui-type": %"checkbox",
             "name": %field,
             "label": %(capitalize field), # uppercase first character
-            "type": %"boolean",    
-            "events": ["onclick"]
+            "type": %"boolean"
         })
       else:
         newV["children"].add(

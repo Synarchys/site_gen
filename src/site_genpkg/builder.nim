@@ -172,7 +172,9 @@ proc buildBody(viewid, action: string, bodyDefinition, data: JsonNode): VNode =
   
   if appState.hasKey "message":
     echo appState["message"]
-    var msgCmpnt = componentsTable["msg"](appState, %*{}, data)
+    var
+      data = appState["message"]
+      msgCmpnt = componentsTable["msg"](appState, %*{}, data)
     # we've shown it, delete it from the state
     appState.delete "message"
     result.add buildComponent(viewid, msgCmpnt)

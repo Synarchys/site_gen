@@ -3,9 +3,29 @@ import json, tables, sequtils, strutils, unicode, times
 import ./uicomponent, ../ui_utils
 
 
-proc formGroup(templates, uidef: JsonNode): JsonNode =
+proc RadioItem(text, value: string): JsonNode =
+  var result = %*{"ui-type": "input"}
+  result.setAttribute("class", "form-check-input")
+  result.setAttribute("type", "checkbox")
+  result.setAttribute("value", value)  
+  var label = %*{"ui-type": "lable"}
+  label.setAttribute("class", "form-check-label")
+  label.addText text
+  result.addChild label  
+
   
+proc Radio(data: JsonNode): JsonNode =
+  # data is a jarray of objects {key: val}  
+  result = %*{"ui-type": "div"}
+  result.setAttribute("class", "form-check")  
+  for key, value in data.pairs:
+    var ch = RadioItem(key, value.getStr)
+    result.addChild ch
+
+  
+proc formGroup(templates, uidef: JsonNode): JsonNode =
   result = copy templates["formGroup"]
+  
   var
     def = uidef
     component: JsonNode
@@ -18,11 +38,18 @@ proc formGroup(templates, uidef: JsonNode): JsonNode =
     if uiType == "check" or uiType == "checkbox":
       component = copy templates["checkbox"]
       if def.haskey("type") and def["type"] == %"boolean":
-        if def.hasKey("value") and def["value"] == %"true":
+        if def.hasKey("value") and def["value"] == %"true":          
           component{"attributes","checked"} = %"true"
         elif component.haskey("attributes") and component["attributes"].haskey("checked"):
           delete(component["attributes"], "checked")
-        
+
+    elif uiType == "boolean": # default bolean ui
+      if def.haskey("type") and def["type"] == %"boolean":
+        if def.hasKey("value") and def["value"] == %"true":
+          component = Radio( %*{"Yes": "true", "No": "false"})
+        else:
+          component = Radio( %*{"Yes": "false", "No": "true"})
+
     elif uiType == "text":
       component = copy templates["textarea"]
     elif uiType == "input":
@@ -33,7 +60,7 @@ proc formGroup(templates, uidef: JsonNode): JsonNode =
 
     else:
       # TODO: raise error
-      echo "Error: ui-type ", uiType, "not found."
+      echo "Error: ui-type ", uiType, " not found."
 
   if def.hasKey "events":
     # add events to component we are preparing

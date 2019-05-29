@@ -19,10 +19,16 @@ proc genLabel*(text: string): string =
     result = result & " " &  (capitalize i)
 
 
-# ui helper procs 
-proc addChild*(parent: var JsonNode, child: JsonNode)  =
+# ui helper procs
+
+proc addChild*(parent: var JsonNode, child: JsonNode) =
   if not parent.haskey "children": parent["children"] = %[]
   parent["children"].add child
+
+
+proc addText*(parent: var JsonNode, text: string) =
+  var txt = %*{"ui-type": %"text", "text": %text}
+  parent.addChild(txt)
 
 
 proc setAttribute*(parent: var JsonNode, key, value: string) =
