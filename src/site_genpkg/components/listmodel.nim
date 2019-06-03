@@ -69,8 +69,9 @@ proc ListModel*(appState, def: JsonNode, modelList: JsonNode = nil): JsonNode =
             "children": %[%*{"ui-type": "#text", "text": %cellVal}]
           }
           tr["children"].add cell
-
-      tr["children"].add newButton(templates["button"], elem["id"].getStr, modelName, "show")
+      
+      let b = newButton(templates["button"], elem["id"].getStr, modelName, "show")
+      tr["children"].add b
       # if we are listing as add mode, the list is inside a show component
       
       let act = if def.hasKey("mode") and def["mode"] == %"add": "delete"

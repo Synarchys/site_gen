@@ -179,7 +179,7 @@ proc buildBody(viewid, action: string, bodyDefinition, data: JsonNode): VNode =
     appState.delete "message"
     result.add buildComponent(viewid, msgCmpnt)
 
-  elif componentsTable.haskey action:
+  if componentsTable.haskey action:
     # if componentsTable has `<model>` and action key show it
     var comp = componentsTable[action](appState, def, data)
     result.add buildComponent(viewid, comp)
