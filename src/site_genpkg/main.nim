@@ -1,13 +1,13 @@
 
 import json, tables, jsffi, strutils, times
 
-include karax / prelude 
+include karax / prelude
 import karax / prelude
 import karax / [vdom, karaxdsl, errors, kdom, vstyles]
 
 import uuidjs
 
-import builder, ui_utils, ui_def_gen, listeners
+import builder, ui_utils, ui_def_gen, listeners, navigation
 export builder, ui_utils
 
 import components / components
@@ -30,8 +30,7 @@ var
   prevHashPart: cstring
   actions: Table[cstring, proc(payload: JsonNode){.closure.}]
   componentsTable: Table[string, proc(appSatus, uidef, payload: JsonNode): JsonNode]
-  history = %*{}
-  #dataListeners: Table[cstring, cstring]
+
 
 proc updateData(n: VNode){.deprecated.} =
   if not n.value.isNil:
@@ -50,83 +49,6 @@ proc reRender*()=
   # wrap and expose redraw
   `kxi`.redraw()
 
-
-proc newView(action, model, sourceId: string, payload: JsonNode):JSonNode =
-  result  = %*{
-    "id": %genUUID(),
-    "action": %action,
-    "model": %model,
-    "source": %sourceid,
-    "payload": payload
-  }
-
-
-proc navigate(viewid: string, payload: JsonNode): JsonNode =
-  # `viewid` is where the actions come from
-  # if we are going to show an action+model that does not exists
-  #   create a new viewid and its navigations status and add it to the history
-  # if it already exists, show it.
-
-  # Types of Actions
-  # there are two kinds of actions.
-  # - singular: show, edit, add, list(singular mode)
-  #     do not depend on anything. go back to previous `viewid`.
-  # - dependant:  save, select, done, cancel.
-  #     are attached to a previous `viewid` and the behaivor is determined by the parent `viewid`.
-  result = payload
-        
-  var
-    model = payload["model"].getStr
-    action = payload["action"].getStr
-    sourceView = history[viewid]
-    targetView: JsonNode
-      
-  case action
-  of "save", "select", "done", "cancel":
-    targetView = history[sourceView["source"].getStr]
-
-    if not targetView.haskey "model":
-      # we are showing a msg o generic view, go to listing model.
-      targetView = newView("list", model, sourceView["id"].getStr, payload)
-      
-    if action == "done":
-      # goes to prevous viewid, changes should be persisted.
-      action = targetView["action"].getStr
-      result["action"] = %action
-    
-  of "delete":
-    # do not redirect
-    targetView = sourceView
-    if (targetView.haskey "payload") and (targetView["payload"].haskey "objid"):
-      result["parent"] = targetView["payload"]["objid"]
-    
-  of "new", "show","edit", "list", "add":
-    if action == "add":
-      action = "list"
-      # result["mode"] = %"add"
-      result["action"] = %action
-      
-    if action == "new":
-      action = "edit"
-      result["action"] = %action
-      result["mode"] = %"new"
-    
-    targetView = newView(action, model, sourceView["id"].getStr, payload)
-
-  else:
-    # show the same 
-    targetView = sourceView
-    
-  # add the entity id as parent of the current
-  if (targetView.haskey "payload") and (targetView["payload"].haskey "objid"):
-    result["parent"] = targetView["payload"]["objid"]
-  
-  history[targetView["id"].getStr] = targetView
-  appState["viewid"] = targetView["id"]
-  
-  let route = "#/$1/$2" % [targetView["model"].getStr, targetView["action"].getStr]
-  appState["route"] = %route
-  
 
 proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Event, n: VNode) =
   result = proc (ev: Event, n: VNode) =
@@ -175,7 +97,7 @@ proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Eve
       payload["value"] = %($n.value)
     
     if payload.haskey "action":
-      payload = navigate(viewid, payload)
+      payload = navigate(appState, payload, viewid)
       
     callEventListener(payload, actions)    
     reRender()
@@ -202,15 +124,12 @@ proc showError(): VNode =
   appState.delete("error")
   reRender()
   
-  
-    
+      
 proc initNavigation() =
   appState["route"] = %($window.location.hash)
   prevHashPart = window.location.hash
   # init history
-  let vid = genUUID()
-  history[vid] = %*{"id": %vid, "action": appState["route"]}
-  appState["viewid"] = %vid
+  initHistory(appState)
 
     
 proc createDOM(rd: RouterData): VNode =

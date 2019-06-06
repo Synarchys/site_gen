@@ -17,8 +17,10 @@ proc ShowModel*(appState, def: JsonNode, data: JsonNode = nil): JsonNode =
     if tschema.hasKey "relations":  
       for relType, props in tschema["relations"].pairs:
         var l: JsonNode
-        if data.hasKey("relations") and data["relations"].kind == JObject and data["relations"].hasKey(relType):
+        if data.hasKey("relations") and data["relations"].kind == JObject and
+           data["relations"].hasKey(relType):
           let modelList = data["relations"][relType]
+          
           l = ListModel(appState, %*{"model": %relType, "mode": "add"}, modelList)
 
         else:

@@ -195,12 +195,13 @@ proc updateUIRaw*(state: JsonNode): VNode =
     
 proc updateUI*(state: var JsonNode): VNode =
   var
-    uiDef = state["definition"]
+    uiDef      = state["definition"]
     definition = uiDef
-    viewid = state["viewid"].getStr
+    view       = state["view"]
+    viewid     = view["id"].getStr
+    data       = state["_renderData"]
     route, action: string
-    data = state["_renderData"]
-  
+    
   if appState.hasKey("route") and appState["route"].getStr != "":
     let splitRoute = appState["route"].getStr.split "/"
     # just asume first item is `#`.
@@ -210,7 +211,7 @@ proc updateUI*(state: var JsonNode): VNode =
 
   result = newVNode VnodeKind.tdiv
   for section in Sections:
-    var sectionDef = uiDef[$section]
+    var sectionDef = copy uiDef[$section]
     case $section
     of "body":
       var
@@ -225,6 +226,8 @@ proc updateUI*(state: var JsonNode): VNode =
               routeSec = sectionDef[route][a]
               break
         routeSec = sectionDef[route][action]
+        if view.haskey "mode":
+          routeSec["mode"] = view["mode"]
         b = buildBody(viewid, action, routeSec, data)
       else:
         b = buildComponent(genUUID(), ErrorPage("Error - " & route & " Page Not Found. "))

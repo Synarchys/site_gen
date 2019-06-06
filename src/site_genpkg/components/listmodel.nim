@@ -28,16 +28,17 @@ proc ListModel*(appState, def: JsonNode, modelList: JsonNode = nil): JsonNode =
             ]}
             
   result["children"].add h
-
-  # `add` action redirects to a list to select one
+  
+  # `select` action redirects to a list to select one
   # `new` redirects to edit mode with a new object set as current
-  
-  let
-    txt = if def.hasKey "mode": capitalize(def["mode"].getStr) else: "New"  
-    ac = if def.hasKey("mode") and def["mode"].getStr == "add": "add"
-                  else: "new"
-  
-  result["children"].add newButton(templates["button"], "", def["model"].getStr, ac, txt)
+  if def.hasKey "mode":
+    let
+      txt = if def["mode"] == %"add": "Add" else: "New"
+      act = if def["mode"] == %"add": "add" else: "new"
+
+    var parentId = if def.haskey "objid": def["objid"].getStr else: ""
+    
+    result["children"].add newButton(templates["button"], parentId, def["model"].getStr, act, txt)
   
   if not modelList.isNil and modelList.len > 0:
     var
@@ -72,14 +73,15 @@ proc ListModel*(appState, def: JsonNode, modelList: JsonNode = nil): JsonNode =
       
       let b = newButton(templates["button"], elem["id"].getStr, modelName, "show")
       tr["children"].add b
-      # if we are listing as add mode, the list is inside a show component
       
-      let act = if def.hasKey("mode") and def["mode"] == %"add": "delete"
-                else: "select"
-      let txt = if def.hasKey("mode") and def["mode"] == %"add": "Remove"
-                else: "Select"
+      # if we are listing as `add` mode, the list is inside a show component
+      # if we are listing as `select` mode, we came from a show/add view.
+      if def.hasKey("mode") and def["mode"] != %"list":
+        let
+          act = if def["mode"] == %"add": "delete" else: "select"
+          txt = if def["mode"] == %"add": "Remove" else: "Select"
       
-      tr["children"].add newButton(templates["button"], elem["id"].getStr, modelName, act, txt)
+        tr["children"].add newButton(templates["button"], elem["id"].getStr, modelName, act, txt)
       
       tbody["children"].add tr
     tab["children"].add tbody
