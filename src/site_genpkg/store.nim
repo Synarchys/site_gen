@@ -23,6 +23,10 @@ proc setCurrent*(appState:JsonNode, objType, id: string) =
     appState["store"]["objects"][objType]["current"] = %id
 
 
+proc setFieldValue*(appState:JsonNode, objType, field: string, value: JsonNode) =
+  var c = getCurrent(appState, objType)
+  c[field] = value
+    
 proc setFieldValue*(appState:JsonNode, objType, field, value: string) =
   var c = getCurrent(appState, objType)
   c[field] = %value

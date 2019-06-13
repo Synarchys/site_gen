@@ -20,7 +20,6 @@ proc genLabel*(text: string): string =
 
 
 # ui helper procs
-
 proc addChild*(parent: var JsonNode, child: JsonNode) =
   if not parent.haskey "children": parent["children"] = %[]
   parent["children"].add child

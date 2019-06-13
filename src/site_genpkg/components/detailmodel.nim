@@ -2,7 +2,7 @@
 import json, tables, sequtils, strutils, unicode
 import ./uicomponent, ../ui_utils
 
-  
+
 proc ignore(key: string): bool =
   # ignore fileds `ìd`, `type`, `relations`, `id_*` and `_id*`
   #returns true if the row has to be ignored
@@ -38,11 +38,11 @@ proc sectionHeader(templates, obj: JsonNode): JsonNode =
       
       fkc["children"].add %*{
         "ui-type": %"h4",
-        "children": %[%*{"ui-type": "#text", "text": %(capitalize key & ":")}]}
+        "children": %[%*{"ui-type": "#text", "text": %(genLabel capitalize key & ":")}]}
       
       fvc["children"].add %*{
         "ui-type": %"h5",
-        "children": %[%*{"ui-type": "#text", "text": %(val.getStr)}]}
+        "children": %[%*{"ui-type": "#text", "text": %(genLabel val.getStr)}]}
       
       fr["children"].add fkc
       fr["children"].add fvc
