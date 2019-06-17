@@ -7,17 +7,17 @@ import karax / prelude
 import karax / [errors, kdom, vstyles]
 
 import store, uuidjs
-import components / uicomponent
 
+import ui_utils
 
 var defaultEvent: proc(name, id, viewid: string): proc(ev: Event, n: VNode)
 
 # global variable that holds all components
-var
-  appState, templates: JsonNode
-var componentsTable: Table[string, proc(appSatus, uidef, data: JsonNode): JsonNode]
+# var
+#   appState, templates: JsonNode
+#   componentsTable: Table[string, proc(appSatus, uidef, data: JsonNode): JsonNode]
 
-const ACTIONS = ["list", "show", "edit", "raw"]
+const actions = ["list", "show", "edit", "raw"]
 
 type
   Sections = enum
@@ -139,14 +139,13 @@ proc buildComponent*(viewid: string, params: JsonNode): VNode =
       result.add buildComponent(viewid, child)
 
 
-proc getModelList(ids: JsonNode): JsonNode {.deprecated: "use site_gen's instead".} =
-  # helper proc that returns a list of entities
-  result = %[]
-  for objId in ids:
-    result.add appState.getItem objId.getStr
-
+# proc getModelList(ids: JsonNode): JsonNode {.deprecated: "use site_gen's instead".} =
+#   # helper proc that returns a list of entities
+#   result = %[]
+#   for objId in ids:
+#     result.add appState.getItem objId.getStr
     
-proc buildHeader(def: JsonNode): VNode =
+proc buildHeader(def, templates: JsonNode): VNode =
   var h = copy templates["header"]
   # WARNING: hardcoded
   h["children"][0]["children"][0]["children"][0]["children"][0]["children"][0]["text"] = def["alternative"]
@@ -162,26 +161,25 @@ proc ErrorPage(txt: string): JsonNode =
                                    "children":[{"ui-type":"#text","text":"Go back home."}]}]}]}
 
     
-proc buildBody(viewid, action: string, bodyDefinition, data: JsonNode): VNode =
+proc buildBody(viewid, action: string, bodyDefinition, data: JsonNode, appCtxt: var AppContext): VNode =
   # builds the initial ui based on the definition and the componentsTable library
   # this part should understand and comply with the component definition specification  
   var def = bodyDefinition
-  result = buildComponent(viewid, copy templates["container"])
-
+  result = buildComponent(viewid, copy appCtxt.state{"templates","container"})
   result.setAttr("viewid", viewid)
   
-  if appState.hasKey "message":
-    echo appState["message"]
+  if appCtxt.state.hasKey "message":
+    echo appCtxt.state["message"]
     var
-      data = appState["message"]
-      msgCmpnt = componentsTable["msg"](appState, %*{}, data)
+      data = appCtxt.state["message"]
+      msgCmpnt = appCtxt.components["msg"](appCtxt, %*{}, data)
     # we've shown it, delete it from the state
-    appState.delete "message"
+    appCtxt.state.delete "message"
     result.add buildComponent(viewid, msgCmpnt)
 
-  if componentsTable.haskey action:
+  if appCtxt.components.haskey action:
     # if componentsTable has `<model>` and action key show it
-    var comp = componentsTable[action](appState, def, data)
+    var comp = appCtxt.components[action](appCtxt, def, data)
     result.add buildComponent(viewid, comp)
     
   else:
@@ -192,18 +190,19 @@ proc updateUIRaw*(state: JsonNode): VNode =
   # builds the vdom tree using the ui attribute
   result = buildComponent(genUUID(), state["ui"])
 
-    
-proc updateUI*(state: var JsonNode): VNode =
+  
+proc updateUI*(appCtxt: var AppContext): VNode =
   var
-    uiDef      = state["definition"]
+    state = appCtxt.state
+    uiDef = state["definition"]
     definition = uiDef
-    view       = state["view"]
-    viewid     = view["id"].getStr
-    data       = state["_renderData"]
+    view = state["view"]
+    viewid = view["id"].getStr
+    data = state["_renderData"]
     route, action: string
     
-  if appState.hasKey("route") and appState["route"].getStr != "":
-    let splitRoute = appState["route"].getStr.split "/"
+  if state.hasKey("route") and state["route"].getStr != "":
+    let splitRoute = state["route"].getStr.split "/"
     # just asume first item is `#`.
     # use `#` in the ui definition to know it is a route.
     route = splitRoute[0..1].join "/"
@@ -220,7 +219,7 @@ proc updateUI*(state: var JsonNode): VNode =
       if sectionDef.hasKey route:
         if action == "":
           # the first action is the default
-          for a in ACTIONS:
+          for a in actions:
             if sectionDef[route].hasKey a:
               action = a
               routeSec = sectionDef[route][a]
@@ -228,29 +227,23 @@ proc updateUI*(state: var JsonNode): VNode =
         routeSec = sectionDef[route][action]
         if view.haskey "mode":
           routeSec["mode"] = view["mode"]
-        b = buildBody(viewid, action, routeSec, data)
+        b = buildBody(viewid, action, routeSec, data, appCtxt)
       else:
         b = buildComponent(genUUID(), ErrorPage("Error - " & route & " Page Not Found. "))
 
       result.add b
     of "header":
-      result.add buildHeader sectionDef
+      result.add buildHeader(sectionDef, appCtxt.state["templates"])
     of "menu":
-      var m = componentsTable["menu"](appState, sectionDef, data)
+      var m = appCtxt.components["menu"](appCtxt, sectionDef, data)
       result.add buildComponent(viewid, m)
     else:
       # try to build as template
-      if componentsTable.hasKey $section:
-        result.add buildComponent(viewid, templates[$section])
+      if appCtxt.components.hasKey $section:
+        result.add buildComponent(viewid, appCtxt.state["templates"][$section])
 
-    
-proc initApp*(state: var JsonNode,
-              c: Table[string, proc(appSatus, uidef, data: JsonNode): JsonNode],
-              event: proc(name, id, viewid: string): proc(ev: Event, n: VNode)): VNode =
-  let definition = state["definition"]
-  appState = state
-  templates = state["templates"]
-  componentsTable = c
+
+proc initApp*(appCtxt: var AppContext, event: proc(name, id, viewid: string): proc(ev: Event, n: VNode)): VNode =
   defaultEvent = event
-  result = updateUI state
-
+  result = updateUI appCtxt
+  

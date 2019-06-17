@@ -1,6 +1,6 @@
  
 import json, tables, sequtils, strutils, unicode, times
-import ./uicomponent, ../ui_utils
+import ../ui_utils
 
 
 proc RadioItem(text, value: string): JsonNode =
@@ -77,16 +77,16 @@ proc formGroup(templates, uidef: JsonNode): JsonNode =
   result["children"].add component
 
 
-proc ignore(key: string): bool =
-  #returns true if the row has to be ignored
-  if key == "id" or key == "relations" or key == "type" or
-     key.contains("_id") or key.contains("id_"):
-    result = true
+# proc ignore(key: string): bool =
+#   #returns true if the row has to be ignored
+#   if key == "id" or key == "relations" or key == "type" or
+#      key.contains("_id") or key.contains("id_"):
+#     result = true
 
     
-var EditModel* =proc(appState, formDef: JsonNode, data: JsonNode = nil): JsonNode =
+var EditModel* = proc(ctxt: AppContext, formDef: JsonNode, data: JsonNode = nil): JsonNode =
   let
-    templates = appState["templates"]
+    templates = ctxt.state["templates"]
     modelName = formDef["model"].getStr
     
   var form = %*{
@@ -111,7 +111,7 @@ var EditModel* =proc(appState, formDef: JsonNode, data: JsonNode = nil): JsonNod
     elif item.haskey "name":
       fieldName = item["name"].getStr
     
-    if not ignore fieldName:
+    if not ctxt.ignoreField fieldName:
       var child: JsonNode
       item["model"] = %modelName
       if item["ui-type"].getStr == "button":

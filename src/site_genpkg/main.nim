@@ -13,24 +13,16 @@ export builder, ui_utils
 import components / components
 export components
 
-var console {.importcpp, noDecl.}: JsObject 
-
-# global variables
-const
-  HEADERS        = [(cstring"Content-Type", cstring"application/json")]
-  TEMPLATES_URL  = "/templates.json"
-  DEFINITION_URL = "/definition.json"
-  MODEL_URL      = "/auto/schema" #"/model.json"
-  
-
+     
 var
   initialized = false
   `kxi`: KaraxInstance
   appState: JsonNode
   prevHashPart: cstring
   actions: Table[cstring, proc(payload: JsonNode){.closure.}]
-  componentsTable: Table[string, proc(appSatus, uidef, payload: JsonNode): JsonNode]
-
+  componentsTable: Table[string, proc(ctxt: AppContext, uidef, payload: JsonNode): JsonNode]
+  appCtxt: AppContext
+  
 
 proc updateData(n: VNode){.deprecated.} =
   if not n.value.isNil:
@@ -139,7 +131,8 @@ proc createDOM(rd: RouterData): VNode =
       result = showError()
       
     elif initialized:
-      result = updateUI(appState)
+      # result = updateUI(appState)
+      result = updateUI(appCtxt)
       
     elif not appState.hasKey("definition"):
       result = buildHtml(tdiv()):
@@ -148,7 +141,8 @@ proc createDOM(rd: RouterData): VNode =
     else:
       let started = now()
       echo " -- Initializing $1 --" % $started.nanosecond
-      result = initApp(appState, componentsTable, eventGen)
+      # result = initApp(appState, componentsTable, eventGen)
+      result = initApp(appCtxt, eventGen)
       let ended = now()
       echo " -- Initialized $1 --" % $ended.nanosecond
       echo "Initialization time: $1 " % $(ended - started)
@@ -169,13 +163,23 @@ proc createDOM(rd: RouterData): VNode =
     result = showError()
     
 
+proc createApp*(ctxt: AppContext) =
+  appCtxt = ctxt
+  actions = ctxt.actions
+  # actions["render"] = proc (payload: JsonNode) = reRender()
+  appState = ctxt.state
+  initNavigation()
+  componentsTable = initComponents(ctxt.components)
+  appCtxt.components = componentsTable
+  `kxi` = setRenderer(createDOM)
 
+  
 proc createApp*(state: JsonNode,
-                c: Table[string, proc(appSatus, uidef, payload: JsonNode): JsonNode],
+                c: Table[string, proc(ctxt: AppContext, uidef, payload: JsonNode): JsonNode],
                 a: Table[cstring, proc(payload: JsonNode){.closure.}]) =
   actions = a
   actions["render"] = proc (payload: JsonNode) = reRender()
   appState = state
   initNavigation()
-  componentsTable = initComponents(c, actions)
+  componentsTable = initComponents(c)
   `kxi` = setRenderer(createDOM)

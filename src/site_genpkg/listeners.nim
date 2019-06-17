@@ -5,18 +5,6 @@ import site_genpkg / ui_utils
 import jsonflow, uuidjs
 
 
-# proc bindDataListners(ui: JsonNode, dataListeners: var Table[cstring, cstring]) =
-#   # bind procs that modify the ui state when data is changed
-#   # find components that have data listeners
-#   const key = "dataListeners"
-#   let elems = findElementsByAttrKey(ui, key)
-#   for elem in elems:
-#     let
-#       listener = elem["attributes"][key].getStr
-#       id = elem["id"].getStr
-#     dataListeners.add(listener, id)
-
-
 proc noEventListener(payload: JsonNode, action: string): proc(payload: JsonNode){.closure.} =
   result = proc(payload: JsonNode){.closure.} =
     echo "WARNING: Action $1 not found in the table." % $action
@@ -104,7 +92,7 @@ proc processEventHandlers(n: NimNode): NimNode =
   for x in n:
     result.add addEventListener(x)
 
-    
+
 macro Listeners*(n: untyped): untyped =
   result = newStmtList()
   if n.kind == nnkStmtList:

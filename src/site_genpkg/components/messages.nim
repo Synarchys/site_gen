@@ -1,13 +1,13 @@
 
 import json, tables, sequtils, times, strutils
-import ../ui_utils, ./uicomponent
+import ../ui_utils
 
-proc UIMessages*(appState, def: JsonNode, data: JsonNode = nil): JsonNode =
+proc UIMessages*(ctxt: AppContext, def: JsonNode, data: JsonNode = nil): JsonNode =
   # data message:
   # messge type: success, error, warning
   # message title
   # message content
-  let templates = appState["templates"]
+  let templates = ctxt.state["templates"]
   result = %*{"ui-type": %"div", "children": %[]}
   result["id"] = %"sitegen_messages"
   var msgType = "alert alert-"

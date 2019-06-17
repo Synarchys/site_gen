@@ -2,6 +2,26 @@
 import json, jsffi, tables, strutils, unicode
 
 
+type
+  AppContext* = object of RootObj
+    state*: JsonNode
+    components*: Table[string, proc(ctxt: AppContext, uidef, payload: JsonNode): JsonNode]
+    actions*: Table[cstring, proc(payload: JsonNode)]
+    ignoreField*: proc(field: string): bool # proc that returns true if the field should be ignored
+    renderer*: proc (payload: JsonNode)
+    labelFormater*: proc(text: string): string
+
+
+proc ignoreField*(ctxt: AppContext, key: string): bool =
+  # ignore fileds `ìd`, `type`, `relations`, `id_*` and `_id*`
+  #returns true if the row has to be ignored
+  if not ctxt.ignoreField.isNil:
+    result = ctxt.ignoreField(key)
+  else:
+    if key == "id" or key == "relations" or key == "type" or
+       key.contains("_id") or key.contains("id_"):
+      result = true
+
 proc newButton*(b: JsonNode, id="", model, action: string, text="", mode= ""): JsonNode =
   result = copy b
   result["children"][0]["text"] = if text != "": %text else: %(capitalize action)

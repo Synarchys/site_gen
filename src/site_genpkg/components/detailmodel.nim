@@ -1,17 +1,9 @@
 
 import json, tables, sequtils, strutils, unicode
-import ./uicomponent, ../ui_utils
+import ../ui_utils
 
 
-proc ignore(key: string): bool =
-  # ignore fileds `ìd`, `type`, `relations`, `id_*` and `_id*`
-  #returns true if the row has to be ignored
-  if key == "id" or key == "relations" or key == "type" or
-     key.contains("_id") or key.contains("id_"):
-    result = true
-
-
-proc sectionHeader(templates, obj: JsonNode): JsonNode =
+proc sectionHeader(ctxt: AppContext, templates, obj: JsonNode): JsonNode =
   # get definition from schema
   let currentType = obj["type"].getStr
   
@@ -29,7 +21,7 @@ proc sectionHeader(templates, obj: JsonNode): JsonNode =
   result["children"].add hr
   
   for key, val in obj.getFields:
-    if not ignore key:
+    if not ctxt.ignoreField key:
       # fileds
       var
         fr = copy templates["gridRow"]
@@ -49,11 +41,11 @@ proc sectionHeader(templates, obj: JsonNode): JsonNode =
       result["children"].add fr
 
 
-var DetailModel* = proc(appState, def: JsonNode, data: JsonNode = nil): JsonNode =
+var DetailModel* = proc(ctxt: AppContext, def: JsonNode, data: JsonNode = nil): JsonNode =
   let
-    templates = appState["templates"]
-    tschema = appState["schema"][def["model"].getStr]
+    templates = ctxt.state["templates"]
+    tschema = ctxt.state["schema"][def["model"].getStr]
 
   if not data.isNil:
-    result = sectionHeader(templates, data)
+    result = sectionHeader(ctxt, templates, data)
   
