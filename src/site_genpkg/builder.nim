@@ -1,21 +1,14 @@
 
-import strutils, unicode
-
-import json, tables, jsffi, sequtils
+import json, tables, jsffi, sequtils, strutils, unicode
 include karax / prelude 
 import karax / prelude
-import karax / [errors, kdom, vstyles]
+import karax / kdom
 
-import store, uuidjs
+import uuidjs
 
-import ui_utils
+import store, ui_utils
 
 var defaultEvent: proc(name, id, viewid: string): proc(ev: Event, n: VNode)
-
-# global variable that holds all components
-# var
-#   appState, templates: JsonNode
-#   componentsTable: Table[string, proc(appSatus, uidef, data: JsonNode): JsonNode]
 
 const actions = ["list", "show", "edit", "raw"]
 
@@ -23,37 +16,6 @@ type
   Sections = enum
     header, menu, body, footer
   
-    
-proc toJson*(component: VNode): JsonNode =
-  ## returns a JsonNode from a VNode
-  result = %*{ "ui-type": $component.kind }
-             
-  if component.getAttr("objid") != nil:
-    result["id"] = %($component.getAttr("objid"))
-   
-  if component.class != nil: result["class"] = %($component.class)
-  if component.text != nil or component.value != nil:
-    if component.kind == VNodeKind.input:
-      # `value` and `text` overlap on input componets
-      result["value"] = %($component.value)
-    else:
-      result["text"] = %($component.text)
-
-  var attributes = %*{}
-  for k,v in component.attrs:
-    attributes.add($k,%($v))
-  if attributes.len > 0: result["attributes"] = attributes
-                           
-  var children = newJArray()
-  for c in component.items:
-    children.add(toJson(c))
-  if children.len > 0: result["children"] = children
-    
-  var events = newJArray()
-  for ev in component.events:
-    events.add(%($ev[0]))
-  if events.len > 0: result["events"] = events
-
     
 proc updateValue(vn: var VNode, value: string) =
   # TODO: handle exceptions when de name of the model is not an object

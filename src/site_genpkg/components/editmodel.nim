@@ -100,7 +100,7 @@ var EditModel* = proc(ctxt: AppContext, formDef: JsonNode, data: JsonNode = nil)
   form["children"].add %*{"ui-type": %"h3",
                            "children": [{
                              "ui-type": %"text",
-                             "text": %genLabel(modelName)}
+                             "text": %ctxt.labelFormat(modelName)}
                            ]
                          }
   
@@ -120,7 +120,7 @@ var EditModel* = proc(ctxt: AppContext, formDef: JsonNode, data: JsonNode = nil)
         child["model"] = %modelName
         child["action"] = if item.hasKey fieldName: copy item[fieldName] else: %fieldName
         child["events"] = copy item["events"]
-        child["children"][0]["text"] = %(genLabel item["label"].getStr)
+        child["children"][0]["text"] = %(ctxt.labelFormat item["label"].getStr)
         if not current.isNil: child["id"] = current["id"]
         
       else:

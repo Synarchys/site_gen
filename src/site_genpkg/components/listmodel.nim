@@ -19,7 +19,7 @@ proc ListModel*(ctxt: AppContext, def: JsonNode, modelList: JsonNode = nil): Jso
   
   let
     modelName = def["model"].getStr
-    l = genLabel modelName
+    l = ctxt.labelFormat modelName
   
   var h = %*{"ui-type": %"div",
               "children": %[
@@ -52,7 +52,7 @@ proc ListModel*(ctxt: AppContext, def: JsonNode, modelList: JsonNode = nil): Jso
         var th = %*{
           "ui-type": %"th",
           "attributes": %*{"scope": %"col"},
-          "children": %[%*{ "ui-type": "#text", "text": %(genLabel k)}]
+          "children": %[%*{ "ui-type": "#text", "text": %(ctxt.labelFormat k)}]
         }
         trh["children"].add th
     tab["children"].add %{"ui-type": %"thead", "children": %[trh]}

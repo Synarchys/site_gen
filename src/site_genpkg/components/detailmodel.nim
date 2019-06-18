@@ -10,7 +10,7 @@ proc sectionHeader(ctxt: AppContext, templates, obj: JsonNode): JsonNode =
   var hc = copy templates["gridColumn"]
   hc["children"].add %*{
     "ui-type": %"h3",
-    "children": %[ %*{"ui-type": "#text", "text": %(genLabel currentType)} ]}
+    "children": %[ %*{"ui-type": "#text", "text": %(ctxt.labelFormat currentType)} ]}
   
   var hr = copy templates["gridRow"]
   hr["children"].add hc
@@ -30,11 +30,11 @@ proc sectionHeader(ctxt: AppContext, templates, obj: JsonNode): JsonNode =
       
       fkc["children"].add %*{
         "ui-type": %"h4",
-        "children": %[%*{"ui-type": "#text", "text": %(genLabel capitalize key & ":")}]}
+        "children": %[%*{"ui-type": "#text", "text": %(ctxt.labelFormat key & ":")}]}
       
       fvc["children"].add %*{
         "ui-type": %"h5",
-        "children": %[%*{"ui-type": "#text", "text": %(genLabel val.getStr)}]}
+        "children": %[%*{"ui-type": "#text", "text": %(ctxt.labelFormat val.getStr)}]}
       
       fr["children"].add fkc
       fr["children"].add fvc

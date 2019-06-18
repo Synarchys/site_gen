@@ -1,6 +1,7 @@
 
 import json, jsffi, tables, strutils, unicode
 
+import karax / [vdom, kdom, karax]
 
 type
   AppContext* = object of RootObj
@@ -9,7 +10,7 @@ type
     actions*: Table[cstring, proc(payload: JsonNode)]
     ignoreField*: proc(field: string): bool # proc that returns true if the field should be ignored
     renderer*: proc (payload: JsonNode)
-    labelFormater*: proc(text: string): string
+    labelFormat*: proc(text: string): string
 
 
 proc ignoreField*(ctxt: AppContext, key: string): bool =
@@ -22,6 +23,20 @@ proc ignoreField*(ctxt: AppContext, key: string): bool =
        key.contains("_id") or key.contains("id_"):
       result = true
 
+
+proc genLabel(text: string): string =
+  result = ""
+  for i in text.split "_":
+    result = result & " " &  (capitalize i)
+
+      
+proc labelFormat*(ctxt: AppContext, text: string): string =
+  if not ctxt.labelFormat.isNil:
+    result = ctxt.labelFormat text
+  else:
+    result = genLabel text
+      
+
 proc newButton*(b: JsonNode, id="", model, action: string, text="", mode= ""): JsonNode =
   result = copy b
   result["children"][0]["text"] = if text != "": %text else: %(capitalize action)
@@ -32,12 +47,6 @@ proc newButton*(b: JsonNode, id="", model, action: string, text="", mode= ""): J
     result["objid"] = %id
   if mode != "": result["objid"] = %mode
     
-                          
-proc genLabel*(text: string): string =
-  result = ""
-  for i in text.split "_":
-    result = result & " " &  (capitalize i)
-
 
 # ui helper procs
 proc addChild*(parent: var JsonNode, child: JsonNode) =
@@ -50,6 +59,13 @@ proc addText*(parent: var JsonNode, text: string) =
   parent.addChild(txt)
 
 
+proc setText*(parent: var JsonNode, text: string) =
+  for c in parent["children"].items:
+    if c["ui-type"] == %"text":
+      c["text"] = %text
+      break
+
+  
 proc setAttribute*(parent: var JsonNode, key, value: string) =
   ## if it does not exist it is added
   parent{"attributes", key} = %value
@@ -134,3 +150,34 @@ proc findElementsByAttrValue*(uiComponent: JsonNode, attrKey, attrVal: string): 
   if uiComponent.hasKey("children"):
     for child in uiComponent["children"].getElems:
       result.add(findElementsByAttrValue(child, attrKey, attrVal))
+
+
+proc toJson*(component: VNode): JsonNode =
+  ## returns a JsonNode from a VNode
+  result = %*{ "ui-type": $component.kind }
+             
+  if component.getAttr("objid") != nil:
+    result["id"] = %($component.getAttr("objid"))
+   
+  if component.class != nil: result["class"] = %($component.class)
+  if component.text != nil or component.value != nil:
+    if component.kind == VNodeKind.input:
+      # `value` and `text` overlap on input componets
+      result["value"] = %($component.value)
+    else:
+      result["text"] = %($component.text)
+
+  var attributes = %*{}
+  for k,v in component.attrs:
+    attributes.add($k,%($v))
+  if attributes.len > 0: result["attributes"] = attributes
+                           
+  var children = newJArray()
+  for c in component.items:
+    children.add(toJson(c))
+  if children.len > 0: result["children"] = children
+    
+  var events = newJArray()
+  for ev in component.events:
+    events.add(%($ev[0]))
+  if events.len > 0: result["events"] = events

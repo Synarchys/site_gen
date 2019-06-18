@@ -158,7 +158,7 @@ proc createDOM(rd: RouterData): VNode =
       echo(msg)
       echo("================================================================================")
     else:
-      msg = "Builder Error: Somthing went wrong."
+      msg = "Builder Error: Something went wrong."
     appState["error"] = %msg
     result = showError()
     
