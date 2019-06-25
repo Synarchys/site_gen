@@ -2,8 +2,9 @@
 import json, tables, strutils, times
 import uuidjs
 
+import ui_utils
 
-var history = %*{}
+#var history = %*{}
 
 proc newView(action, model, sourceId: string, payload: JsonNode, mode = ""):JSonNode =
   result  = %*{
@@ -16,20 +17,19 @@ proc newView(action, model, sourceId: string, payload: JsonNode, mode = ""):JSon
   if mode != "": result["mode"] = %mode
 
 
-proc initHistory*(appState: JsonNode) =
-  let vid = genUUID()
-  history[vid] = %*{"id": %vid, "action": appState["route"]}
-  appState["view"] = %*{"id": %vid}
-
+# proc initHistory*(appState: JsonNode) =
+#   let vid = genUUID()
+#   appState{"history", vid} = %*{"id": %vid, "action": appState["route"]}
+#   appState["view"] = %*{"id": %vid}
 
 #[
-Default navigation:
-Show/Listadd relation) -> New(edit) -> Save
+ Default navigation:
+ Show/List(add relation) -> New(edit) -> Save
                                            |               
               Show <- List(add relation) <-
 ]#
 
-proc navigate*(appState, payload: JsonNode, viewid: string): JsonNode =
+proc navigate*(ctxt: var AppContext, payload: JsonNode, viewid: string): JsonNode =
   # `viewid` is where the actions come from
   # if we are going to show an action+model that does not exists
   #   create a new viewid and its navigations status and add it to the history
@@ -43,18 +43,19 @@ proc navigate*(appState, payload: JsonNode, viewid: string): JsonNode =
   #     are attached to a previous `viewid` and the behaivor is determined by the parent `viewid`.
   result = payload
   var
-    model       = payload["model"].getStr
-    action      = payload["action"].getStr
-    sourceView  = history[viewid]
+    appState = ctxt.state
+    model = payload["model"].getStr
+    action = payload["action"].getStr
+    sourceView = appState{"history", viewid}
     targetView: JsonNode
     
   case action
   of "save", "select", "done", "cancel":
-    targetView = history[sourceView["source"].getStr]
+    targetView = appState{"history", sourceView["source"].getStr}
     
     if targetView.haskey "mode":
       result["mode"] = targetView["mode"]
-
+   
     if not targetView.haskey "model":
       # ???
       # we are showing a msg o generic view, go to listing model.
@@ -87,13 +88,12 @@ proc navigate*(appState, payload: JsonNode, viewid: string): JsonNode =
     else:
       result["mode"] = %action    
     # creates a new viewId
-    targetView = newView(action, model, sourceView["id"].getStr, payload, result["mode"].getStr)   
-    
+    targetView = newView(action, model, sourceView["id"].getStr, payload, result["mode"].getStr)    
   else:
     # show the same
     targetView = sourceView
     
-  history[targetView["id"].getStr] = targetView
+  appState{"history", targetView["id"].getStr} = targetView
   appState["view"] = %*{"id": targetView["id"]}
   if result.haskey "mode":
     appState{"view", "mode"} = result["mode"]

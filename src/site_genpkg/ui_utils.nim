@@ -3,6 +3,7 @@ import json, jsffi, tables, strutils, unicode
 
 import karax / [vdom, kdom, karax]
 
+
 type
   AppContext* = object of RootObj
     state*: JsonNode
@@ -11,7 +12,8 @@ type
     ignoreField*: proc(field: string): bool # proc that returns true if the field should be ignored
     renderer*: proc (payload: JsonNode)
     labelFormat*: proc(text: string): string
-
+    navigate*: proc(ctxt: var AppContext, payload: JsonNode, viewid: string): JsonNode # returns the new payload
+    
 
 proc ignoreField*(ctxt: AppContext, key: string): bool =
   # ignore fileds `ìd`, `type`, `relations`, `id_*` and `_id*`

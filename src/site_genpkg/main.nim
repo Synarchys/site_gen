@@ -3,7 +3,7 @@ import json, tables, jsffi, strutils, times
 
 include karax / prelude
 import karax / prelude
-import karax / [vdom, karaxdsl, errors, kdom, vstyles]
+import karax / [vdom, karaxdsl, kdom]
 
 import uuidjs
 
@@ -17,26 +17,10 @@ export components
 var
   initialized = false
   `kxi`: KaraxInstance
-  appState: JsonNode
   prevHashPart: cstring
-  actions: Table[cstring, proc(payload: JsonNode){.closure.}]
-  componentsTable: Table[string, proc(ctxt: AppContext, uidef, payload: JsonNode): JsonNode]
-  appCtxt: AppContext
-  
+  ctxt: AppContext
 
-proc updateData(n: VNode){.deprecated.} =
-  if not n.value.isNil:
-    let 
-      model = $n.getAttr "model"
-      field = $n.getAttr "name"
-    if not appState.hasKey("data"):
-      appState.add("data", %*{})
-    if not appState["data"].hasKey(model):
-      appState["data"].add(model, %*{})
-    # update the value
-    appState["data"][model].add($field, %($n.value))
 
-  
 proc reRender*()=
   # wrap and expose redraw
   `kxi`.redraw()
@@ -62,12 +46,13 @@ proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Eve
     if n.kind == VnodeKind.input:
       payload["type"] = %($n.getAttr "type")
 
-    if payload.haskey("type") and (payload["type"].getStr == "date" or payload["type"].getStr == "checkbox"):
+    if payload.haskey("type") and (payload["type"].getStr == "date" or
+                                   payload["type"].getStr == "checkbox"):
       # let the dom handle the events for the `input date`
       discard
     else:
       ev.preventDefault()
-    
+      
     payload["model"] = %model
     payload["node_kind"] = %($n.kind)
     payload["event_kind"] = %eventKind
@@ -89,18 +74,18 @@ proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Eve
       payload["value"] = %($n.value)
     
     if payload.haskey "action":
-      payload = navigate(appState, payload, viewid)
-      
-    callEventListener(payload, actions)    
+        payload = ctxt.navigate(ctxt, payload, viewid)
+            
+    callEventListener(payload, ctxt.actions)    
     reRender()
       
 
 proc setHashRoute(rd: RouterData) =
   if prevHashPart != $rd.hashPart:
-    appState["route"] = %($rd.hashPart)
+    ctxt.state["route"] = %($rd.hashPart)
     prevHashPart = $rd.hashPart
-  elif $prevHashPart != appState["route"].getStr:
-    window.location.href = cstring(appState["route"].getStr)
+  elif $prevHashPart != ctxt.state["route"].getStr:
+    window.location.href = cstring(ctxt.state["route"].getStr)
     prevHashPart = window.location.hash  
 
 
@@ -110,39 +95,39 @@ proc showError(): VNode =
       h3:
         text "Error:"
       p:
-        text appState["error"].getStr
+        text ctxt.state["error"].getStr
       a(href="#/home"):
         text "Go back home."
-  appState.delete("error")
+  ctxt.state.delete("error")
   reRender()
-  
-      
+
+
 proc initNavigation() =
-  appState["route"] = %($window.location.hash)
+  ctxt.state["route"] = %($window.location.hash)
   prevHashPart = window.location.hash
   # init history
-  initHistory(appState)
+  let vid = genUUID()
+  ctxt.state{"history", vid} = %*{"id": %vid, "action": ctxt.state["route"]}
+  ctxt.state["view"] = %*{"id": %vid}
 
     
 proc createDOM(rd: RouterData): VNode =
   setHashRoute(rd)
   try:
-    if appState.hasKey("error"):
+    if ctxt.state.hasKey("error"):
       result = showError()
       
     elif initialized:
-      # result = updateUI(appState)
-      result = updateUI(appCtxt)
+      result = updateUI(ctxt)
       
-    elif not appState.hasKey("definition"):
+    elif not ctxt.state.hasKey("definition"):
       result = buildHtml(tdiv()):
         p:
           text "Loading Site..."
     else:
       let started = now()
       echo " -- Initializing $1 --" % $started.nanosecond
-      # result = initApp(appState, componentsTable, eventGen)
-      result = initApp(appCtxt, eventGen)
+      result = initApp(ctxt, eventGen)
       let ended = now()
       echo " -- Initialized $1 --" % $ended.nanosecond
       echo "Initialization time: $1 " % $(ended - started)
@@ -159,27 +144,15 @@ proc createDOM(rd: RouterData): VNode =
       echo("================================================================================")
     else:
       msg = "Builder Error: Something went wrong."
-    appState["error"] = %msg
+    ctxt.state["error"] = %msg
     result = showError()
     
 
-proc createApp*(ctxt: AppContext) =
-  appCtxt = ctxt
-  actions = ctxt.actions
-  # actions["render"] = proc (payload: JsonNode) = reRender()
-  appState = ctxt.state
+proc createApp*(appctxt: AppContext) =
+  ctxt = appctxt
   initNavigation()
-  componentsTable = initComponents(ctxt.components)
-  appCtxt.components = componentsTable
+  ctxt.components = initComponents(ctxt.components)
+  if ctxt.navigate.isNil: ctxt.navigate = navigate
   `kxi` = setRenderer(createDOM)
 
-  
-proc createApp*(state: JsonNode,
-                c: Table[string, proc(ctxt: AppContext, uidef, payload: JsonNode): JsonNode],
-                a: Table[cstring, proc(payload: JsonNode){.closure.}]) =
-  actions = a
-  actions["render"] = proc (payload: JsonNode) = reRender()
-  appState = state
-  initNavigation()
-  componentsTable = initComponents(c)
-  `kxi` = setRenderer(createDOM)
+
