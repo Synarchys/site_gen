@@ -72,9 +72,6 @@ proc buildComponent*(viewid: string, params: JsonNode): VNode =
   if params.hasKey "action":
     result.setAttr "action", params["action"].getStr
 
-  if params.hasKey "dataListener":
-    result.setAttr "dataListener", params["dataListener"].getStr
-
   if params.hasKey "events":
     let events = params["events"]
     var id = if params.hasKey "objid": kstring(params["objid"].getStr)
@@ -122,11 +119,13 @@ proc ErrorPage(txt: string): JsonNode =
                                  {"ui-type":"a","attributes":{"href":"#/home"},
                                    "children":[{"ui-type":"#text","text":"Go back home."}]}]}]}
 
-    
+             
 proc buildBody(viewid, action: string, bodyDefinition, data: JsonNode, appCtxt: var AppContext): VNode =
   # builds the initial ui based on the definition and the componentsTable library
   # this part should understand and comply with the component definition specification  
-  var def = bodyDefinition
+  var
+    def = bodyDefinition
+    route = def["route"].getStr
   result = buildComponent(viewid, copy appCtxt.state{"templates","container"})
   result.setAttr("viewid", viewid)
   
@@ -143,7 +142,10 @@ proc buildBody(viewid, action: string, bodyDefinition, data: JsonNode, appCtxt: 
     # if componentsTable has `<model>` and action key show it
     var comp = appCtxt.components[action](appCtxt, def, data)
     result.add buildComponent(viewid, comp)
-    
+  elif action == "raw" and appCtxt.components.haskey route:
+    # raw comes from def.json
+    # if action is raw and there's a component provided, use the component instead.
+    result.add buildComponent(viewid, appCtxt.components[route](appCtxt, def, data))
   else:
     result.add buildComponent(viewid, bodyDefinition)
 
@@ -181,12 +183,13 @@ proc updateUI*(appCtxt: var AppContext): VNode =
       if sectionDef.hasKey route:
         if action == "":
           # the first action is the default
-          for a in actions:
+          for a in actions:            
             if sectionDef[route].hasKey a:
               action = a
               routeSec = sectionDef[route][a]
               break
         routeSec = sectionDef[route][action]
+        routeSec["route"] = %route.replace("#/", "")
         if view.haskey "mode":
           routeSec["mode"] = view["mode"]
         b = buildBody(viewid, action, routeSec, data, appCtxt)
@@ -208,4 +211,4 @@ proc updateUI*(appCtxt: var AppContext): VNode =
 proc initApp*(appCtxt: var AppContext, event: proc(name, id, viewid: string): proc(ev: Event, n: VNode)): VNode =
   defaultEvent = event
   result = updateUI appCtxt
-  
+

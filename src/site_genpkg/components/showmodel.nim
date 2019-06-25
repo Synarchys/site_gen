@@ -13,7 +13,7 @@ proc ShowModel*(ctxt: AppContext, def: JsonNode, data: JsonNode = nil): JsonNode
   if not data.isNil and data.kind != JNull:
     result = DetailModel(ctxt, def, data)
     
-    if tschema.hasKey "relations":  
+    if tschema.hasKey "relations":
       for relType, props in tschema["relations"].pairs:
         var l: JsonNode
         if data.hasKey("relations") and data["relations"].kind == JObject and
