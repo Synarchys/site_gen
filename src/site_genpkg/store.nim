@@ -1,6 +1,6 @@
 
 import json, sequtils
-import ui_utils
+import appContext
 
 # general store procs
 
@@ -14,9 +14,9 @@ proc getCurrent*(ctxt: AppContext, objType: string): string =
   if ctxt.state["store"].haskey("objects") and
      ctxt.state["store"]["objects"].haskey(objType) and
     ctxt.state["store"]["objects"][objType].hasKey("current"):
-    let id = ctxt.state["store"]["objects"][objType]["current"].getStr
-    if id != "":
-      result = ctxt.state["store"]["data"][id].getStr
+    result = ctxt.state{"store", "objects", objType, "current"}.getStr
+    # if id != "":
+    #   result = ctxt.state["store"]["data"][id].getStr
 
 
 proc setCurrent*(ctxt: AppContext, objType, id: string) =

@@ -7,7 +7,7 @@ import karax / [vdom, karaxdsl, kdom]
 
 import uuidjs
 
-import builder, ui_utils, ui_def_gen, listeners, navigation
+import builder, ui_utils, ui_def_gen, listeners, navigation, appContext
 export builder, ui_utils
 
 import components / components
@@ -120,7 +120,7 @@ proc createDOM(rd: RouterData): VNode =
     elif initialized:
       result = updateUI(ctxt)
       
-    elif not ctxt.state.hasKey("definition"):
+    elif ctxt.state.isNil or not ctxt.state.hasKey("definition"):
       result = buildHtml(tdiv()):
         p:
           text "Loading Site..."

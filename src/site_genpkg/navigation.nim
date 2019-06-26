@@ -2,9 +2,7 @@
 import json, tables, strutils, times
 import uuidjs
 
-import ui_utils
-
-#var history = %*{}
+import appContext
 
 proc newView(action, model, sourceId: string, payload: JsonNode, mode = ""):JSonNode =
   result  = %*{

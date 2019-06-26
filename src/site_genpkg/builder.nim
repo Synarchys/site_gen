@@ -6,7 +6,7 @@ import karax / kdom
 
 import uuidjs
 
-import store, ui_utils
+import store, appContext
 
 var defaultEvent: proc(name, id, viewid: string): proc(ev: Event, n: VNode)
 
