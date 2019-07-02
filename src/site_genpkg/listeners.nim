@@ -81,23 +81,19 @@ proc addEventListener(n: NimNode): NimNode =
     newIdentNode($n[0].ident)
   )
 
- 
-proc processEventHandlers(n: NimNode): NimNode =  
+
+macro EventHandlers*(n: untyped): untyped =
+  # actions table
   result = nnkStmtList.newTree(
     nnkVarSection.newTree(
       createEventsTable()
     )
   )
-
-  for x in n:
-    result.add addEventListener(x)
-
-
-macro Listeners*(n: untyped): untyped =
-  result = newStmtList()
+  
   if n.kind == nnkStmtList:
     for x in n.children:
-      if x.kind == nnkCall:
-        if x[0].eqident("EventHandlers"):
-          result.add x[1]
-          result.add processEventHandlers(x[1])
+      result.add x
+      if x.kind == nnkProcDef:
+        result.add addEventListener(x)
+
+ 

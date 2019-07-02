@@ -6,7 +6,7 @@ import karax / kdom
 
 import uuidjs
 
-import store, appContext
+import store, appcontext
 
 var defaultEvent: proc(name, id, viewid: string): proc(ev: Event, n: VNode)
 
@@ -75,7 +75,7 @@ proc buildComponent*(viewid: string, params: JsonNode): VNode =
   if params.hasKey "events":
     let events = params["events"]
     var id = if params.hasKey "objid": kstring(params["objid"].getStr)
-             else: result.getAttr "id" # deprecate de use of `id`
+             else: result.getAttr "id" # deprecate the use of `id`
     
     if id.isNil: id = ""
     if events.kind == JString:
@@ -98,12 +98,6 @@ proc buildComponent*(viewid: string, params: JsonNode): VNode =
       result.add buildComponent(viewid, child)
 
 
-# proc getModelList(ids: JsonNode): JsonNode {.deprecated: "use site_gen's instead".} =
-#   # helper proc that returns a list of entities
-#   result = %[]
-#   for objId in ids:
-#     result.add appState.getItem objId.getStr
-    
 proc buildHeader(def, templates: JsonNode): VNode =
   var h = copy templates["header"]
   # WARNING: hardcoded
@@ -113,11 +107,11 @@ proc buildHeader(def, templates: JsonNode): VNode =
 
 proc ErrorPage(txt: string): JsonNode =
   result = %*{"ui-type":"div","class":"container-fluid",
-       "children":[{"ui-type":"div","class":"alert alert-danger","attributes":{"role":"alert"},
-                     "children":[{"ui-type":"h4",
-                                   "children":[{"ui-type":"#text","text": txt}]},
-                                 {"ui-type":"a","attributes":{"href":"#/home"},
-                                   "children":[{"ui-type":"#text","text":"Go back home."}]}]}]}
+               "children":[{"ui-type":"div","class":"alert alert-danger","attributes":{"role":"alert"},
+                             "children":[{"ui-type":"h4",
+                                           "children":[{"ui-type":"#text","text": txt}]},
+                                         {"ui-type":"a","attributes":{"href":"#/home"},
+                                           "children":[{"ui-type":"#text","text":"Go back home."}]}]}]}
 
              
 proc buildBody(viewid, action: string, bodyDefinition, data: JsonNode, appCtxt: var AppContext): VNode =
@@ -162,7 +156,7 @@ proc updateUI*(appCtxt: var AppContext): VNode =
     definition = uiDef
     view = state["view"]
     viewid = view["id"].getStr
-    data = state["_renderData"]
+    data = copy state["_renderData"]
     route, action: string
     
   if state.hasKey("route") and state["route"].getStr != "":
@@ -193,6 +187,10 @@ proc updateUI*(appCtxt: var AppContext): VNode =
         if view.haskey "mode":
           routeSec["mode"] = view["mode"]
         b = buildBody(viewid, action, routeSec, data, appCtxt)
+        
+      elif appCtxt.components.haskey "error":
+        var cmp = appCtxt.components["error"](appCtxt, nil, nil)
+        b = buildComponent(genUUID(), cmp)
       else:
         b = buildComponent(genUUID(), ErrorPage("Error - " & route & " Page Not Found. "))
 
@@ -206,7 +204,7 @@ proc updateUI*(appCtxt: var AppContext): VNode =
       # try to build as template
       if appCtxt.components.hasKey $section:
         result.add buildComponent(viewid, appCtxt.state["templates"][$section])
-
+        
 
 proc initApp*(appCtxt: var AppContext, event: proc(name, id, viewid: string): proc(ev: Event, n: VNode)): VNode =
   defaultEvent = event

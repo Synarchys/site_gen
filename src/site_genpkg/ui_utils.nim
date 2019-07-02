@@ -1,20 +1,9 @@
 
 import json, jsffi, tables, strutils, unicode
-import karax / [vdom, kdom, karax]
 
-import appContext
-export appContext
+import appcontext
+export appcontext
 
-# type
-#   AppContext* = object of RootObj
-#     state*: JsonNode
-#     components*: Table[string, proc(ctxt: AppContext, uidef, payload: JsonNode): JsonNode]
-#     actions*: Table[cstring, proc(payload: JsonNode)]
-#     ignoreField*: proc(field: string): bool # proc that returns true if the field should be ignored
-#     renderer*: proc (payload: JsonNode)
-#     labelFormat*: proc(text: string): string
-#     navigate*: proc(ctxt: var AppContext, payload: JsonNode, viewid: string): JsonNode # returns the new payload
-    
 
 proc ignoreField*(ctxt: AppContext, key: string): bool =
   # ignore fileds `ìd`, `type`, `relations`, `id_*` and `_id*`
@@ -42,7 +31,7 @@ proc labelFormat*(ctxt: AppContext, text: string): string =
 
 proc newButton*(b: JsonNode, id="", model, action: string, text="", mode= ""): JsonNode =
   result = copy b
-  result["children"][0]["text"] = if text != "": %text else: %(capitalize action)
+  result["children"][0]["text"] = if text != "": %text else: %(genLabel action)
   result["events"] = %["onclick"]
   result["attributes"]= %*{"model": %model, "action": %action}
   if id != "":
@@ -58,13 +47,16 @@ proc addChild*(parent: var JsonNode, child: JsonNode) =
 
 
 proc addText*(parent: var JsonNode, text: string) =
-  var txt = %*{"ui-type": %"text", "text": %text}
+  var txt = %*{"ui-type": %"#text", "text": %text}
   parent.addChild(txt)
 
 
 proc setText*(parent: var JsonNode, text: string) =
+  if not parent.haskey("children") or parent["children"].isNil:
+    parent["children"] = %[]
+  
   for c in parent["children"].items:
-    if c["ui-type"] == %"text":
+    if c["ui-type"] == %"#text" or c["ui-type"] == %"text":
       c["text"] = %text
       break
 
@@ -155,32 +147,37 @@ proc findElementsByAttrValue*(uiComponent: JsonNode, attrKey, attrVal: string): 
       result.add(findElementsByAttrValue(child, attrKey, attrVal))
 
 
-proc toJson*(component: VNode): JsonNode =
-  ## returns a JsonNode from a VNode
-  result = %*{ "ui-type": $component.kind }
-             
-  if component.getAttr("objid") != nil:
-    result["id"] = %($component.getAttr("objid"))
-   
-  if component.class != nil: result["class"] = %($component.class)
-  if component.text != nil or component.value != nil:
-    if component.kind == VNodeKind.input:
-      # `value` and `text` overlap on input componets
-      result["value"] = %($component.value)
-    else:
-      result["text"] = %($component.text)
 
-  var attributes = %*{}
-  for k,v in component.attrs:
-    attributes.add($k,%($v))
-  if attributes.len > 0: result["attributes"] = attributes
+when defined(js):
+  import karax / [vdom, kdom, karax]
+
+  proc toJson*(component: VNode): JsonNode =
+    ## returns a JsonNode from a VNode
+    result = %*{ "ui-type": $component.kind }
+
+    if component.getAttr("objid") != nil:
+      result["id"] = %($component.getAttr("objid"))
+   
+    if component.class != nil: result["class"] = %($component.class)
+    if component.text != nil or component.value != nil:
+      
+      if component.kind == VNodeKind.input:
+         # `value` and `text` overlap on input componets
+         result["value"] = %($component.value)
+      else:
+        result["text"] = %($component.text)
+
+    var attributes = %*{}
+    for k,v in component.attrs:
+      attributes.add($k,%($v))
+    if attributes.len > 0: result["attributes"] = attributes
                            
-  var children = newJArray()
-  for c in component.items:
-    children.add(toJson(c))
-  if children.len > 0: result["children"] = children
+    var children = newJArray()
+    for c in component.items:
+      children.add(toJson(c))
+    if children.len > 0: result["children"] = children
     
-  var events = newJArray()
-  for ev in component.events:
-    events.add(%($ev[0]))
-  if events.len > 0: result["events"] = events
+    var events = newJArray()
+    for ev in component.events:
+      events.add(%($ev[0]))
+    if events.len > 0: result["events"] = events

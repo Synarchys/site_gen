@@ -7,7 +7,7 @@ import karax / [vdom, karaxdsl, kdom]
 
 import uuidjs
 
-import builder, ui_utils, ui_def_gen, listeners, navigation, appContext
+import builder, ui_utils, ui_def_gen, listeners, navigation, appcontext
 export builder, ui_utils
 
 import components / components
@@ -24,6 +24,7 @@ var
 proc reRender*()=
   # wrap and expose redraw
   `kxi`.redraw()
+  # ctxt.state["_renderData"] = %*{}
 
 
 proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Event, n: VNode) =

@@ -1,11 +1,15 @@
 
 import json, sequtils
-import appContext
+import appcontext
 
 # general store procs
 
+proc hasId*(ctxt: AppContext, id: string): bool =
+  return ctxt.state{"store", "data"}.haskey id
+
+
 proc getItem*(ctxt: AppContext, id: string): JsonNode =
-  if  ctxt.state["store"].haskey("data"):
+  if ctxt.state.haskey("store") and ctxt.state["store"].haskey("data"):
     if ctxt.state{"store", "data"}.hasKey id:
       result = ctxt.state{"store", "data", id}
 
@@ -52,14 +56,29 @@ proc getFieldValue*(ctxt: AppContext, id, field: string): JsonNode =
     echo "Error: getFieldValue there is no item for id " & id 
 
 
-proc getList*(ctxt: AppContext, objType: string): JsonNode =
+proc getTypeIds*(ctxt: AppContext, objType: string): seq[string] =
+  # returns a jsnode of kind array
+  #result = %[]
+  if ctxt.state["store"].haskey("objects") and ctxt.state["store"]["objects"].haskey(objType):
+    if not ctxt.state{"store", "objects", objType, "list"}.isNil:
+      result = ctxt.state{"store", "objects", objType, "list"}.to(seq[string])
+
+
+proc getItems*(ctxt: AppContext, ids: seq[string]): seq[JsonNode] =
+  # helper proc that returns a list of entities
+  result = @[]
+  for objId in ids:
+    result.add getItem(ctxt, objId)
+
+
+proc getList*(ctxt: AppContext, objType: string): JsonNode {.deprecated.} =
   # returns a jsnode of kind array
   #result = %[]
   if ctxt.state["store"].haskey("objects") and ctxt.state["store"]["objects"].haskey(objType):
     result = ctxt.state["store"]["objects"][objType]["list"]
 
 
-proc getModelList*(ctxt: AppContext, ids: JsonNode): JsonNode =
+proc getModelList*(ctxt: AppContext, ids: JsonNode): JsonNode {.deprecated.} =
   # helper proc that returns a list of entities
   result = %[]
   for objId in ids:
