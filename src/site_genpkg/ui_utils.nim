@@ -37,7 +37,7 @@ proc newButton*(b: JsonNode, id="", model, action: string, text="", mode= ""): J
   if id != "":
     result["id"] = %id
     result["objid"] = %id
-  if mode != "": result["objid"] = %mode
+  if mode != "": result["mode"] = %mode
     
 
 # ui helper procs
@@ -65,6 +65,11 @@ proc setAttribute*(parent: var JsonNode, key, value: string) =
   ## if it does not exist it is added
   parent{"attributes", key} = %value
 
+
+proc removeAttribute*(parent: var JsonNode, key: string) =
+  if parent.haskey("attributes") and parent["attributes"].haskey(key):
+    parent["attributes"].delete key
+  
 
 proc addEvent*(parent: var JsonNode, event: string) =
   ## if it does not exist it is added
