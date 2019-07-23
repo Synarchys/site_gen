@@ -10,6 +10,8 @@ import uuidjs
 import builder, ui_utils, ui_def_gen, listeners, navigation, appcontext
 export builder, ui_utils
 
+import uielement, uibuild
+
 import components / components
 export components
 
@@ -19,6 +21,7 @@ var
   `kxi`: KaraxInstance
   prevHashPart: cstring
   ctxt: AppContext
+  app: App
 
 
 proc reRender*()=
@@ -31,11 +34,17 @@ proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Eve
   result = proc (ev: Event, n: VNode) =
     let
       evt = ev.`type`
-      model = $n.getAttr "model"
-      
+    
     var
       payload = %*{"value": %""}
       event = %*{"type": %($evt)}
+
+    #var model = ""
+    for k, v in n.attrs:
+      if k == "model":
+        # model = $n.getAttr "model"
+        payload["model"] = %($n.getAttr "model") #%model
+        break
 
     # TODO: improve event data passed.
     if not evt.isNil and evt.contains "key":
@@ -54,7 +63,7 @@ proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Eve
     else:
       ev.preventDefault()
       
-    payload["model"] = %model
+    
     payload["node_kind"] = %($n.kind)
     payload["event_kind"] = %eventKind
     
@@ -111,7 +120,22 @@ proc initNavigation() =
   ctxt.state{"history", vid} = %*{"id": %vid, "action": ctxt.state["route"]}
   ctxt.state["view"] = %*{"id": %vid}
 
-    
+
+proc handleCreateDomException(): Vnode =
+  let e = getCurrentException()
+  var msg: string
+  if not e.isNil:
+    msg = e.getStackTrace()
+    echo("===================================== ERROR ===================================")
+    echo getCurrentExceptionMsg()
+    echo(msg)
+    echo("================================================================================")
+  else:
+    msg = "Builder Error: Something went wrong."
+    ctxt.state["error"] = %msg
+    result = showError()
+
+
 proc createDOM(rd: RouterData): VNode =
   setHashRoute(rd)
   try:
@@ -135,19 +159,8 @@ proc createDOM(rd: RouterData): VNode =
       initialized = true
       
   except:
-    let e = getCurrentException()
-    var msg: string
-    if not e.isNil:
-      msg = e.getStackTrace()
-      echo("===================================== ERROR ===================================")
-      echo getCurrentExceptionMsg()
-      echo(msg)
-      echo("================================================================================")
-    else:
-      msg = "Builder Error: Something went wrong."
-    ctxt.state["error"] = %msg
-    result = showError()
-    
+    result = handleCreateDomException()
+
 
 proc createApp*(appctxt: AppContext) =
   ctxt = appctxt
@@ -157,3 +170,33 @@ proc createApp*(appctxt: AppContext) =
   `kxi` = setRenderer(createDOM)
 
 
+# uses app instead of ctxt
+proc createAppDOM(rd: RouterData): VNode =
+  setHashRoute(rd)
+  try:
+    if ctxt.state.hasKey("error"):
+      result = showError()
+      
+    elif app.state == "ready":
+      result = updateUI(app, eventGen)
+            
+    elif app.state == "loading":
+      result = buildHtml(tdiv()):
+        p:
+          text "Loading Site..."
+    else:
+      # TODO: show invalid state error
+      echo "App invalid state."
+      
+  except:
+    result = handleCreateDomException()
+
+
+# debug this code
+proc createApp*(a: var App) =
+  app = a
+  ctxt = app.ctxt  
+  initNavigation()
+  ctxt.components = initComponents(ctxt.components)
+  if ctxt.navigate.isNil: ctxt.navigate = navigate
+  `kxi` = setRenderer(createAppDOM)

@@ -152,7 +152,6 @@ proc findElementsByAttrValue*(uiComponent: JsonNode, attrKey, attrVal: string): 
       result.add(findElementsByAttrValue(child, attrKey, attrVal))
 
 
-
 when defined(js):
   import karax / [vdom, kdom, karax]
 

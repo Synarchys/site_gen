@@ -23,7 +23,11 @@ proc updateValue(vn: var VNode, value: string) =
     setInputText vn, value
       
           
-proc buildComponent*(viewid: string, params: JsonNode): VNode =
+proc buildComponent*(viewid: string, params: JsonNode,
+                     eventHandler: proc(name, id, viewid: string): proc(ev: Event, n: VNode) = nil): VNode =
+
+  if not eventHandler.isNil: defaultEvent = eventHandler
+    
   ## builds a component based on a json definition
   var nodeKind: VNodeKind
 
@@ -209,4 +213,3 @@ proc updateUI*(appCtxt: var AppContext): VNode =
 proc initApp*(appCtxt: var AppContext, event: proc(name, id, viewid: string): proc(ev: Event, n: VNode)): VNode =
   defaultEvent = event
   result = updateUI appCtxt
-

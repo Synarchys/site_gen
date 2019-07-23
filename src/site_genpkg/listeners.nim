@@ -14,18 +14,21 @@ proc callEventListener*(payload: JsonNode,
                         actions: Table[cstring, proc(payload: JsonNode){.closure.}]) =
 
   var eventListener: proc(payload: JsonNode){.closure.}
-  var a: string
-  if payload.haskey("node_name"):
+  var a, model: string
+  
+  if payload.haskey("model"):
+    model = payload["model"].getStr
+    
+  if payload.haskey("node_name"): # field
     a = payload["node_name"].getStr
   elif payload.haskey("action"):
     a = payload["action"].getStr
-
+    
   let
     nodeKind = payload["node_kind"].getStr
     eventKind = payload["event_kind"].getStr.replace("on", "")
     defaultNodeAction = "default_action_" & nodeKind & "_" & eventKind
-    sitegen_action = "$1_$2_$3" % [payload["model"].getStr, a, eventKind]
-
+    sitegen_action = "$1_$2_$3" % [model, a, eventKind]
 
   if actions.hasKey sitegen_action:
     eventListener = actions[sitegen_action]
