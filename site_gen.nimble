@@ -7,7 +7,7 @@ license       = "GPL-3.0"
 srcDir        = "src"
 installExt    = @["nim"]
 bin           = @["site_gen"]
-installDirs   = @["baseapp"]
+installDirs   = @["site_genpkg", "baseapp"]
 
 # Dependencies
 

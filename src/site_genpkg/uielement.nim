@@ -1,29 +1,36 @@
 
-import sequtils, tables
+import sequtils, tables, json
 import appcontext
 
 
 type
   UiElementKind* = enum
     kLayout, kHeader, kFooter, kBody, kButton, kDropdopwn, kIcon,
-    kText, kLabel, kMenu, kMenuItem, kNavBar, kNavSection, kLink, 
-    kList, kListItem
+    kLabel, kText, kMenu, kMenuItem, kNavBar, kNavSection, kLink,
+    kInputText, kList, kListItem, kForm
     
 
 type
-  UiElement* = object of RootObj
+  UiEvent* = enum
+    click, keydown, keyup
+    
+    
+type
+  UiElement* = ref object # of RootObj
     id*: string
     kind*: UiElementKind
+    label*: string
     value*: string
     # data*: ref RootObj # point to a model object ?
     attributes*: Table[string, string]
     children*: seq[UiElement]
-    events*: seq[string]
-    ctxt*: ref AppContext # reference to context
+    events*: seq[UiEvent]
+    #ctxt*: ref AppContext # reference to conlabel
+    render*: proc(): UiElement # redraws the ui element.
     
 
 type
-  App* = object of RootObj
+  App* = ref object 
     id*: string
     title*: string
     layout*: seq[UiElement] # header, menu, body, footer
@@ -34,24 +41,22 @@ type
 proc addChild*(parent: var UiElement, child: UiElement) =
   parent.children.add child
 
+  
+# proc addLabel*(parent: var UiElement, label: string) =
+#   var txt = UiElement()
+#   txt.kind = UiElementKind.kLabel
+#   txt.value = label
+#   parent.addChild txt
 
-proc addText*(parent: var UiElement, text: string) =
-  var txt = UiElement()
-  txt.kind = UiElementKind.kText
-  txt.value = text
-  parent.addChild txt
-
-
-proc setText*(parent: var UiElement, text: string) =
-  if parent.children.len == 0:
-    addText(parent, text)
-  else:
-    
-    for child in parent.children.items:
-      var c = child
-      if c.kind == UiElementKind.kText:
-        c.value = text
-        break
+# proc setLabel*(parent: var UiElement, label: string) =
+#   if parent.children.len == 0:
+#     addLabel(parent, label)
+#   else:    
+#     for child in parent.children.items:
+#       var c = child
+#       if c.kind == UiElementKind.kText:
+#         c.label = label
+#         break
 
   
 proc setAttribute*(parent: var UiElement, key, value: string) =
@@ -65,7 +70,7 @@ proc removeAttribute*(parent: var UiElement, key: string) =
     parent.attributes.del key
   
 
-proc addEvent*(parent: var UiElement, event: string) =
+proc addEvent*(parent: var UiElement, event: UiEvent) =
   ## if it does not exist it is added
   if not parent.events.contains event:
     parent.events.add event
@@ -80,23 +85,28 @@ proc newUiElement*(kind: UiElementKind): UiElement =
   result.kind = kind
 
 
-proc newUiElement*(kind: UiElementKind, text: string): UiElement =
+proc newUiElement*(kind: UiElementKind, id, label: string): UiElement =
   result = newUiElement()
   result.kind = kind
-  result.value = text
+  if label != "":
+    result.label = label     
+  if id != "":
+    result.id = id
 
-proc newUiElement*(kind: UiElementKind, text="", events: seq[string]): UiElement =
+
+proc newUiElement*(kind: UiElementKind, id, label="", events: seq[UiEvent]): UiElement =
   result = newUiElement(kind)
-  
-  if text != "":
-    result.value = text
+  if label != "":
+    result.label = label
+
+  if id != "":
+    result.id = id
     
   result.events = events
   
-   
-proc newUiElement*(kind: UiElementKind, text="",
-                   attributes:Table[string, string], events: seq[string]): UiElement =
-  result = newUiElement(kind, text=text, events= events)
+  
+proc newUiElement*(kind: UiElementKind, label="",
+                   attributes:Table[string, string], events: seq[UiEvent]): UiElement =
+  result = newUiElement(kind, label=label, events= events)
   result.kind = kind
   result.attributes = attributes    
-

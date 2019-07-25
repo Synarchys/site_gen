@@ -2,7 +2,7 @@
 import json, tables
 
 type
-  AppContext* = object of RootObj
+  AppContext* = ref object # of RootObj
     state*: JsonNode
     components*: Table[string, proc(ctxt: AppContext, uidef, payload: JsonNode): JsonNode]
     actions*: Table[cstring, proc(payload: JsonNode)]
