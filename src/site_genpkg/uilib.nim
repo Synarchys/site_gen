@@ -2,8 +2,19 @@
 import uielement
 
 
-proc Link*(text: string): UiElement =
-  result = newUiElement(UiElementKind.kLink, text=text, events = @["onclick"])
+proc Form*(): UiElement =
+  result = newUiElement(UiElementKind.kForm)
+
+
+proc InputText*(id, label = ""): UiElement =
+  result = newUiElement(UiElementKind.kInputText, events = @[UiEvent.keyup])
+  result.setAttribute("type", "text")
+  result.label = label
+  result.id = id
+  
+  
+proc Link*(label: string): UiElement =
+  result = newUiElement(UiElementKind.kLink, label=label, events = @[UiEvent.click])
 
   
 proc NavSection*(navItems: seq[UiElement] = @[]): UiElement =
@@ -16,17 +27,16 @@ proc NavBar*(sections: seq[UiElement] = @[]): UiElement =
   result.children = sections
   
   
-proc Button*(text: string): UiElement =
-  result = newUiElement(UiElementKind.kButton, text=text, events = @["onclick"])
+proc Button*(label: string): UiElement =
+  result = newUiElement(UiElementKind.kButton, label=label, events = @[UiEvent.click])
   
 
-proc MenuItem*(text: string): UiElement =
-  result = newUiElement(UiElementKind.kMenuItem, text=text, events = @["onclick"])
+proc MenuItem*(label: string): UiElement =
+  result = newUiElement(UiElementKind.kMenuItem, label=label, events = @[UiEvent.click])
 
   
-proc Menu*(text="", menuItems: seq[UiElement]): UiElement =
+proc Menu*(label="", menuItems: seq[UiElement]): UiElement =
   result = newUiElement(UiElementKind.kMenu)
-  if text != "":
-    result.value = text
+  if label != "":
+    result.value = label
   result.children = menuItems
-

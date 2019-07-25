@@ -31,6 +31,7 @@ proc reRender*()=
 
 
 proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Event, n: VNode) =
+
   result = proc (ev: Event, n: VNode) =
     let
       evt = ev.`type`
@@ -62,8 +63,7 @@ proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Eve
       discard
     else:
       ev.preventDefault()
-      
-    
+          
     payload["node_kind"] = %($n.kind)
     payload["event_kind"] = %eventKind
     
@@ -77,9 +77,11 @@ proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Eve
       payload["node_name"] = %($n.getAttr "name")
     
     if id != "":
+      echo id
       payload["id"] = %id # deprecate de use of `id`  
       payload["objid"] = %id
-
+  
+      
     if not n.value.isNil:
       payload["value"] = %($n.value)
     
@@ -181,9 +183,14 @@ proc createAppDOM(rd: RouterData): VNode =
       result = updateUI(app, eventGen)
             
     elif app.state == "loading":
+      echo "Loading..."
       result = buildHtml(tdiv()):
         p:
           text "Loading Site..."
+
+      result = initApp(app, eventGen)
+      app.state = "ready"
+      
     else:
       # TODO: show invalid state error
       echo "App invalid state."
@@ -195,7 +202,7 @@ proc createAppDOM(rd: RouterData): VNode =
 # debug this code
 proc createApp*(a: var App) =
   app = a
-  ctxt = app.ctxt  
+  ctxt = app.ctxt 
   initNavigation()
   ctxt.components = initComponents(ctxt.components)
   if ctxt.navigate.isNil: ctxt.navigate = navigate
