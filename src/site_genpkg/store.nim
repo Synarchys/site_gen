@@ -1,9 +1,9 @@
 
-import json, sequtils
+import json, tables, sequtils
 import appcontext
 
+        
 # general store procs
-
 proc hasId*(ctxt: AppContext, id: string): bool =
   return ctxt.state{"store", "data"}.haskey id
 
@@ -17,7 +17,7 @@ proc getItem*(ctxt: AppContext, id: string): JsonNode =
 proc getCurrent*(ctxt: AppContext, objType: string): string =
   if ctxt.state["store"].haskey("objects") and
      ctxt.state["store"]["objects"].haskey(objType) and
-    ctxt.state["store"]["objects"][objType].hasKey("current"):
+     ctxt.state["store"]["objects"][objType].hasKey("current"):
     result = ctxt.state{"store", "objects", objType, "current"}.getStr
     # if id != "":
     #   result = ctxt.state["store"]["data"][id].getStr

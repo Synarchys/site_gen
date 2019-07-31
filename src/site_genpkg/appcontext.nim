@@ -1,5 +1,5 @@
 
-import json, tables
+import json, tables, tstore
 
 type
   AppContext* = ref object # of RootObj
@@ -10,3 +10,4 @@ type
     renderer*: proc (payload: JsonNode)
     labelFormat*: proc(text: string): string
     navigate*: proc(ctxt: var AppContext, payload: JsonNode, viewid: string): JsonNode # returns the new payload
+    store*: Store

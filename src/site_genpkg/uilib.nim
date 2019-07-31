@@ -13,8 +13,9 @@ proc InputText*(id, label = ""): UiElement =
   result.id = id
   
   
-proc Link*(label: string): UiElement =
+proc Link*(label: string, value: string = ""): UiElement =
   result = newUiElement(UiElementKind.kLink, label=label, events = @[UiEvent.click])
+  result.value = value
 
   
 proc NavSection*(navItems: seq[UiElement] = @[]): UiElement =

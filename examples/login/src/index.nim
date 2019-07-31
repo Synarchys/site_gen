@@ -9,7 +9,6 @@ import login / [events, datastore]
 import login / components / layout
 
 var context = AppContext()
-context.state = %*{}
 context.state = %*{"store": %*{}}
 
 var app = App()
@@ -33,7 +32,6 @@ proc delay(ms: int): Future[void] =
     setTimeout(cb, ms)
     resolve()
   result = newPromise(handler)
-
 
 
 proc init(): Future[void] {.async.} =

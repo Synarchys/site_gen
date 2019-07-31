@@ -4,19 +4,18 @@ import appcontext
 
 
 type
-  UiElementKind* = enum
-    kLayout, kHeader, kFooter, kBody, kButton, kDropdopwn, kIcon,
-    kLabel, kText, kMenu, kMenuItem, kNavBar, kNavSection, kLink,
-    kInputText, kList, kListItem, kForm
-    
-
-type
   UiEvent* = enum
     click, keydown, keyup
     
     
 type
-  UiElement* = ref object # of RootObj
+  UiElementKind* = enum
+    kLayout, kHeader, kFooter, kBody, kButton, kDropdopwn, kIcon,
+    kLabel, kText, kMenu, kMenuItem, kNavBar, kNavSection, kLink,
+    kInputText, kList, kListItem, kForm, kUiEdit
+
+  UiElement* = ref UiElementObj
+  UiElementObj* = object
     id*: string
     kind*: UiElementKind
     label*: string
@@ -27,7 +26,8 @@ type
     events*: seq[UiEvent]
     #ctxt*: ref AppContext # reference to conlabel
     render*: proc(): UiElement # redraws the ui element.
-    
+
+      
 
 type
   App* = ref object 
@@ -37,7 +37,8 @@ type
     state*: string
     ctxt*: AppContext
     
-  
+      
+                                            
 proc addChild*(parent: var UiElement, child: UiElement) =
   parent.children.add child
 
@@ -107,6 +108,8 @@ proc newUiElement*(kind: UiElementKind, id, label="", events: seq[UiEvent]): UiE
   
 proc newUiElement*(kind: UiElementKind, label="",
                    attributes:Table[string, string], events: seq[UiEvent]): UiElement =
+    
   result = newUiElement(kind, label=label, events= events)
   result.kind = kind
   result.attributes = attributes    
+

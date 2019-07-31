@@ -1,11 +1,14 @@
 
 # wrapps around `builder.nim` but uses uielement objects instead of json
-import tables, json
+import tables, json, strutils
 import uuidjs
 
 include karax / prelude
 import karax / [kbase, kdom, vdom, karaxdsl]
 import uielement, builder, ui_utils, uitemplates
+
+
+import components / uiedit
 
 
 var
@@ -52,7 +55,8 @@ proc toJson(e: UiElement): JsonNode =
     
 proc buildLink(el: UiElement, viewid: string): Vnode = 
   result = buildHtml():
-    a(href="#", class="btn btn-link"): text el.value
+    let link = "#" & el.value
+    a(href=link, class="btn btn-link"): text el.label
   result.buildTargetElement(el, viewid)
 
 
@@ -96,7 +100,6 @@ proc buildInputText(el: UiElement, viewid: string): Vnode =
     input = buildHtml input(class = "form-input", id = el.id, placeholder = el.label)
   
   input.buildTargetElement(el, viewid)
-  
   result.add label
   result.add input
 
@@ -118,7 +121,8 @@ proc buildForm(f: UiElement, viewid: string): VNode =
         echo c.kind, " - ", c.label
     
 
-proc buildBody(body: UiElement, viewid: string): VNode =
+proc buildBody(body: UiElement, viewid, route: string): VNode =
+    
   result = newVNode VnodeKind.tdiv
   for l in body.children:
     var elkid = l
@@ -138,11 +142,19 @@ proc updateUI*(app: var App, event: proc(name, id, viewid: string): proc(ev: Eve
     state = app.ctxt.state
     view = state["view"]
     viewid = view["id"].getStr
-
+    route, action: string
+  
   defaultEvent = event
   result = newVNode VnodeKind.tdiv
   result.class = "container"
 
+  if state.hasKey("route") and state["route"].getStr != "":
+    let splitRoute = state["route"].getStr.split "/"
+    # just asume first item is `#`.
+    # use `#` in the ui definition to know it is a route.
+    route = splitRoute[0..1].join "/"
+    if splitRoute.len > 2: action = splitRoute[2]
+  
   for l in app.layout:
     var el = l
     if not el.render.isNil: el = l.render()
@@ -155,7 +167,13 @@ proc updateUI*(app: var App, event: proc(name, id, viewid: string): proc(ev: Eve
         result.add buildMenu(el, viewid)
       
       of UiElementKind.kBody:
-        result.add buildBody(el, viewid)
+        echo route, "/", action
+        # use the correct ui for the action
+        case action
+        of "edit":
+          # uiedit
+          let ui = UiEdit(app.ctxt, viewid, route)
+          result.add buildBody(ui, viewid, route)
         
       else:
         # TODO:
