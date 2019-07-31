@@ -119,24 +119,23 @@ proc buildForm(f: UiElement, viewid: string): VNode =
       else:
         echo "Unknown UiElementkind."
         echo c.kind, " - ", c.label
-    
 
-proc buildBody(body: UiElement, viewid, route: string): VNode =
-    
+  
+proc buildBody(body: UiElement, viewid, route: string): VNode =    
   result = newVNode VnodeKind.tdiv
-  for l in body.children:
-    var elkid = l
-    if not l.render.isNil: elkid = l.render()
-    case elkid.kind:
-      of UiElementKind.kForm:
-        result.add buildForm(elkid, viewid)
-        
-      else:
-        echo elkid.kind, " - ", elkid.label
-        # var ejs = elkid.toJson()
-        # result.add buildComponent(viewid, ejs, defaultEvent)
 
+  var el = body
+  if not el.render.isNil: el = el.render()
+  
+  if el.kind == UiElementKind.kForm:
+    result.add buildForm(el, viewid)
+  else:
+    for l in el.children:
+      var elkid = l
+      if not l.render.isNil: elkid = l.render()
+      result.add buildBody(elkid, viewid, route)
 
+      
 proc updateUI*(app: var App, event: proc(name, id, viewid: string): proc(ev: Event, n: VNode)): VNode =
   var
     state = app.ctxt.state
@@ -154,7 +153,7 @@ proc updateUI*(app: var App, event: proc(name, id, viewid: string): proc(ev: Eve
     # use `#` in the ui definition to know it is a route.
     route = splitRoute[0..1].join "/"
     if splitRoute.len > 2: action = splitRoute[2]
-  
+    
   for l in app.layout:
     var el = l
     if not el.render.isNil: el = l.render()
@@ -174,7 +173,14 @@ proc updateUI*(app: var App, event: proc(name, id, viewid: string): proc(ev: Eve
           # uiedit
           let ui = UiEdit(app.ctxt, viewid, route)
           result.add buildBody(ui, viewid, route)
-        
+        else:
+          let cName = route.replace("#/", "")
+          if cName != "":
+            let ui = app.ctxt.uicomponents[cName].render()
+            result.add buildBody(ui, viewid, route)
+          else:
+            echo "Error: Invalid Ui Component."
+
       else:
         # TODO:
         echo "Error: Invalid Layout section."

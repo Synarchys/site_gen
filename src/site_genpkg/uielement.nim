@@ -1,6 +1,5 @@
 
 import sequtils, tables, json
-import appcontext
 
 
 type
@@ -12,7 +11,7 @@ type
   UiElementKind* = enum
     kLayout, kHeader, kFooter, kBody, kButton, kDropdopwn, kIcon,
     kLabel, kText, kMenu, kMenuItem, kNavBar, kNavSection, kLink,
-    kInputText, kList, kListItem, kForm, kUiEdit
+    kInputText, kList, kListItem, kForm, kUiEdit, kComponent
 
   UiElement* = ref UiElementObj
   UiElementObj* = object
@@ -24,20 +23,9 @@ type
     attributes*: Table[string, string]
     children*: seq[UiElement]
     events*: seq[UiEvent]
-    #ctxt*: ref AppContext # reference to conlabel
     render*: proc(): UiElement # redraws the ui element.
-
       
-
-type
-  App* = ref object 
-    id*: string
-    title*: string
-    layout*: seq[UiElement] # header, menu, body, footer
-    state*: string
-    ctxt*: AppContext
-    
-      
+     
                                             
 proc addChild*(parent: var UiElement, child: UiElement) =
   parent.children.add child
