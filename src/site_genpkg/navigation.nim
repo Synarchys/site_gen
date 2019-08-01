@@ -42,59 +42,57 @@ proc navigate*(ctxt: var AppContext, payload: JsonNode, viewid: string): JsonNod
   result = payload
   var
     appState = ctxt.state
-    model = payload["model"].getStr
+    model = if payload.haskey("model"): payload["model"].getStr else: ""
     action = payload["action"].getStr
     sourceView = appState{"history", viewid}
     targetView: JsonNode
-    
-  case action
-  of "save", "select", "done", "cancel":
-    targetView = appState{"history", sourceView["source"].getStr}
-    
-    if targetView.haskey "mode":
-      result["mode"] = targetView["mode"]
-   
-    if not targetView.haskey "model":
-      # ???
-      # we are showing a msg o generic view, go to listing model.
-      echo "WARNING: no model found at navigation."
-      targetView = newView("list", model, sourceView["id"].getStr, payload)
 
-    # goes to previous viewid, changes should be persisted.
-    result["action"] = %action
-    # after new -> select, go to grand parent
-    if targetView.haskey("payload") and targetView["payload"].haskey "objid":
-      result["parent"] = targetView["payload"]["objid"]
+  if model == "":
+    # send to the action
+    # TODO: add history handling
+    appState["route"] = %("#/" & action)
     
-  of "delete":
-    # do not redirect
-    targetView = sourceView
-    if targetView.haskey("payload") and targetView["payload"].haskey "objid":
-      result["parent"] = targetView["payload"]["objid"]
-
-  of "new", "show","edit", "list", "add":    
-    if action == "add":
-      action = "list"
-      result["action"] = %action
-      result["mode"] = %"select"
-      
-    elif action == "new":
-      action = "edit"
-      result["action"] = %action
-      result["mode"] = %"new"
-      
-    else:
-      result["mode"] = %action    
-    # creates a new viewId
-    targetView = newView(action, model, sourceView["id"].getStr, payload, result["mode"].getStr)    
   else:
-    # show the same
-    targetView = sourceView
-    
-  appState{"history", targetView["id"].getStr} = targetView
-  appState["view"] = %*{"id": targetView["id"]}
-  if result.haskey "mode":
-    appState{"view", "mode"} = result["mode"]
-                       
-  let route = "#/$1/$2" % [targetView["model"].getStr, targetView["action"].getStr]
-  appState["route"] = %route
+    case action
+    of "save", "select", "done", "cancel":
+      targetView = appState{"history", sourceView["source"].getStr}
+      if targetView.haskey "mode":
+        result["mode"] = targetView["mode"]
+      if not targetView.haskey "model":
+        # ???
+        # we are showing a msg o generic view, go to listing model.
+        echo "WARNING: no model found at navigation."
+        targetView = newView("list", model, sourceView["id"].getStr, payload)
+      # goes to previous viewid, changes should be persisted.
+      result["action"] = %action
+      # after new -> select, go to grand parent
+      if targetView.haskey("payload") and targetView["payload"].haskey "objid":
+        result["parent"] = targetView["payload"]["objid"]
+    of "delete":
+      # do not redirect
+      targetView = sourceView
+      if targetView.haskey("payload") and targetView["payload"].haskey "objid":
+        result["parent"] = targetView["payload"]["objid"]
+    of "new", "show","edit", "list", "add":    
+      if action == "add":
+        action = "list"
+        result["action"] = %action
+        result["mode"] = %"select"
+      elif action == "new":
+        action = "edit"
+        result["action"] = %action
+        result["mode"] = %"new"
+      else:
+        result["mode"] = %action    
+        # creates a new viewId
+      targetView = newView(action, model, sourceView["id"].getStr, payload, result["mode"].getStr)
+    else:
+      # show the same
+      targetView = sourceView
+      
+    appState{"history", targetView["id"].getStr} = targetView
+    appState["view"] = %*{"id": targetView["id"]}
+    if result.haskey "mode":
+      appState{"view", "mode"} = result["mode"]         
+    let route = "#/$1/$2" % [targetView["model"].getStr, targetView["action"].getStr]
+    appState["route"] = %route

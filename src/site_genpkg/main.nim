@@ -80,14 +80,13 @@ proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Eve
       echo id
       payload["id"] = %id # deprecate de use of `id`  
       payload["objid"] = %id
-  
-      
+        
     if not n.value.isNil:
       payload["value"] = %($n.value)
     
     if payload.haskey "action":
-        payload = ctxt.navigate(ctxt, payload, viewid)
-            
+      payload = ctxt.navigate(ctxt, payload, viewid)
+    
     callEventListener(payload, ctxt.actions)    
     reRender()
       

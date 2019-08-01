@@ -24,7 +24,6 @@ type
     children*: seq[UiElement]
     events*: seq[UiEvent]
     render*: proc(): UiElement # redraws the ui element.
-      
      
                                             
 proc addChild*(parent: var UiElement, child: UiElement) =
@@ -47,6 +46,10 @@ proc addChild*(parent: var UiElement, child: UiElement) =
 #         c.label = label
 #         break
 
+
+proc hasAttribute*(el: UiElement, attr: string): bool =
+  result = el.attributes.haskey attr
+  
   
 proc setAttribute*(parent: var UiElement, key, value: string) =
   # TODO: handle basic types
