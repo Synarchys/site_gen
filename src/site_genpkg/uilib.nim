@@ -1,16 +1,11 @@
 
 import uielement
+import uilib / input
+export input
 
 
 proc Form*(): UiElement =
   result = newUiElement(UiElementKind.kForm)
-
-
-proc InputText*(id, label = ""): UiElement =
-  result = newUiElement(UiElementKind.kInputText, events = @[UiEvent.keyup])
-  result.setAttribute("type", "text")
-  result.label = label
-  result.id = id
   
   
 proc Link*(label: string, value: string = ""): UiElement =
