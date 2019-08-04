@@ -11,7 +11,7 @@ type
   UiElementKind* = enum
     kLayout, kHeader, kFooter, kBody, kButton, kDropdopwn, kIcon,
     kLabel, kText, kMenu, kMenuItem, kNavBar, kNavSection, kLink,
-    kInputText, kList, kListItem, kForm, kUiEdit, kComponent
+    kInputText, kList, kListItem, kForm, kComponent
 
   UiElement* = ref UiElementObj
   UiElementObj* = object
@@ -50,6 +50,11 @@ proc addChild*(parent: var UiElement, child: UiElement) =
 proc hasAttribute*(el: UiElement, attr: string): bool =
   result = el.attributes.haskey attr
   
+
+proc getAttribute*(el: UiElement, key: string): string =
+  if el.hasAttribute key:
+    result = el.attributes[key]
+
   
 proc setAttribute*(parent: var UiElement, key, value: string) =
   # TODO: handle basic types
