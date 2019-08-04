@@ -10,7 +10,8 @@ proc UiEdit*(ctxt: AppContext, viewid, route: string): UiElement =
   # returns a form wiht the fields to be edited
   let entity = route.replace("#/", "")
   result = newUiElement()
-  result.kind = UiElementkind.kUiEdit
+  result.kind = UiElementkind.kComponent
+
   var
     current = ctxt.store.getCurrent entity
     form = Form()
@@ -25,7 +26,7 @@ proc UiEdit*(ctxt: AppContext, viewid, route: string): UiElement =
       inputTxt.value = v.getStr
       inputTxt.id = current.id   
       form.addChild inputTxt
-
-  form.addChild Button("Guardar")
+  
+  form.addChild Button("Save")
   result.addChild form
-
+  
