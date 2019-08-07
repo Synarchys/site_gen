@@ -1,11 +1,7 @@
 
 import sequtils, tables, json
 
-
-type
-  UiEvent* = enum
-    click, keydown, keyup
-    
+import karax / [vdom, kdom]
     
 type
   UiElementKind* = enum
@@ -14,18 +10,26 @@ type
     kInputText, kList, kListItem, kForm, kCheckBox
 
   UiElement* = ref UiElementObj
+
+  UiEventKind* = enum
+    click, keydown, keyup
+
+  UiEvent* = object
+    kind*: UiEventKind
+    targetKind*: EventKind
+    handler*: proc(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev: Event, n: VNode)
+  
   UiElementObj* = object
     id*: string
     kind*: UiElementKind
     label*: string
     value*: string
-    # data*: ref RootObj # point to a model object ?
     attributes*: Table[string, string]
     children*: seq[UiElement]
     events*: seq[UiEvent]
     render*: proc(): UiElement # redraws the ui element.
-     
-                                            
+    
+    
 proc addChild*(parent: var UiElement, child: UiElement) =
   parent.children.add child
 
@@ -91,21 +95,24 @@ proc newUiElement*(kind: UiElementKind, id, label: string): UiElement =
     result.id = id
 
 
-proc newUiElement*(kind: UiElementKind, id, label="", events: seq[UiEvent]): UiElement =
+proc newUiElement*(kind: UiElementKind, id, label="", events: seq[UiEventKind]): UiElement =
   result = newUiElement(kind)
   if label != "":
     result.label = label
 
   if id != "":
     result.id = id
-    
-  result.events = events
+  for evk in events:
+    var ev = UiEvent()
+    ev.kind = evk
+    result.events.add ev
+  #result.events = events
   
   
 proc newUiElement*(kind: UiElementKind, label="",
-                   attributes:Table[string, string], events: seq[UiEvent]): UiElement =
+                   attributes:Table[string, string], events: seq[UiEventKind]): UiElement =
     
-  result = newUiElement(kind, label=label, events= events)
+  result = newUiElement(kind, label = label, events = events)
   result.kind = kind
   result.attributes = attributes    
 

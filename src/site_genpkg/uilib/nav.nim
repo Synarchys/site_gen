@@ -1,7 +1,6 @@
 
 import ../uielement
 
-
 proc NavSection*(navItems: seq[UiElement] = @[]): UiElement =
   result = newUiElement(UiElementKind.kNavSection)
   for ni in navItems:

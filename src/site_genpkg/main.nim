@@ -15,7 +15,8 @@ import uielement, uibuild
 import components / components
 export components
 
-     
+var console {. importc, nodecl .}: JsObject
+
 var
   initialized = false
   `kxi`: KaraxInstance
@@ -30,9 +31,11 @@ proc reRender*()=
   # ctxt.state["_renderData"] = %*{}
 
 
-proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Event, n: VNode) =
-
+proc eventGen*(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev: Event, n: VNode) =
+#proc eventGen*(eventKind: string, objid: string = "", viewid: string): proc(ev: Event, n: VNode) =
   result = proc (ev: Event, n: VNode) =
+    # ev.preventDefault()
+    
     let
       evt = ev.`type`
     
@@ -65,7 +68,7 @@ proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Eve
       ev.preventDefault()
           
     payload["node_kind"] = %($n.kind)
-    payload["event_kind"] = %eventKind
+    payload["event_kind"] = %uiev.kind
     
     if n.getAttr("action") != nil:
       payload["action"] = %($n.getAttr "action")
@@ -76,12 +79,10 @@ proc eventGen*(eventKind: string, id: string = "", viewid: string): proc(ev: Eve
     if n.getAttr("name") != nil:
       payload["node_name"] = %($n.getAttr "name")
     
-    if id != "":
-      echo id
-      payload["id"] = %id # deprecate de use of `id`  
-      payload["objid"] = %id
-        
-    if not n.value.isNil:
+    if el.id != "":
+      payload["objid"] = %el.id
+
+    if not n.value.isNil and n.value != "":
       payload["value"] = %($n.value)
     
     if payload.haskey "action":
@@ -137,40 +138,6 @@ proc handleCreateDomException(): Vnode =
     result = showError()
 
 
-proc createDOM(rd: RouterData): VNode =
-  setHashRoute(rd)
-  try:
-    if ctxt.state.hasKey("error"):
-      result = showError()
-      
-    elif initialized:
-      result = updateUI(ctxt)
-      
-    elif ctxt.state.isNil or not ctxt.state.hasKey("definition"):
-      result = buildHtml(tdiv()):
-        p:
-          text "Loading Site..."
-    else:
-      let started = now()
-      echo " -- Initializing $1 --" % $started.nanosecond
-      result = initApp(ctxt, eventGen)
-      let ended = now()
-      echo " -- Initialized $1 --" % $ended.nanosecond
-      echo "Initialization time: $1 " % $(ended - started)
-      initialized = true
-      
-  except:
-    result = handleCreateDomException()
-
-
-proc createApp*(appctxt: AppContext) =
-  ctxt = appctxt
-  initNavigation()
-  ctxt.components = initComponents(ctxt.components)
-  if ctxt.navigate.isNil: ctxt.navigate = navigate
-  `kxi` = setRenderer(createDOM)
-
-
 # uses app instead of ctxt
 proc createAppDOM(rd: RouterData): VNode =
   setHashRoute(rd)
@@ -179,7 +146,7 @@ proc createAppDOM(rd: RouterData): VNode =
       result = showError()
       
     elif app.state == "ready":
-      result = updateUI(app, eventGen)
+      result = updateUI(app)
             
     elif app.state == "loading":
       echo "Loading..."

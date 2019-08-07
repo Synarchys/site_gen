@@ -14,25 +14,7 @@ import components / uiedit
 import uibuild / builders
 
 
-var
-  defaultEvent: proc(name, id, viewid: string): proc(ev: Event, n: VNode)
-  eventsMap: Table[uielement.UiEvent, EventKind]
-  webBuilders = getWebBuilders()
-
-
-proc buildTargetElement(n: var Vnode, el: UiElement, viewid: string) =
-  # set events
-  for e in el.events:
-    let kev = eventsMap[e]
-    n.addEventListener kev, defaultEvent($kev, el.id, viewid)
-    
-  # set attributes
-  for k, v in el.attributes.pairs:
-    n.setAttr(k, v)
-    
-  # set value
-  if n.kind == VnodeKind.input:
-    setInputText n, el.value
+var wb: WebBuilder
 
   
 proc toJson(e: UiElement): JsonNode = 
@@ -60,13 +42,10 @@ proc buildElement(uiel: UiElement, viewid: string): VNode =
     # for now use its first child
     el = el.children[0]
 
-  if webBuilders.hasKey el.kind:
-    result = webBuilders[el.kind](el, viewid)
-    result.buildTargetElement(el, viewid)
+  result = wb.callBuilder(el, viewid)
     
-  else:
+  if result.isNil:
     result = buildElement(el, viewid)
-    result.buildTargetElement(el, viewid)
     
   for elkid in el.children:
     result.add buildElement(elkid, viewid)
@@ -77,14 +56,13 @@ proc buildBody(body: UiElement, viewid, route: string): VNode =
   result.add buildElement(body, viewid)
 
       
-proc updateUI*(app: var App, event: proc(name, id, viewid: string): proc(ev: Event, n: VNode)): VNode =
+proc updateUI*(app: var App): VNode =
   var
     state = app.ctxt.state
     view = state["view"]
     viewid = view["id"].getStr
     route, action: string
   
-  defaultEvent = event
   result = newVNode VnodeKind.tdiv
   result.class = "container"
 
@@ -97,13 +75,14 @@ proc updateUI*(app: var App, event: proc(name, id, viewid: string): proc(ev: Eve
     
   for l in app.layout:
     var el = l
+    # deprecate the use of render
     if not el.render.isNil: el = l.render()
     case l.kind:
       of UiElementKind.kHeader:
-        result.add webBuilders[UiElementKind.kHeader](el, viewid)
+        result.add wb.callBuilder(el, viewid)
       
       of UiElementKind.kMenu:
-        result.add webBuilders[UiElementKind.kHeader](el, viewid)
+        result.add wb.callBuilder(el, viewid)
       
       of UiElementKind.kBody:
         # use the correct ui for the action
@@ -116,21 +95,15 @@ proc updateUI*(app: var App, event: proc(name, id, viewid: string): proc(ev: Eve
         else:
           let cName = route.replace("#/", "")
           if cName != "":
-            let ui = app.ctxt.uicomponents[cName]
+            let ui = app.ctxt.uicomponents[cName](app.ctxt)
             result.add buildBody(ui, viewid, route)
           else:
-            echo "Error: Invalid Action:" & action & "."
+            echo "Error: Invalid Route/Action:" & action & "."
       else:
         # TODO:
         echo "Error: Invalid Layout section."
 
 
-proc initApp*(app: var App, event: proc(name, id, viewid: string): proc(ev: Event, n: VNode)): VNode =
-  defaultEvent = event
-  for uie in uielement.UiEvent:
-    for kev in EventKind:
-      if $kev == ("on" & $uie):
-        eventsMap.add(uie, kev)
-        break
-    
-  result = updateUI(app, defaultEvent)
+proc initApp*(app: var App, event: proc(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev: Event, n: VNode)): VNode =
+  wb = initBuilder(event)
+  result = updateUI(app)

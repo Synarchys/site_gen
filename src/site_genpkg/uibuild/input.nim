@@ -1,16 +1,23 @@
 
+import tables
 include karax / prelude
-import karax / [kbase, kdom, vdom, karaxdsl]
+# import karax / [kbase, kdom, vdom, karaxdsl]
+import karax / [kdom, vdom]
 
 import ../uielement, ../ui_utils
+import webbuilder
 
 
-proc buildInputText*(el: UiElement, viewid: string): Vnode =
+proc buildInputText*(wb: WebBuilder, el: UiElement, viewid: string): Vnode =
   result = buildHtml tdiv(class="form-group")
   var
     label = buildHtml label(class = "form-label", `for`= el.id): text el.label
-    input = buildHtml input(`type`= " text", class = "form-input", id = el.id, placeholder = el.label)
-    
+    input = buildHtml input(`type`= "text", class = "form-input", objid = el.id, placeholder = el.label)
+
   setInputText input, el.value
+  input.addAttributes el
+  input.addEvents wb, el, viewid
+   
   result.add label
   result.add input
+

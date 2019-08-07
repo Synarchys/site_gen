@@ -29,7 +29,7 @@ proc callEventListener*(payload: JsonNode,
     eventKind = payload["event_kind"].getStr.replace("on", "")
     defaultNodeAction = "default_action_" & nodeKind & "_" & eventKind
     sitegen_action = "$1_$2_$3" % [model, a, eventKind]
-
+    
   if actions.hasKey sitegen_action:
     eventListener = actions[sitegen_action]
   elif actions.hasKey defaultNodeAction:

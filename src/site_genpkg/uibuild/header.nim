@@ -3,9 +3,10 @@ include karax / prelude
 import karax / [kbase, kdom, vdom, karaxdsl]
 
 import ../uielement, ../ui_utils
-import link
+import webbuilder
 
-proc buildHeader*(header: UiElement, viewid: string): VNode =
+
+proc buildHeader*(b: WebBuilder, header: UiElement, viewid: string): VNode =
   result = buildHtml(header(class="navbar")):
     for men in header.children:
       if men.kind == UiElementKind.kNavBar:
@@ -14,4 +15,4 @@ proc buildHeader*(header: UiElement, viewid: string): VNode =
             section(class="navbar-section"):
               for l in sect.children:
                 if l.kind == UiElementKind.kLink:
-                  buildLink(l, viewid)
+                  build(b, l, viewid)
