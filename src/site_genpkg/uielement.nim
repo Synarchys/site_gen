@@ -1,13 +1,13 @@
 
 import sequtils, tables, json
-
 import karax / [vdom, kdom]
-    
+
+
 type
   UiElementKind* = enum
     kComponent, kLayout, kHeader, kFooter, kBody, kButton, kDropdopwn, kIcon,
-    kLabel, kText, kMenu, kMenuItem, kNavBar, kNavSection, kLink,
-    kInputText, kList, kListItem, kForm, kCheckBox
+    kLabel, kText, kMenu, kMenuItem, kNavBar, kNavSection, kLink, kInputText,
+    kList, kListItem, kForm, kCheckBox, kDropdown, kDropdownItem, kPanel, kTile
 
   UiElement* = ref UiElementObj
 
@@ -21,6 +21,7 @@ type
   
   UiElementObj* = object
     id*: string
+    viewid*: string
     kind*: UiElementKind
     label*: string
     value*: string
@@ -31,6 +32,10 @@ type
     
     
 proc addChild*(parent: var UiElement, child: UiElement) =
+  parent.children.add child
+
+
+proc add*(parent: var UiElement, child: UiElement) =
   parent.children.add child
 
   

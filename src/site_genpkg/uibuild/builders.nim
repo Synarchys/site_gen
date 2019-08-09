@@ -7,39 +7,32 @@ import webbuilder
 export webbuilder
 
 # import modular builders
-import input, button, form, header, input, link, menu, checkbox
+import input, button, form, nav, input, link, menu, checkbox, dropdown, panel, tile
 
-proc callBuilder*(wb: WebBuilder, elem: UiElement, viewid: string): VNode =
-  var el = elem
-   
-  try:
-    case el.kind
-    of UiElementKind.kInputText:
-      result = buildInputText(wb, el, viewid)
-    of UiElementKind.kForm:
-      result = buildForm(el, viewid)
-    of UiElementKind.kLink:
-      result = buildLink(wb, el, viewid)
-    of UiElementKind.kButton:
-      result = buildButton(wb, el, viewid)
-    of UiElementKind.kHeader:
-      result = buildHeader(wb, el, viewid)
-    of UiElementKind.kMenu:
-      result = buildMenu(el, viewid)
-    of UiElementKind.kCheckBox:
-      result = buildCheckBox(wb, el, viewid)
-    else:
-      echo "UnknownBuilder."
-  except:
-    # TODO:
-    let msg = getCurrentExceptionMsg()
-    echo el.kind
-    echo msg
-    
-    result = buildHtml(tdiv):
-      h3: text "Error: Element build fail: " & $el.kind
-      p: text msg
-    
+var buildersTable = initTable[UiElementKind, proc(wb: WebBuilder, el: UiElement): Vnode]()
+buildersTable.add UiElementKind.kInputText, buildInputText
+buildersTable.add UiElementKind.kForm, buildForm
+buildersTable.add UiElementKind.kLink, buildLink
+buildersTable.add UiElementKind.kButton, buildButton
+buildersTable.add UiElementKind.kNavBar, buildNav
+buildersTable.add UiElementKind.kMenu, buildMenu
+buildersTable.add UiElementKind.kCheckBox, buildCheckBox
+buildersTable.add UiElementKind.kDropdown, buildDropdown
+buildersTable.add UiElementKind.kPanel, buildPanel
+buildersTable.add UiElementKind.kTile, buildTile
+
+
+proc callBuilder*(wb: WebBuilder, elem: UiElement): VNode =
+  var el = elem  
+  if buildersTable.haskey el.kind:
+    result = buildersTable[el.kind](wb, elem)
+    for elkid in el.children:
+      let kid = callBuilder(wb, elkid)
+      if not kid.isNil:
+        result.add kid
+  else:
+    echo "Builder not found for: " & $el.kind
+      
 
 proc initBuilder*(handler: proc(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev: Event, n: VNode)): WebBuilder =
   result = newWebBuilder(handler)

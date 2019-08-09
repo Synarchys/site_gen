@@ -7,7 +7,7 @@ import ../uielement, ../ui_utils
 import webbuilder
 
 
-proc buildLink*(wb: WebBuilder, el: UiElement, viewid: string): Vnode =  
+proc buildLink*(wb: WebBuilder, el: UiElement): Vnode =  
   let action = el.getAttribute("action")
   var link = "#/" & el.value
   if action != "":
@@ -15,4 +15,4 @@ proc buildLink*(wb: WebBuilder, el: UiElement, viewid: string): Vnode =
   result = buildHtml a(href=link, class="btn btn-link"): text el.label
   
   result.addAttributes el
-  result.addEvents wb, el, viewid
+  result.addEvents wb, el

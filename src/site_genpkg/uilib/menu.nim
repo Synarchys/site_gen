@@ -1,6 +1,7 @@
 
 import ../uielement
 
+
 proc MenuItem*(label: string): UiElement =
   result = newUiElement(UiElementKind.kMenuItem, label=label, events = @[UiEventKind.click])
 

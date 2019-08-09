@@ -7,7 +7,7 @@ import ../uielement, ../ui_utils
 import webbuilder
 
 
-proc buildCheckBox*(wb: WebBuilder, el: UiElement, viewid: string): Vnode =
+proc buildCheckBox*(wb: WebBuilder, el: UiElement): Vnode =
   result = buildHtml tdiv(class="form-group")
   var
     label = buildHtml label(class = "form-checkbox")
@@ -17,7 +17,7 @@ proc buildCheckBox*(wb: WebBuilder, el: UiElement, viewid: string): Vnode =
         text el.label
 
   input.addAttributes el
-  input.addEvents wb, el, viewid
+  input.addEvents wb, el
   
   label.add input
   label.add i

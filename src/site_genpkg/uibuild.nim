@@ -10,13 +10,12 @@ import uielement, builder, ui_utils, uitemplates
 
 # complex components
 import components / uiedit
-
 import uibuild / builders
 
 
 var wb: WebBuilder
 
-  
+
 proc toJson(e: UiElement): JsonNode = 
   case e.kind:
     of UiElementKind.kButton:
@@ -36,20 +35,23 @@ proc toJson(e: UiElement): JsonNode =
 
     
 proc buildElement(uiel: UiElement, viewid: string): VNode =
-  var el: UiElement = uiel   
-  if not uiel.render.isNil: el = uiel.render()  
-  if el.kind == UiElementKind.kComponent:
-    # for now use its first child
-    el = el.children[0]
+  var el: UiElement = uiel
+  try:
+    if el.kind == UiElementKind.kComponent:
+      result = buildHtml(tdiv())
+      for c in el.children:
+        result.add buildElement(c, viewid)
+    else:
+      result = wb.callBuilder(el)
+  except:
+    # TODO:
+    let msg = getCurrentExceptionMsg()
+    echo el.kind
+    echo msg
+    result = buildHtml(tdiv):
+      h3: text "Error: Element build fail: " & $el.kind
+      p: text msg
 
-  result = wb.callBuilder(el, viewid)
-    
-  if result.isNil:
-    result = buildElement(el, viewid)
-    
-  for elkid in el.children:
-    result.add buildElement(elkid, viewid)
-  
         
 proc buildBody(body: UiElement, viewid, route: string): VNode =    
   result = newVNode VnodeKind.tdiv
@@ -75,14 +77,17 @@ proc updateUI*(app: var App): VNode =
     
   for l in app.layout:
     var el = l
+    el.viewid = viewid
     # deprecate the use of render
     if not el.render.isNil: el = l.render()
     case l.kind:
       of UiElementKind.kHeader:
-        result.add wb.callBuilder(el, viewid)
+        # TODO:
+        discard
+        # result.add wb.callBuilder(el)
       
       of UiElementKind.kMenu:
-        result.add wb.callBuilder(el, viewid)
+        result.add wb.callBuilder(el)
       
       of UiElementKind.kBody:
         # use the correct ui for the action
