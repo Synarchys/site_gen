@@ -7,7 +7,8 @@ import webbuilder
 export webbuilder
 
 # import modular builders
-import input, button, form, nav, input, link, menu, checkbox, dropdown, panel, tile
+import input, button, form, nav, input, link, menu, checkbox, dropdown, tile, panel
+
 
 var buildersTable = initTable[UiElementKind, proc(wb: WebBuilder, el: UiElement): Vnode]()
 buildersTable.add UiElementKind.kInputText, buildInputText
