@@ -1,5 +1,6 @@
 
 import json, tables, tstore, uielement
+# import uibuild / webbuilder
 
 type
   AppContext* = ref object # of RootObj
@@ -20,4 +21,4 @@ type
     layout*: seq[UiElement] # header, menu, body, footer
     state*: string
     ctxt*: AppContext
-    
+    wb*: WebBuilder

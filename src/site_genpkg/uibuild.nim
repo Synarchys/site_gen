@@ -38,9 +38,16 @@ proc buildElement(uiel: UiElement, viewid: string): VNode =
   var el: UiElement = uiel
   try:
     if el.kind == UiElementKind.kComponent:
-      result = buildHtml(tdiv())
+      if not el.builder.isNil:
+        result = el.builder(wb, el)
+      else:
+        result = buildHtml(tdiv())
+      result.addAttributes el
+      
       for c in el.children:
-        result.add buildElement(c, viewid)
+        let vkid = buildElement(c, viewid)
+        if not vkid.isNil:
+          result.add vkid
     else:
       result = wb.callBuilder(el)
   except:
@@ -54,8 +61,7 @@ proc buildElement(uiel: UiElement, viewid: string): VNode =
 
         
 proc buildBody(body: UiElement, viewid, route: string): VNode =    
-  result = newVNode VnodeKind.tdiv
-  result.add buildElement(body, viewid)
+  result = buildElement(body, viewid)
 
       
 proc updateUI*(app: var App): VNode =
@@ -79,7 +85,7 @@ proc updateUI*(app: var App): VNode =
     var el = l
     el.viewid = viewid
     # deprecate the use of render
-    if not el.render.isNil: el = l.render()
+    # if not el.render.isNil: el = l.render()
     case l.kind:
       of UiElementKind.kHeader:
         # TODO:

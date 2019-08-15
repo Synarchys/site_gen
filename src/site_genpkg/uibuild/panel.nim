@@ -1,7 +1,8 @@
 
 
 import karax / [vdom, karaxdsl]
-import webbuilder, ../uielement
+import ../uielement
+# import webbuilder
 
 
 proc buildPanelNav(el: UiElementKind): Vnode =

@@ -2,7 +2,7 @@
 
 import karax / [vdom, karaxdsl]
 import ../uielement, ../ui_utils
-import webbuilder
+#import webbuilder
 
 
 proc buildForm*(wb: WebBuilder, el: UiElement): VNode =

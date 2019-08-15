@@ -3,9 +3,6 @@ import tables
 import karax / [vdom, kdom, karaxdsl]
 import ../uielement
 
-import webbuilder
-export webbuilder
-
 # import modular builders
 import input, button, form, nav, input, link, menu, checkbox, dropdown, tile, panel
 
@@ -24,17 +21,22 @@ buildersTable.add UiElementKind.kTile, buildTile
 
 
 proc callBuilder*(wb: WebBuilder, elem: UiElement): VNode =
-  var el = elem  
-  if buildersTable.haskey el.kind:
+  var el = elem
+  if not el.builder.isNil:
+    result = el.builder(wb, elem)
+  elif buildersTable.haskey el.kind:
     result = buildersTable[el.kind](wb, elem)
+  # else:
+  #   echo "Builder not found for: " & $el.kind
+
+  if not result.isNil:
     for elkid in el.children:
       let kid = callBuilder(wb, elkid)
       if not kid.isNil:
         result.add kid
-  else:
-    echo "Builder not found for: " & $el.kind
       
 
-proc initBuilder*(handler: proc(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev: Event, n: VNode)): WebBuilder =
+proc initBuilder*(handler: proc(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev: Event, n: VNode)): WebBuilder =  
   result = newWebBuilder(handler)
   result.builder = callBuilder
+

@@ -23,6 +23,7 @@ var
   prevHashPart: cstring
   ctxt: AppContext
   app: App
+  customNav = false
 
 
 proc reRender*()=
@@ -32,9 +33,8 @@ proc reRender*()=
 
 
 proc eventGen*(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev: Event, n: VNode) =
-#proc eventGen*(eventKind: string, objid: string = "", viewid: string): proc(ev: Event, n: VNode) =
   result = proc (ev: Event, n: VNode) =
-    # ev.preventDefault()
+    ev.preventDefault()
     
     let
       evt = ev.`type`
@@ -72,12 +72,15 @@ proc eventGen*(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev:
     
     if n.getAttr("action") != nil:
       payload["action"] = %($n.getAttr "action")
-
+      
     if n.getAttr("mode") != nil:
       payload["mode"] = %($n.getAttr "mode")
     
     if n.getAttr("name") != nil:
-      payload["node_name"] = %($n.getAttr "name")
+      payload["field"] = %($n.getAttr "name")
+
+    if n.getAttr("field") != nil:
+      payload["field"] = %($n.getAttr "field")
     
     if el.id != "":
       payload["objid"] = %el.id
@@ -87,9 +90,18 @@ proc eventGen*(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev:
     
     if payload.haskey "action":
       payload = ctxt.navigate(ctxt, payload, viewid)
+      callEventListener(payload, ctxt.actions)
+      reRender()
+      
+    elif n.getAttr("eventhandler") != nil:
+      payload["eventhandler"] = %($n.getAttr "eventhandler")
+      callEventListener(payload, ctxt.actions)
+      
+      if customNav == true:
+        payload = ctxt.navigate(ctxt, payload, viewid)
+      
     
-    callEventListener(payload, ctxt.actions)    
-    reRender()
+    
       
 
 proc setHashRoute(rd: RouterData) =
@@ -171,5 +183,8 @@ proc createApp*(a: var App) =
   ctxt = app.ctxt 
   initNavigation()
   ctxt.components = initComponents(ctxt.components)
-  if ctxt.navigate.isNil: ctxt.navigate = navigate
+  if ctxt.navigate.isNil:
+    ctxt.navigate = navigate
+  else:
+    customNav = true
   `kxi` = setRenderer(createAppDOM)

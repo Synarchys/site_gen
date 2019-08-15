@@ -15,15 +15,15 @@ proc build*(wb: WebBuilder, el: UiElement): VNode =
   result = wb.builder(wb, el)
 
 
-proc addEvents*(n: var Vnode, wb: WebBuilder, el: UiElement) = 
-  for ev in el.events:
-    let targetKind = wb.eventsMap[ev.kind]
-    n.addEventListener(targetKind, wb.handler(ev, el, el.viewid))
+# proc addEvents*(n: var Vnode, wb: WebBuilder, el: UiElement) = 
+#   for ev in el.events:
+#     let targetKind = wb.eventsMap[ev.kind]
+#     n.addEventListener(targetKind, wb.handler(ev, el, el.viewid))
 
 
-proc addAttributes*(n: var Vnode, el: UiElement) =
-  for k, v in el.attributes.pairs:
-    n.setAttr(k, v)
+# proc addAttributes*(n: var Vnode, el: UiElement) =
+#   for k, v in el.attributes.pairs:
+#     n.setAttr(k, v)
 
 
 proc newWebBuilder*(handler: proc(uiev: uielement.UiEvent,

@@ -4,7 +4,7 @@ include karax / prelude
 import karax / [kbase, kdom, vdom, karaxdsl]
 
 import ../uielement, ../ui_utils
-import webbuilder
+#import webbuilder
 
 
 proc buildLink*(wb: WebBuilder, el: UiElement): Vnode =  

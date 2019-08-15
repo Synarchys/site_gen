@@ -1,7 +1,7 @@
 
 import tables
 import karax / [vdom, karaxdsl]
-import  webbuilder, ../uielement
+import  ../uielement
 
 
 proc buildButton*(wb: WebBuilder, el: UiElement): Vnode =

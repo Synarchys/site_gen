@@ -4,7 +4,7 @@ include karax / prelude
 import karax / [kdom, vdom]
 
 import ../uielement, ../ui_utils
-import webbuilder
+#import webbuilder
 
 
 #proc buildDropdownItem*(wb: WebBuilder, el: UiElement): Vnode =

@@ -1,7 +1,7 @@
 
 import karax / [vdom, karaxdsl]
 import ../uielement, ../ui_utils
-import webbuilder
+#import webbuilder
 
 # TODO:
 proc buildMenuItem(el: UiElement): Vnode =
