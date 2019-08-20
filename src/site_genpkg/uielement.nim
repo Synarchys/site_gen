@@ -1,6 +1,10 @@
 
 import sequtils, tables, json
-import karax / [vdom, kdom]
+import karax / vdom
+
+when defined(js):
+  import karax / kdom
+  
 
 
 type
