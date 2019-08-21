@@ -22,4 +22,3 @@ proc Column*(id: string): UiElement =
   
 proc Row*(id: string): UiElement =
   result = newUiElement(UiElementKind.kRow)
-

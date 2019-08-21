@@ -6,13 +6,12 @@ when defined(js):
   import karax / kdom
   
 
-
 type
   UiElementKind* = enum
     kComponent, kLayout, kHeader, kFooter, kBody, kButton, kDropdopwn, kIcon,
     kLabel, kText, kMenu, kMenuItem, kNavBar, kNavSection, kLink, kInputText,
     kList, kListItem, kForm, kCheckBox, kDropdown, kDropdownItem, kPanel, kTile,
-    kTable, kColumn, kRow
+    kTable, kColumn, kRow, kRadio, kRadioGroup, kParagraph, kTitle
 
   UiElement* = ref UiElementObj
 

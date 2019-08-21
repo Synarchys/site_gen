@@ -1,5 +1,5 @@
 
-import karax / [kdom, vdom, karaxdsl]
+import karax / [vdom, karaxdsl]
 
 import baseui
 import ../uielement

@@ -4,7 +4,7 @@ import karax / [vdom, kdom, karaxdsl]
 import ../uielement
 
 # import modular builders
-import input, button, form, nav, input, link, menu, checkbox, dropdown, tile, panel
+import input, button, form, nav, input, link, menu, dropdown, tile, panel
 
 
 var buildersTable = initTable[UiElementKind, proc(wb: WebBuilder, el: UiElement): Vnode]()
@@ -14,7 +14,6 @@ buildersTable.add UiElementKind.kLink, buildLink
 buildersTable.add UiElementKind.kButton, buildButton
 buildersTable.add UiElementKind.kNavBar, buildNav
 buildersTable.add UiElementKind.kMenu, buildMenu
-buildersTable.add UiElementKind.kCheckBox, buildCheckBox
 buildersTable.add UiElementKind.kDropdown, buildDropdown
 buildersTable.add UiElementKind.kPanel, buildPanel
 buildersTable.add UiElementKind.kTile, buildTile
