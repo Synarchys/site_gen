@@ -105,11 +105,9 @@ proc updateUI*(app: var App): VNode =
           result.add buildBody(ui, viewid, route)
         else:
           let cName = route.replace("#/", "")
-          if cName != "":
-            let ui = app.ctxt.uicomponents[cName](app.ctxt)
-            result.add buildBody(ui, viewid, route)
-          else:
-            echo "Error: Invalid Route/Action:" & action & "."
+          let ui = app.ctxt.uicomponents[cName](app.ctxt)
+          result.add buildBody(ui, viewid, route)
+
       else:
         # TODO:
         echo "Error: Invalid Layout section."
