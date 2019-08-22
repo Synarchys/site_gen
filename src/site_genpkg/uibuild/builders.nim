@@ -25,8 +25,14 @@ proc callBuilder*(wb: WebBuilder, elem: UiElement): VNode =
     result = el.builder(wb, elem)
   elif buildersTable.haskey el.kind:
     result = buildersTable[el.kind](wb, elem)
-  # else:
-  #   echo "Builder not found for: " & $el.kind
+  elif el.kind == UiElementKind.kComponent:
+    result = buildHtml(tdiv())
+    # # build its childs
+    # for kid in el.children:
+    #   echo kid.kind
+    #   result = callBuilder(wb, kid)
+  else:
+    echo "Builder not found for: " & $el.kind
 
   if not result.isNil:
     for elkid in el.children:
