@@ -2,7 +2,7 @@
 import site_genpkg / uielement
 import karax / [vdom, karaxdsl]
 
-# deprecate
+
 proc buildRadio*(wb: WebBuilder, el: UiElement): Vnode =
   result = buildHtml tdiv(class="form-group"):
     label(class = "form-label"):

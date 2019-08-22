@@ -31,7 +31,7 @@ proc hasKey*(store: Store, key: string): bool =
 proc getItem*(store: Store, id: string): StoreObj =
   result = store.data[id]
   
-
+  
 proc getCurrent*(store: Store, objType: string): StoreObj =
   let cid = store.collection[objType].current
   if cid != "":
@@ -44,7 +44,14 @@ proc getCollection*(store: Store, objType: string): seq[StoreObj] =
     for id in store.collection[objType].ids:
       result.add store.data[id]
     
-    
+
+proc getItems*(store: Store, objType: string): seq[JsonNode] =
+  result = @[]
+  let collection = getCollection(store, objType)
+  for item in collection:
+    result.add item.data
+
+      
 proc setCurrent*(store: var Store, objType, id: string) =
   if store.collection.hasKey objType:
     store.collection[objType].current = id
@@ -53,26 +60,26 @@ proc setCurrent*(store: var Store, objType, id: string) =
 
 
 proc setFieldValue*(store: var Store, id, field: string, value: JsonNode) =
-  # TODO: handel data type
   if store.data.hasKey(id) and store.data[id].data.hasKey(field):
     store.data[id].data[field] = value
 
 
 proc getFieldValue*(store: var Store, id, field: string): JsonNode =
-  # TODO: handel data type
   if store.data.hasKey(id) and store.data[id].data.hasKey(field):
     result = store.data[id].data[field]
   
 
 proc add*(store: var Store, objType: string, obj: JsonNode) =
   var so = StoreObj()
-  if obj.haskey "id": so.id = obj["id"].getStr
+
+  so.id = obj["id"].getStr
   so.`type` = objType
   so.data = obj
   
-  if not store.collection.haskey objType: store.collection[objType] = ObjCollection(`type`: objType)
-  store.collection[objType].ids.add so.id
+  if not store.collection.haskey objType:
+    store.collection[objType] = ObjCollection(`type`: objType)
+    store.collection[objType].ids = @[]
   
+  store.collection[objType].ids.add so.id
   store.data[so.id] = so
-    
   
