@@ -43,13 +43,12 @@ proc eventGen*(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev:
       payload = %*{"value": %""}
       event = %*{"type": %($evt)}
 
-    #var model = ""
     for k, v in n.attrs:
       if k == "model":
-        # model = $n.getAttr "model"
         payload["model"] = %($n.getAttr "model") #%model
-        break
-
+      if k == "value":
+        payload["value"] = %($n.getAttr "value")
+      
     # TODO: improve event data passed.
     if not evt.isNil and evt.contains "key":
       event["keyCode"] = %(cast[KeyboardEvent](ev).keyCode)
@@ -100,10 +99,7 @@ proc eventGen*(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev:
       if customNav == true:
         payload = ctxt.navigate(ctxt, payload, viewid)
       
-    
-    
-      
-
+          
 proc setHashRoute(rd: RouterData) =
   if prevHashPart != $rd.hashPart:
     ctxt.state["route"] = %($rd.hashPart)
