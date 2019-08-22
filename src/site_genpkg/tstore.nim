@@ -43,14 +43,14 @@ proc getCollection*(store: Store, objType: string): seq[StoreObj] =
   if store.collection.haskey objType:
     for id in store.collection[objType].ids:
       result.add store.data[id]
-    
+
 
 proc getItems*(store: Store, objType: string): seq[JsonNode] =
   result = @[]
   let collection = getCollection(store, objType)
   for item in collection:
-    result.add item.data
-
+    result.add item.data 
+  
       
 proc setCurrent*(store: var Store, objType, id: string) =
   if store.collection.hasKey objType:
@@ -60,8 +60,7 @@ proc setCurrent*(store: var Store, objType, id: string) =
 
 
 proc setFieldValue*(store: var Store, id, field: string, value: JsonNode) =
-  if store.data.hasKey(id) and store.data[id].data.hasKey(field):
-    store.data[id].data[field] = value
+  store.data[id].data[field] = value
 
 
 proc getFieldValue*(store: var Store, id, field: string): JsonNode =
@@ -70,6 +69,7 @@ proc getFieldValue*(store: var Store, id, field: string): JsonNode =
   
 
 proc add*(store: var Store, objType: string, obj: JsonNode) =
+  # TODO: replace obj if its id already exists
   var so = StoreObj()
 
   so.id = obj["id"].getStr

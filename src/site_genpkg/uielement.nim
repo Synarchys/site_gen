@@ -21,8 +21,7 @@ type
   UiEvent* = object
     kind*: UiEventKind
     targetKind*: EventKind
-    handler*: string#proc(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev: Event, n: VNode)
-
+    handler*: string # a key in the actions table
     
   WebBuilder* = object
     eventsMap*: Table[uielement.UiEventKind, EventKind]
@@ -77,6 +76,9 @@ proc addEvents*(n: var Vnode, wb: WebBuilder, el: UiElement) =
 
 proc addAttributes*(n: var Vnode, el: UiElement) =
   if el.id!="": n.id = el.id
+  if el.value != "":
+    n.setAttr "value", el.value
+  
   for k, v in el.attributes.pairs:
     n.setAttr(k, v)
 
@@ -103,9 +105,18 @@ proc removeAttribute*(parent: var UiElement, key: string) =
 
 proc addEvent*(parent: var UiElement, event: UiEvent) =
   ## if it does not exist it is added
-  if not parent.events.contains event:
-    parent.events.add event
-
+  # remove the event and add it again
+  var
+    indx = 0
+    rm = false
+  for e in parent.events:
+    if event.kind == e.kind:
+      rm = true
+      break
+    indx += 1
+  if rm == true: parent.events.delete indx
+  parent.events.add event
+  
 
 proc addEvent*(e: var UiElement, evk: UiEventKind) =
   var ev = UiEvent()
