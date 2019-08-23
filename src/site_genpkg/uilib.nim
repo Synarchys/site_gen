@@ -2,7 +2,7 @@
 import uielement
 
 import uilib / [baseui, input, form,  link, nav, button, checkbox, menu, dropdown,
-                panel, table, radio, paragraph, title, breadcrumb]
+                panel, table, radio, paragraph, title, breadcrumb, item]
 
 export baseui, input, form, link, nav, button, checkbox, menu, dropdown, panel,
-       table, radio, paragraph, title, breadcrumb
+       table, radio, paragraph, title, breadcrumb, item
