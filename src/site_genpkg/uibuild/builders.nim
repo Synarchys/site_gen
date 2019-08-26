@@ -31,8 +31,6 @@ proc callBuilder*(wb: WebBuilder, elem: UiElement): VNode =
     # for kid in el.children:
     #   echo kid.kind
     #   result = callBuilder(wb, kid)
-  else:
-    echo "Builder not found for: " & $el.kind
 
   if not result.isNil:
     for elkid in el.children:

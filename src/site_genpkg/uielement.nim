@@ -27,7 +27,6 @@ type
     eventsMap*: Table[uielement.UiEventKind, EventKind]
     handler*: proc(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev: Event, n: VNode)
     builder*: proc(wb: WebBuilder, el: UiElement): VNode
-
     
   UiElementObj* = object
     id*: string
@@ -78,6 +77,8 @@ proc addAttributes*(n: var Vnode, el: UiElement) =
   if el.id!="": n.id = el.id
   if el.value != "":
     n.setAttr "value", el.value
+  if el.field != "":
+    n.setAttr "field", el.field
   
   for k, v in el.attributes.pairs:
     n.setAttr(k, v)
@@ -154,7 +155,6 @@ proc newUiElement*(kind: UiElementKind, id, label="", events: seq[UiEventKind]):
     ev.kind = evk
     result.events.add ev
 
-  
   
 proc newUiElement*(kind: UiElementKind, label="",
                    attributes:Table[string, string], events: seq[UiEventKind]): UiElement =

@@ -68,6 +68,15 @@ proc getFieldValue*(store: var Store, id, field: string): JsonNode =
     result = store.data[id].data[field]
   
 
+proc add*(store: var Store, so: StoreObj) =  
+  if not store.collection.haskey so.`type`:
+    store.collection[so.`type`] = ObjCollection(`type`: so.`type`)
+    store.collection[so.`type`].ids = @[]
+  
+  store.collection[so.`type`].ids.add so.id
+  store.data[so.id] = so
+
+    
 proc add*(store: var Store, objType: string, obj: JsonNode) =
   # TODO: replace obj if its id already exists
   var so = StoreObj()
@@ -75,11 +84,11 @@ proc add*(store: var Store, objType: string, obj: JsonNode) =
   so.id = obj["id"].getStr
   so.`type` = objType
   so.data = obj
-  
-  if not store.collection.haskey objType:
-    store.collection[objType] = ObjCollection(`type`: objType)
-    store.collection[objType].ids = @[]
-  
-  store.collection[objType].ids.add so.id
-  store.data[so.id] = so
-  
+
+  store.add so
+  # if not store.collection.haskey objType:
+  #   store.collection[objType] = ObjCollection(`type`: objType)
+  #   store.collection[objType].ids = @[]
+  # store.collection[objType].ids.add so.id
+  # store.data[so.id] = so
+

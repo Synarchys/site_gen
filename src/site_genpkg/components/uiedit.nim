@@ -6,8 +6,6 @@ import ../appcontext, ../uielement, ../uilib, ../tstore
 # TODO: call label gen
 
 proc UiEdit*(ctxt: AppContext, viewid, route: string): UiElement =
-  # TODO: add mode
-  # returns a form wiht the fields to be edited
   let entity = route.replace("#/", "")
   result = newUiElement()
   result.kind = UiElementkind.kComponent
