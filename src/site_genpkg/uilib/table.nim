@@ -16,7 +16,7 @@ proc buildTable(wb: WebBuilder, el: UiElement): VNode =
       for hkid in c.children:
         var th = buildHtml th: text hkid.label
         h.add th
-      result.add h        
+      result.add h
     break
   
   for c in el.children:
@@ -24,7 +24,12 @@ proc buildTable(wb: WebBuilder, el: UiElement): VNode =
       # iterate over the rows to create columns
       var row = buildHtml tr()
       for col in c.children:
-        var htcol = buildHtml td: text col.value
+        var htcol = buildHtml td():
+          if not col.builder.isNil:
+            col.builder(wb, el)
+          else:
+            text col.value
+        
         row.add htcol
         if c.events.len > 0:
           row.class = "c-hand"
