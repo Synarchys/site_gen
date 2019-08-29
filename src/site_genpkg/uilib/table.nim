@@ -4,9 +4,21 @@ import karax / [vdom, karaxdsl]
 import baseui
 import ../uielement
 
+
 proc buildTable(wb: WebBuilder, el: UiElement): VNode =
   result = buildHtml table(class="table")  
-  var b = buildHtml tbody()
+  var
+    h = buildHtml thead()
+    b = buildHtml tbody()
+
+  for c in el.children:
+    if c.kind == UiElementKind.kHeader:
+      for hkid in c.children:
+        var th = buildHtml th: text hkid.label
+        h.add th
+      result.add h        
+    break
+  
   for c in el.children:
     if c.kind == UiElementKind.kRow:
       # iterate over the rows to create columns
@@ -17,8 +29,8 @@ proc buildTable(wb: WebBuilder, el: UiElement): VNode =
         if c.events.len > 0:
           row.class = "c-hand"
           row.addAttributes col
-          row.addEvents wb, c
-          
+
+      row.addEvents wb, c
       b.add row
   result.add b
 

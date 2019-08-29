@@ -22,8 +22,15 @@ proc buildPanel*(wb: WebBuilder, el: UiElement): Vnode =
   for c in el.children:
     if c.kind == UiElementKind.kHeader:
       h = buildHtml tdiv(class="panel-header"):
-        tdiv(class="panel-title"): text el.label
-      buildChildren(h, wb, c)
+        if el.label != "":
+          tdiv(class="panel-title"): text el.label
+      for hkid in c.children:
+        if hkid.kind == UiElementKind.kTitle:
+          var t = buildHtml tdiv(class="panel-title")
+          t.add wb.build hkid
+          h.add t
+        else:
+          h.add wb.build hkid
         
     if c.kind == UiElementKind.kBody:
       b = buildHtml tdiv(class="panel-body")

@@ -1,12 +1,17 @@
 
 import json, tables, sequtils
 
+type
+  SObjState* = enum
+    new, dirty, synched
+
 # wrap json data for easier handling
 type
   StoreObj* = object
     id*:  string
     `type`*: string
     data*: JsonNode # use nim root obj (?)
+    state*: SObjState
       
   ObjCollection = object
     current: string # id
@@ -25,7 +30,7 @@ proc newStore*(): Store =
   
 
 proc hasKey*(store: Store, key: string): bool =
-  result = store.data.haskey key
+  result = store.collection.haskey key
 
   
 proc getItem*(store: Store, id: string): StoreObj =
@@ -72,7 +77,6 @@ proc add*(store: var Store, so: StoreObj) =
   if not store.collection.haskey so.`type`:
     store.collection[so.`type`] = ObjCollection(`type`: so.`type`)
     store.collection[so.`type`].ids = @[]
-  
   store.collection[so.`type`].ids.add so.id
   store.data[so.id] = so
 
@@ -80,11 +84,9 @@ proc add*(store: var Store, so: StoreObj) =
 proc add*(store: var Store, objType: string, obj: JsonNode) =
   # TODO: replace obj if its id already exists
   var so = StoreObj()
-
   so.id = obj["id"].getStr
   so.`type` = objType
   so.data = obj
-
   store.add so
   # if not store.collection.haskey objType:
   #   store.collection[objType] = ObjCollection(`type`: objType)
