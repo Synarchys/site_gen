@@ -26,7 +26,7 @@ proc buildTable(wb: WebBuilder, el: UiElement): VNode =
       for col in c.children:
         var htcol = buildHtml td():
           if not col.builder.isNil:
-            col.builder(wb, el)
+            col.builder(wb, col)
           else:
             text col.value
         
