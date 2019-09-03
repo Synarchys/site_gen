@@ -52,6 +52,7 @@ proc buildElement(uiel: UiElement, viewid: string): VNode =
           result.add vkid
     else:
       result = wb.callBuilder(el)
+      result.addAttributes el
   except:
     # TODO:
     let msg = getCurrentExceptionMsg()
@@ -93,7 +94,6 @@ proc updateUI*(app: var App): VNode =
         let h = buildElement(l, viewid)
         
         if not h.isNil:
-          echo "built"
           result.add h
       
       of UiElementKind.kMenu:

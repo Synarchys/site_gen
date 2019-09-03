@@ -6,7 +6,6 @@ import ../uielement
 proc builder(wb: WebBuilder, el: UiElement): Vnode =
   result = buildHtml tdiv(class="hero")
   var b = buildHtml tdiv(class="hero-body")
-  echo "building hero"
   for c in el.children:
     b.add builder(wb, c)
 
