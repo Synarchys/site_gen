@@ -6,7 +6,7 @@ import ../uielement
 
 
 proc buildTable(wb: WebBuilder, el: UiElement): VNode =
-  result = buildHtml table(class="table")  
+  result = buildHtml table(class="table")
   var
     h = buildHtml thead()
     b = buildHtml tbody()

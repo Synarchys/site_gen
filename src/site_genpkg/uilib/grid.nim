@@ -5,8 +5,6 @@ import site_genpkg / uielement
 import site_genpkg / builder / webbuilder
 
 
-
-
 proc buildGrid*(wb: WebBuilder, el: UiElement): VNode =
   result = buildHtml():
     tdiv(class="container"):

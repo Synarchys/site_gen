@@ -14,6 +14,8 @@ import uibuild / builders
 
 
 var wb: WebBuilder
+const containersKind = [UiElementKind.kComponent, UiElementKind.kHeader,
+                        UiElementKind.kNavBar, UiElementKind.kNavSection]
 
 
 proc toJson(e: UiElement): JsonNode = 
@@ -33,11 +35,11 @@ proc toJson(e: UiElement): JsonNode =
   for c in e.children:
     result.addChild c.toJson()
 
-    
+
 proc buildElement(uiel: UiElement, viewid: string): VNode =
   var el: UiElement = uiel
   try:
-    if el.kind == UiElementKind.kComponent:
+    if el.kind in containersKind:
       if not el.builder.isNil:
         result = el.builder(wb, el)
       else:
@@ -53,8 +55,6 @@ proc buildElement(uiel: UiElement, viewid: string): VNode =
   except:
     # TODO:
     let msg = getCurrentExceptionMsg()
-    echo el.kind
-    echo msg
     result = buildHtml(tdiv):
       h3: text "Error: Element build fail: " & $el.kind
       p: text msg
@@ -89,8 +89,12 @@ proc updateUI*(app: var App): VNode =
     case l.kind:
       of UiElementKind.kHeader:
         # TODO:
-        discard
-        # result.add wb.callBuilder(el)
+        #discard
+        let h = buildElement(l, viewid)
+        
+        if not h.isNil:
+          echo "built"
+          result.add h
       
       of UiElementKind.kMenu:
         result.add wb.callBuilder(el)

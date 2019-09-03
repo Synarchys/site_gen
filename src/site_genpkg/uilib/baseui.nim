@@ -19,7 +19,14 @@ proc Body*(): UiElement =
 proc Column*(id: string): UiElement =
   result = newUiElement(UiElementKind.kColumn)
   result.id = id
-  
+
+
 proc Row*(id: string): UiElement =
   result = newUiElement(UiElementKind.kRow)
   result.id = id
+
+
+proc Item*(label: string, value: string): UiElement =
+  result = newUiElement(UiElementKind.kItem)
+  result.label = label
+  result.value = value
