@@ -63,8 +63,8 @@ proc init(params: seq[string]) =
     baseAppDir = binPath / "src/baseapp/"
   
   if baseAppDir != "":
-    echo "coping from: $1 to $2" % [baseAppgDir, targetDir]
-    for kind, path in os.walkDir(baseAppdir):
+    echo "coping from: $1 to $2" % [baseAppDir, targetDir]
+    for kind, path in os.walkDir(baseAppDir):
       if kind == PathComponent.pcDir:
         if path.endsWith("/public") and options.haskey(csslib[0]) and options[csslib[0]].len > 0:
           let val = options[csslib[0]][0]
