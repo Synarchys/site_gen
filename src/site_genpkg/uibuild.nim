@@ -64,43 +64,51 @@ proc buildElement(uiel: UiElement, viewid: string): VNode =
 proc buildBody(body: UiElement, viewid, route: string): VNode =    
   result = buildElement(body, viewid)
 
-      
+  
 proc updateUI*(app: var App): VNode =
   var
     state = app.ctxt.state
     view = state["view"]
     viewid = view["id"].getStr
     route, action: string
-  
+    req = Request()
+      
   result = newVNode VnodeKind.tdiv
   result.class = "container"
 
   if state.hasKey("route") and state["route"].getStr != "":
-    let splitRoute = state["route"].getStr.split "/"
+    let
+      sr = state["route"].getStr.split("?")
+
+    if sr.len > 1:
+      let qs = sr[1].split("&")
+      for q in qs:
+        let kv = q.split("=")
+        if kv.len > 1:
+          req.queryString.add kv[0], kv[1]
+        else:
+          req.queryString.add kv[0], kv[0]
+
+    app.ctxt.request = req
+    # grab the first part of the route
+    
+    let splitRoute = sr[0].split "/"
     # just asume first item is `#`.
     # use `#` in the ui definition to know it is a route.
     route = splitRoute[0..1].join "/"
     if splitRoute.len > 2: action = splitRoute[2]
-    
+
   for l in app.layout:
     var el = l
     el.viewid = viewid
-    # deprecate the use of render
-    # if not el.render.isNil: el = l.render()
     case l.kind:
       of UiElementKind.kHeader:
-        # TODO:
-        #discard
         let h = buildElement(l, viewid)
-        
         if not h.isNil:
           result.add h
-      
       of UiElementKind.kMenu:
         result.add wb.callBuilder(el)
-      
       of UiElementKind.kBody:
-        # use the correct ui for the action
         case action
         of "edit":
           echo route, "/", action
@@ -109,9 +117,15 @@ proc updateUI*(app: var App): VNode =
           result.add buildBody(ui, viewid, route)
         else:
           let cName = route.replace("#/", "")
-          let ui = app.ctxt.uicomponents[cName](app.ctxt)
-          result.add buildBody(ui, viewid, route)
-
+          if app.ctxt.uicomponents.haskey cName:
+             let ui = app.ctxt.uicomponents[cName](app.ctxt)
+             result.add buildBody(ui, viewid, route)
+             result.addAttributes el
+          else:
+            # try to despach to event handler
+            if app.ctxt.actions.haskey cName:              
+              app.ctxt.actions[cName](%*{"querystring": req.queryString})
+  
       else:
         # TODO:
         echo "Error: Invalid Layout section."
