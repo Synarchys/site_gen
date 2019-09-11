@@ -1,8 +1,10 @@
 
 import json, tables, tstore, uielement
-# import uibuild / webbuilder
 
 type
+  Request* = ref object
+    queryString*: OrderedTable[string, string]
+    
   AppContext* = ref object # of RootObj
     state*: JsonNode
     components*: Table[string, proc(ctxt: AppContext, uidef, payload: JsonNode): JsonNode]
@@ -13,8 +15,8 @@ type
     labelFormat*: proc(text: string): string
     navigate*: proc(ctxt: var AppContext, payload: JsonNode, viewid: string): JsonNode # returns the new payload
     store*: Store
-
-  
+    request*: Request
+      
   App* = ref object 
     id*: string
     title*: string
@@ -22,3 +24,4 @@ type
     state*: string
     ctxt*: AppContext
     wb*: WebBuilder
+    

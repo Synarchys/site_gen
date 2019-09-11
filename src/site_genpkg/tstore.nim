@@ -1,5 +1,5 @@
 
-import json, tables, sequtils
+import json, tables, sequtils, algorithm, times
 
 type
   SObjState* = enum
@@ -35,8 +35,21 @@ proc hasKey*(store: Store, key: string): bool =
   
 proc getItem*(store: Store, id: string): StoreObj =
   result = store.data[id]
-  
-  
+
+
+proc getItemByField*(store: Store, objType, field: string, value: JsonNode): StoreObj =
+  var r: StoreObj
+  var cmpr = proc(id: string , val: JsonNode): int {.closure.} =
+    let obj = store.getItem id
+    if obj.data.haskey(field) and obj.data[field] == val:
+      r = obj
+      result = 0
+    else:
+      result = -1
+  let exists = binarySearch(store.collection[objType].ids, value, cmpr)
+  if exists == 0: result = r
+
+
 proc getCurrent*(store: Store, objType: string): StoreObj =
   let cid = store.collection[objType].current
   if cid != "":
@@ -56,10 +69,16 @@ proc getItems*(store: Store, objType: string): seq[JsonNode] =
   for item in collection:
     result.add item.data 
   
+
+proc setCurrent*(store: var Store, oType="", id: string) =
+  var objType = oType
+  if objType == "":
+      let c = store.getItem id
+      objType = c.`type`
       
-proc setCurrent*(store: var Store, objType, id: string) =
   if store.collection.hasKey objType:
-    store.collection[objType].current = id
+    if objType != "":
+      store.collection[objType].current = id
   else:
     store.collection[objType] = ObjCollection(current: id)
 
