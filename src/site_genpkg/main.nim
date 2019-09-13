@@ -10,7 +10,7 @@ import uuidjs
 import builder, ui_utils, ui_def_gen, listeners, navigation, appcontext
 export builder, ui_utils
 
-import uielement, uibuild
+import uielement, uibuild, uiactions
 
 import components / components
 export components
@@ -145,7 +145,6 @@ proc handleCreateDomException(): Vnode =
     ctxt.state["error"] = %msg
     result = showError()
 
-
 # uses app instead of ctxt
 proc createAppDOM(rd: RouterData): VNode =
   setHashRoute(rd)
@@ -184,3 +183,6 @@ proc createApp*(a: var App) =
   else:
     customNav = true
   `kxi` = setRenderer(createAppDOM)
+  # embeded actions
+  loadDefaultActions(app, reRender)
+

@@ -12,7 +12,7 @@ type
     kLabel, kText, kMenu, kMenuItem, kNavBar, kNavSection, kLink, kInputText,
     kList, kListItem, kForm, kCheckBox, kDropdown, kDropdownItem, kPanel, kTile,
     kTable, kColumn, kRow, kRadio, kRadioGroup, kParagraph, kTitle,kBreadcrum,
-    kItem, kHero
+    kItem, kHero, kMessage
 
   UiElement* = ref UiElementObj
 

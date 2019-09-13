@@ -7,7 +7,7 @@ include karax / prelude
 import karax / [kbase, kdom, vdom, karaxdsl]
 
 import uielement, builder, ui_utils, uitemplates
-
+import uilib / message
 # complex components
 import components / uiedit
 import uibuild / builders
@@ -64,7 +64,7 @@ proc buildElement(uiel: UiElement, viewid: string): VNode =
 proc buildBody(body: UiElement, viewid, route: string): VNode =    
   result = buildElement(body, viewid)
 
-  
+   
 proc updateUI*(app: var App): VNode =
   var
     state = app.ctxt.state
@@ -75,6 +75,16 @@ proc updateUI*(app: var App): VNode =
       
   result = newVNode VnodeKind.tdiv
   result.class = "container"
+
+  if app.ctxt.messages.len > 0:
+    var c = 0
+    for m in app.ctxt.messages:
+      result.add buildElement(Message(m.kind, m.content, id= $c), viewid)
+      c += 1
+  
+  # if state.hasKey "message":
+  #   var msg = Message(state["message"].getStr, id=genUUID())
+  #   result.add buildElement(msg, viewid)
 
   if state.hasKey("route") and state["route"].getStr != "":
     let
@@ -100,7 +110,7 @@ proc updateUI*(app: var App): VNode =
 
   for l in app.layout:
     var el = l
-    el.viewid = viewid
+    el.viewid = viewid    
     case l.kind:
       of UiElementKind.kHeader:
         let h = buildElement(l, viewid)
@@ -123,9 +133,8 @@ proc updateUI*(app: var App): VNode =
              result.addAttributes el
           else:
             # try to despach to event handler
-            if app.ctxt.actions.haskey cName:              
-              app.ctxt.actions[cName](%*{"querystring": req.queryString})
-  
+            if app.ctxt.actions.haskey cName:
+              app.ctxt.actions[cName](%*{"querystring": req.queryString})  
       else:
         # TODO:
         echo "Error: Invalid Layout section."
@@ -134,3 +143,4 @@ proc updateUI*(app: var App): VNode =
 proc initApp*(app: var App, event: proc(uiev: uielement.UiEvent, el: UiElement, viewid: string): proc(ev: Event, n: VNode)): VNode =
   wb = initBuilder(event)
   result = updateUI(app)
+    

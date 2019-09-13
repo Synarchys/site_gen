@@ -37,6 +37,22 @@ proc getItem*(store: Store, id: string): StoreObj =
   result = store.data[id]
 
 
+proc add*(store: var Store, so: StoreObj) =  
+  if not store.collection.haskey so.`type`:
+    store.collection[so.`type`] = ObjCollection(`type`: so.`type`)
+    store.collection[so.`type`].ids = @[]
+  store.collection[so.`type`].ids.add so.id
+  store.data[so.id] = so
+
+
+proc add*(store: var Store, objType: string, obj: JsonNode) =
+  var so = StoreObj()
+  so.id = obj["id"].getStr
+  so.`type` = objType
+  so.data = obj
+  store.add so
+
+  
 proc getItemByField*(store: Store, objType, field: string, value: JsonNode): StoreObj =
   var r: StoreObj
   var cmpr = proc(id: string , val: JsonNode): int {.closure.} =
@@ -87,29 +103,13 @@ proc setFieldValue*(store: var Store, id, field: string, value: JsonNode) =
   store.data[id].data[field] = value
 
 
+proc setOrCreateFieldValue*(store: var Store, objType, id, field: string, value: JsonNode) =
+  if not store.data.haskey id:
+     store.add StoreObj(id: id, `type`: objType, state: SObjState.new, data: %{field: value})
+  else:
+    store.setFieldValue(id, field, value)
+     
+
 proc getFieldValue*(store: var Store, id, field: string): JsonNode =
   if store.data.hasKey(id) and store.data[id].data.hasKey(field):
     result = store.data[id].data[field]
-  
-
-proc add*(store: var Store, so: StoreObj) =  
-  if not store.collection.haskey so.`type`:
-    store.collection[so.`type`] = ObjCollection(`type`: so.`type`)
-    store.collection[so.`type`].ids = @[]
-  store.collection[so.`type`].ids.add so.id
-  store.data[so.id] = so
-
-    
-proc add*(store: var Store, objType: string, obj: JsonNode) =
-  # TODO: replace obj if its id already exists
-  var so = StoreObj()
-  so.id = obj["id"].getStr
-  so.`type` = objType
-  so.data = obj
-  store.add so
-  # if not store.collection.haskey objType:
-  #   store.collection[objType] = ObjCollection(`type`: objType)
-  #   store.collection[objType].ids = @[]
-  # store.collection[objType].ids.add so.id
-  # store.data[so.id] = so
-
